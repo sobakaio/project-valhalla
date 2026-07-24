@@ -206,6 +206,72 @@
             "bra"
           ]
         }
+      ],
+      "stage_visibility_rules": [
+        {
+          "id": "opaque_outer_chest_covers_anatomy",
+          "outer_slots": [
+            "upperwear",
+            "full_body",
+            "outerwear"
+          ],
+          "outer_tags_any": [
+            "opaque_chest"
+          ],
+          "hide_slots": [
+            "bra"
+          ],
+          "remove_body_visibility": [
+            "breasts",
+            "nipples"
+          ]
+        },
+        {
+          "id": "opaque_full_body_covers_anatomy",
+          "outer_slots": [
+            "full_body"
+          ],
+          "outer_tags_any": [
+            "opaque_body"
+          ],
+          "hide_slots": [
+            "bra"
+          ],
+          "remove_body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ],
+      "render_contracts": [
+        {
+          "id": "continuous_sheer_bra_fabric",
+          "slot": "bra",
+          "garment_tags_any": [
+            "sheer"
+          ],
+          "body_visibility_any": [
+            "breasts",
+            "nipples"
+          ],
+          "positive_prompt": "one anatomically fitted sheer bra with continuous intact translucent fabric lying smoothly across both breasts and nipples, soft anatomy visible through the fabric weave, realistic fabric tension and cup construction"
+        },
+        {
+          "id": "continuous_sheer_full_body_fabric",
+          "slot": "full_body",
+          "garment_tags_any": [
+            "sheer"
+          ],
+          "body_visibility_any": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ],
+          "positive_prompt": "one intact sheer full-body garment continuously covering the torso and pelvis, translucent fabric lying smoothly over the anatomy with realistic weave, seams, tension, and garment construction"
+        }
       ]
     },
     "garment_layer_rules": [
@@ -265,6 +331,51 @@
           "bra_simple_06",
           "bra_simple_07",
           "bra_simple_08"
+        ]
+      },
+      {
+        "id": "layerable_revealing_boudoir_over_bra",
+        "template_ids": [
+          "template_revealing_boudoir"
+        ],
+        "outer_slot": "full_body",
+        "inner_slot": "bra",
+        "allowed_outer_ids": [
+          "dress_mesh_mini",
+          "nightgown_sheer",
+          "catsuit_fishnet",
+          "catsuit_lace"
+        ],
+        "allowed_inner_ids": [
+          "bra_sheer",
+          "bra_embroidered",
+          "bra_mesh_balconette",
+          "bra_open_cup",
+          "bra_quarter_cup",
+          "bra_strappy_cage"
+        ]
+      },
+      {
+        "id": "layerable_pearl_boudoir_over_bra",
+        "template_ids": [
+          "template_pearl_boudoir"
+        ],
+        "outer_slot": "full_body",
+        "inner_slot": "bra",
+        "allowed_outer_ids": [
+          "dress_slip",
+          "dress_sheer_robe",
+          "dress_satin_robe",
+          "dress_mesh_mini",
+          "robe_terry_bath",
+          "robe_silk_long",
+          "robe_lace_open",
+          "nightgown_satin",
+          "nightgown_sheer",
+          "catsuit_fishnet"
+        ],
+        "allowed_inner_ids": [
+          "bra_pearl_detail"
         ]
       }
     ],
@@ -7930,7 +8041,8 @@
         "tags": [
           "silk",
           "boudoir",
-          "erotic"
+          "erotic",
+          "opaque_chest"
         ],
         "occupies_slots": [
           "upperwear",
@@ -7987,13 +8099,14 @@
         ]
       },
       {
-      "id": "dress_satin_robe",
+        "id": "dress_satin_robe",
       "catalog_category": "normal",
         "prompt": "short satin robe",
       "tags": [
-        "silk",
-        "boudoir",
-        "robe"
+          "silk",
+          "boudoir",
+          "robe",
+          "opaque_chest"
         ],
         "mix_tags": [
           "silk"
@@ -8236,14 +8349,15 @@
         ]
       },
       {
-      "id": "robe_terry_bath",
+        "id": "robe_terry_bath",
       "catalog_category": "normal",
         "prompt": "plush loosely belted terry bathrobe",
       "tags": [
         "home",
-        "bathrobe",
-        "boudoir",
-        "robe"
+          "bathrobe",
+          "boudoir",
+          "robe",
+          "opaque_chest"
         ],
         "occupies_slots": [
           "upperwear",
@@ -8258,15 +8372,16 @@
         ]
       },
       {
-      "id": "robe_silk_long",
+        "id": "robe_silk_long",
       "catalog_category": "normal",
         "prompt": "long flowing silk robe",
       "tags": [
         "silk",
-        "bathrobe",
-        "boudoir",
-        "elegant",
-        "robe"
+          "bathrobe",
+          "boudoir",
+          "elegant",
+          "robe",
+          "opaque_chest"
         ],
         "mix_tags": [
           "silk"
@@ -8317,7 +8432,8 @@
           "home",
           "silk",
           "boudoir",
-          "elegant"
+          "elegant",
+          "opaque_chest"
         ],
         "occupies_slots": [
           "upperwear",
@@ -8431,7 +8547,8 @@
         "tags": [
           "leather",
           "fetish",
-          "erotic"
+          "erotic",
+          "opaque_body"
         ],
         "occupies_slots": [
           "upperwear",
@@ -14243,6 +14360,58 @@
           "level": "nude",
           "visible_slots": [
             "footwear"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_bodysuit_solo",
+      "catalog_category": "normal",
+      "weight": 0.65,
+      "slots": {
+        "full_body": {
+          "catalog": "full_body",
+          "required": true,
+          "allowed_ids": [
+            "bodysuit_sheer",
+            "bodysuit_strappy",
+            "bodysuit_leather"
+          ]
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": false,
+          "chance": 0.65,
+          "required_any_tags": [
+            "boudoir",
+            "fetish",
+            "erotic"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.45,
+          "required_any_tags": [
+            "erotic",
+            "luxury"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "bodysuit_solo_worn",
+          "level": "lingerie",
+          "visible_slots": [
+            "full_body",
+            "footwear",
+            "accessories"
           ],
           "body_visibility": [
             "breasts",

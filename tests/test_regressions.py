@@ -1406,6 +1406,66 @@ class DirectorRegressionTests(unittest.TestCase):
         source = Path(app.__file__).read_text(encoding="utf-8")
         self.assertNotIn("COLOR_TONE_FAMILIES", source)
 
+    def test_revealing_templates_exclude_self_contained_bodysuits_from_bra_layering(self):
+        database, _ = app.load_database()
+        blocked = {"bodysuit_lace", "bodysuit_sheer", "bodysuit_strappy", "bodysuit_leather", "swimsuit_micro"}
+        for template_id in ("template_revealing_boudoir", "template_pearl_boudoir"):
+            template = next(item for item in database["outfit_templates"] if item["id"] == template_id)
+            reachable = {
+                item["id"] for item in database["garments"]["full_body"]
+                if app.garment_matches_template_slot(database, template, "full_body", item)
+            }
+            self.assertFalse(blocked & reachable, (template_id, blocked & reachable))
+
+    def test_opaque_boudoir_outer_layer_hides_bra_and_chest_visibility(self):
+        database, _ = app.load_database()
+        configured = copy.deepcopy(database)
+        template = next(
+            item for item in configured["outfit_templates"]
+            if item["id"] == "template_pearl_boudoir"
+        )
+        for item in configured["garments"]["full_body"]:
+            item["disabled"] = item["id"] != "nightgown_satin"
+        composer = app.Composer(configured, app.random.Random(515151))
+        outfit = composer.choose_outfit(template)
+        layered = next(stage for stage in outfit["template"]["stages"] if stage["id"] == "pearl_boudoir_layered")
+        self.assertNotIn("bra", layered["visible_slots"])
+        self.assertFalse({"breasts", "nipples"} & set(layered["body_visibility"]))
+        context = composer.fixed_context()
+        context["outfit"] = outfit
+        positive, _, selected = app.compile_scene(
+            configured, composer.resolve_scene(context, layered)
+        )
+        self.assertIn("long satin nightgown with a high slit", positive)
+        self.assertNotIn(outfit["garments"]["bra"]["prompt"], positive)
+        self.assertNotIn(outfit["garments"]["bra"]["id"], selected)
+        for anatomy in ("breast", "nipple", "areola"):
+            self.assertNotIn(anatomy, positive.casefold())
+
+    def test_visible_sheer_bra_uses_continuous_fabric_render_contract(self):
+        database, _ = app.load_database()
+        configured = copy.deepcopy(database)
+        template = next(
+            item for item in configured["outfit_templates"]
+            if item["id"] == "template_revealing_boudoir"
+        )
+        for item in configured["garments"]["full_body"]:
+            item["disabled"] = item["id"] != "dress_mesh_mini"
+        for item in configured["garments"]["bra"]:
+            item["disabled"] = item["id"] != "bra_sheer"
+        composer = app.Composer(configured, app.random.Random(616161))
+        outfit = composer.choose_outfit(template)
+        stage = next(item for item in outfit["template"]["stages"] if item["id"] == "revealing_boudoir_layered")
+        context = composer.fixed_context()
+        context["outfit"] = outfit
+        positive, _, _ = app.compile_scene(
+            configured, composer.resolve_scene(context, stage)
+        )
+        contract = configured["settings"]["wardrobe_compatibility"]["render_contracts"][0]
+        self.assertIn(contract["positive_prompt"], positive)
+        self.assertIn("distinct bra underneath", positive)
+        self.assertNotIn("fully opaque bra underneath", positive)
+
     def test_covered_chest_positive_contract_is_anatomy_neutral(self):
         state, storyboard_id = self.make_storyboard(count=12, prompt_seed=24680)
         record = state.get_storyboard(storyboard_id)

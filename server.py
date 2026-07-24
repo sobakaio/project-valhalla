@@ -520,6 +520,56 @@ def validate_database(db: dict[str, Any]) -> None:
                     or not set(coverage_slots).issubset(known_slots)
                 ):
                     raise AppError(f"{context}.{rule['id']}.coverage_slots is invalid")
+    visibility_rules = wardrobe_compatibility.get("stage_visibility_rules")
+    if not isinstance(visibility_rules, list):
+        raise AppError("settings.wardrobe_compatibility.stage_visibility_rules must be a list")
+    for rule in visibility_rules:
+        context = "settings.wardrobe_compatibility.stage_visibility_rules"
+        if not isinstance(rule, dict) or not isinstance(rule.get("id"), str):
+            raise AppError(f"Every {context} entry needs a string id")
+        for field in ("outer_slots", "hide_slots"):
+            values = rule.get(field)
+            if (
+                not isinstance(values, list) or not values
+                or len(values) != len(set(values))
+                or not set(values).issubset(known_slots)
+            ):
+                raise AppError(f"{context}.{rule['id']}.{field} contains invalid slots")
+        outer_tags = rule.get("outer_tags_any")
+        if (
+            not isinstance(outer_tags, list) or not outer_tags
+            or not set(outer_tags).issubset(known_garment_tags)
+        ):
+            raise AppError(f"{context}.{rule['id']}.outer_tags_any contains invalid tags")
+        visibility = rule.get("remove_body_visibility")
+        if (
+            not isinstance(visibility, list) or not visibility
+            or not set(visibility).issubset(SFW_BLOCKED_VISIBILITY)
+        ):
+            raise AppError(f"{context}.{rule['id']}.remove_body_visibility is invalid")
+    render_contracts = wardrobe_compatibility.get("render_contracts")
+    if not isinstance(render_contracts, list):
+        raise AppError("settings.wardrobe_compatibility.render_contracts must be a list")
+    for rule in render_contracts:
+        context = "settings.wardrobe_compatibility.render_contracts"
+        if not isinstance(rule, dict) or not isinstance(rule.get("id"), str):
+            raise AppError(f"Every {context} entry needs a string id")
+        if rule.get("slot") not in known_slots:
+            raise AppError(f"{context}.{rule['id']}.slot is invalid")
+        garment_tags = rule.get("garment_tags_any")
+        if (
+            not isinstance(garment_tags, list) or not garment_tags
+            or not set(garment_tags).issubset(known_garment_tags)
+        ):
+            raise AppError(f"{context}.{rule['id']}.garment_tags_any contains invalid tags")
+        visibility = rule.get("body_visibility_any")
+        if (
+            not isinstance(visibility, list) or not visibility
+            or not set(visibility).issubset(SFW_BLOCKED_VISIBILITY)
+        ):
+            raise AppError(f"{context}.{rule['id']}.body_visibility_any is invalid")
+        if not isinstance(rule.get("positive_prompt"), str) or not rule["positive_prompt"].strip():
+            raise AppError(f"{context}.{rule['id']}.positive_prompt must be text")
     surface_pool_sections = {
         "colors": {item["id"] for item in db["colors"] if not item.get("disabled", False)},
         "textures": {
@@ -678,9 +728,22 @@ def validate_database(db: dict[str, Any]) -> None:
                     raise AppError(
                         f"Template {template['id']} slot {slot} {field} must be a unique list of tags"
                     )
+            allowed_ids = rule.get("allowed_ids", [])
+            catalog_ids = {item["id"] for item in db["garments"][catalog]}
+            if (
+                not isinstance(allowed_ids, list)
+                or not all(isinstance(item_id, str) and item_id for item_id in allowed_ids)
+                or len(allowed_ids) != len(set(allowed_ids))
+                or not set(allowed_ids).issubset(catalog_ids)
+            ):
+                raise AppError(
+                    f"Template {template['id']} slot {slot} allowed_ids must reference "
+                    f"unique garments from {catalog}"
+                )
             candidates = [
                 item for item in db["garments"][catalog]
                 if not item.get("disabled", False)
+                and (not allowed_ids or item["id"] in allowed_ids)
                 and set(rule.get("required_tags", [])).issubset(tags(item))
                 and (
                     not rule.get("required_any_tags")
@@ -999,6 +1062,7 @@ def garment_matches_template_slot(
     return (
         garment in db["garments"][rule["catalog"]]
         and not garment.get("disabled", False)
+        and (not rule.get("allowed_ids") or garment["id"] in rule["allowed_ids"])
         and category_allows(template, garment)
         and garment_allowed_by_layer_rules(db, template["id"], slot, garment["id"])
         and set(rule.get("required_tags", [])).issubset(garment_tags)
@@ -1664,6 +1728,28 @@ class Composer:
                     )
                 )
             ]
+
+        for stage in resolved_template["stages"]:
+            visible_slots = set(stage.get("visible_slots", []))
+            for relation in compatibility["stage_visibility_rules"]:
+                matching_outer = any(
+                    slot in visible_slots
+                    and slot in selected
+                    and tags(selected[slot]) & set(relation["outer_tags_any"])
+                    for slot in relation["outer_slots"]
+                )
+                if not matching_outer:
+                    continue
+                hidden = set(relation["hide_slots"])
+                removed_visibility = set(relation["remove_body_visibility"])
+                stage["visible_slots"] = [
+                    slot for slot in stage.get("visible_slots", []) if slot not in hidden
+                ]
+                stage["body_visibility"] = [
+                    part for part in stage.get("body_visibility", [])
+                    if part not in removed_visibility
+                ]
+                visible_slots = set(stage["visible_slots"])
 
         occupied: dict[str, str] = {}
         for slot, item in selected.items():
@@ -2511,7 +2597,7 @@ def compile_scene(db: dict[str, Any], scene: dict[str, Any]) -> tuple[str, str, 
         "lingerie": (
             (
                 "one sheer upper-body garment worn as the outer layer over one coordinated "
-                "fully opaque bra underneath, the bra entirely beneath the outer garment, "
+                "distinct bra underneath, the bra entirely beneath the outer garment, "
                 "clean physically correct clothing layers"
                 if layered_sheer_chest else
                 "one fully opaque upper-body garment as the visible chest layer, clean "
@@ -2563,6 +2649,16 @@ def compile_scene(db: dict[str, Any], scene: dict[str, Any]) -> tuple[str, str, 
     fragments.extend(
         human_fragments(scene["human"], visibility, covered_chest, custom)
     )
+    for contract in db["settings"]["wardrobe_compatibility"]["render_contracts"]:
+        slot = contract["slot"]
+        garment = outfit["garments"].get(slot)
+        if (
+            garment
+            and slot in visible_slots
+            and tags(garment) & set(contract["garment_tags_any"])
+            and visibility & set(contract["body_visibility_any"])
+        ):
+            fragments.append(contract["positive_prompt"])
     if scene.get("intimate_arousal_modifier"):
         fragments.append(scene["intimate_arousal_modifier"]["prompt"])
     if custom.get("outfit.template"):
