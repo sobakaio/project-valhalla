@@ -207,6 +207,20 @@ class CatalogQualityTests(unittest.TestCase):
             positive, _, _ = app.compile_scene(configured, shot["scene"])
             self.assertIn(rule["positive_prompt"], positive)
 
+        composer = app.Composer(database, app.random.Random(717171))
+        for _ in range(1000):
+            fixed = composer.fixed_context()
+            probe = {"context": fixed}
+            options = app.director_stage_options(database, probe, "progressive")
+            reveal_options = [
+                item for item in options
+                if item.get("visual_category") == "dressed_panties_reveal"
+            ]
+            if reveal_options:
+                break
+        self.assertTrue(reveal_options)
+        self.assertIn("panties", reveal_options[0]["visible_slots"])
+
     def test_xxx_camera_recipes_produce_broad_non_macro_compositions(self):
         database, _ = app.load_database()
         observed = {
@@ -615,6 +629,55 @@ class CatalogQualityTests(unittest.TestCase):
             app.hands_required({"prompt": "holding a teddy bear", "hands_required": 2}),
             2,
         )
+
+    def test_structural_partial_undressing_precedes_complete_removal(self):
+        database, _ = app.load_database()
+        expected = {
+            83: ("lowerwear", "lowered_to_hips", "lowered to the hips"),
+            430: ("upperwear", "unbuttoned_open", "front panels hanging open"),
+        }
+        for seed, (slot, state, prompt_fragment) in expected.items():
+            args = app.parse_run_config({
+                "mode": "photoshoot", "count": 12, "photoshoots": 1,
+                "prompt_seed": seed, "content_mode": "progressive",
+            }, database)
+            rng = app.random.Random(seed)
+            shots = app.build_storyboard(
+                args, database, app.Composer(database, rng), rng,
+                args.nsfw_percent, args.plateau_percent,
+            )
+            position = next(
+                index for index, shot in enumerate(shots)
+                if shot["scene"].get("garment_states", {}).get(slot) == state
+            )
+            partial = shots[position]
+            self.assertIn(slot, partial["stage"]["visible_slots"])
+            positive, _, _ = app.compile_scene(database, partial["scene"])
+            self.assertIn(prompt_fragment, positive)
+            later = shots[position + 1:]
+            removed_at = next(
+                shot for shot in later if slot in shot["scene"]["removed_garment_slots"]
+            )
+            self.assertNotIn(slot, removed_at["stage"].get("visible_slots", []))
+            self.assertTrue(
+                removed_at["scene"]["garment_transition"]["prompt"].startswith(
+                    "fully removed and no longer wearing"
+                )
+            )
+
+    def test_removed_shot_transition_options_never_claim_half_removed_state(self):
+        database, _ = app.load_database()
+        scene = {
+            "garment_transition": {
+                "id": "transition_lowerwear", "prompt": "removed", "slots": ["lowerwear"],
+            },
+            "outfit": {
+                "garments": {"lowerwear": {"prompt": "blue jeans"}},
+            },
+        }
+        options = app.director_transition_options(scene)
+        self.assertTrue(options)
+        self.assertFalse(any("half" in item["prompt"].casefold() for item in options))
 
     def test_age_catalog_contains_only_three_explicit_adult_presets(self):
         database, _ = app.load_database()

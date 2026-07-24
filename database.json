@@ -6367,6 +6367,11 @@
       },
       {
         "id": "top_cotton_button_shirt",
+        "supported_states": [
+          "worn_closed",
+          "unbuttoned_open",
+          "removed"
+        ],
         "catalog_category": "normal",
         "prompt": "plain cotton button-front shirt",
         "tags": [
@@ -6400,6 +6405,11 @@
       },
       {
         "id": "top_stretch_button_shirt",
+        "supported_states": [
+          "worn_closed",
+          "unbuttoned_open",
+          "removed"
+        ],
         "catalog_category": "normal",
         "prompt": "stretch cotton button shirt fitted at the waist",
         "tags": [
@@ -6982,6 +6992,11 @@
     "lowerwear": [
       {
         "id": "lower_blue_jeans",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
         "catalog_category": "normal",
         "prompt": "close-fitting jeans",
         "tags": [
@@ -7309,6 +7324,11 @@
       },
       {
         "id": "lower_straight_jeans",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
         "catalog_category": "normal",
         "prompt": "straight-leg blue jeans",
         "tags": [
@@ -7319,6 +7339,11 @@
       },
       {
         "id": "lower_relaxed_jeans",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
         "catalog_category": "normal",
         "prompt": "relaxed-fit denim jeans",
         "tags": [
@@ -7329,6 +7354,11 @@
       },
       {
         "id": "lower_highwaist_jeans",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
         "catalog_category": "normal",
         "prompt": "plain high-waisted jeans",
         "tags": [
@@ -7454,6 +7484,11 @@
       },
       {
         "id": "lower_skinny_blue_jeans",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
         "catalog_category": "normal",
         "prompt": "tight skinny blue jeans",
         "tags": [
@@ -7465,6 +7500,11 @@
       },
       {
         "id": "lower_skinny_black_jeans",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
         "catalog_category": "normal",
         "prompt": "tight black skinny jeans",
         "tags": [
@@ -7476,6 +7516,11 @@
       },
       {
         "id": "lower_lowrise_jeans",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
         "catalog_category": "normal",
         "prompt": "close-fitting low-rise jeans",
         "tags": [
@@ -7487,6 +7532,11 @@
       },
       {
         "id": "lower_highrise_sculpt_jeans",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
         "catalog_category": "normal",
         "prompt": "high-rise body-sculpting jeans",
         "reveals_cameltoe": true,
@@ -7603,6 +7653,11 @@
       },
       {
         "id": "lower_mom_jeans",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
         "catalog_category": "normal",
         "prompt": "casual high-waisted mom jeans",
         "tags": [
@@ -7619,6 +7674,11 @@
       },
       {
         "id": "lower_bootcut_jeans",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
         "catalog_category": "normal",
         "prompt": "fitted bootcut denim jeans",
         "tags": [
@@ -7634,6 +7694,11 @@
       },
       {
         "id": "lower_cropped_jeans",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
         "catalog_category": "normal",
         "prompt": "slim cropped ankle jeans",
         "tags": [
@@ -7847,6 +7912,11 @@
       },
       {
         "id": "bottom_simple_01",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
         "catalog_category": "normal",
         "prompt": "straight-leg everyday jeans",
         "tags": [

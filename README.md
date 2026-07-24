@@ -139,6 +139,12 @@ both hands. Finger-to-mouth and middle-finger gestures are available across the
 authored covered-to-explicit range; intimate spreading explicitly uses one hand's
 index and middle fingers and requires uncovered anatomy plus open-leg geometry.
 
+Garments may declare an ordered `supported_states` sequence. The first structural
+slice covers button-front shirts (`worn_closed` → `unbuttoned_open` → `removed`)
+and jeans (`worn_closed` → `lowered_to_hips` → `removed`). The intermediate state
+is compiled while the garment remains physically visible, with the underlying bra
+or panties exposed as appropriate; a later removal shot only describes full removal.
+
 If `comfy.workflow_source` is set to `live`, Valhalla reads the latest compatible ComfyUI workflow instead of the selected saved profiles. Saved profiles are recommended for reproducible production.
 
 ## Production workflow

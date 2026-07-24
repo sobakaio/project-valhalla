@@ -730,6 +730,17 @@ def validate_database(db: dict[str, Any]) -> None:
             raise AppError(
                 f"Non-hosiery legwear {item['id']} cannot declare support_mode"
             )
+    supported_state_sequences = {
+        ("worn_closed", "unbuttoned_open", "removed"),
+        ("worn_closed", "lowered_to_hips", "removed"),
+    }
+    for values in db["garments"].values():
+        for item in values:
+            states = item.get("supported_states")
+            if states is not None and tuple(states) not in supported_state_sequences:
+                raise AppError(
+                    f"Garment {item['id']} has an unsupported ordered state sequence"
+                )
     reveal_outer_slots = panties_reveal.get("outer_slots")
     reveal_outer_ids = panties_reveal.get("compatible_outer_ids")
     if (
@@ -2954,12 +2965,17 @@ def compile_scene(
     layered_sheer_chest = any(
         tags(item) & {"sheer", "transparent"} for item in visible_outer_chest
     )
+    garment_states = scene.get("garment_states", {})
+    open_upperwear = garment_states.get("upperwear") == "unbuttoned_open"
     covered_sheer = stage.get("level") == "covered" and layered_sheer_chest
     lingerie_sheer = stage.get("level") == "lingerie" and chest_coverage == "sheer"
     # A stage label alone is UI metadata. These anchors state the visual contract
     # explicitly in vocabulary image models reliably understand.
     stage_anchors = {
         "covered": (
+            "button-front shirt worn fully unbuttoned and open at both sides, the intact "
+            "bra underneath remains the complete chest-covering layer"
+            if open_upperwear else
             "(fully opaque fitted lining beneath the translucent outer garment:1.5), "
             "uninterrupted lining fabric across the entire chest, uniform lining color "
             "and weave, clean smooth garment surface"
@@ -3057,6 +3073,15 @@ def compile_scene(
             if custom.get(f"outfit.textures.{slot}") or slot in outfit.get("textures", {}):
                 garment_parts.append(custom.get(f"outfit.textures.{slot}") or outfit["textures"][slot]["prompt"])
             garment_parts.append(custom.get(f"outfit.garments.{slot}") or garment["prompt"])
+            state = garment_states.get(slot)
+            if state == "unbuttoned_open":
+                garment_parts.append(
+                    "worn fully unbuttoned with both front panels hanging open"
+                )
+            elif state == "lowered_to_hips":
+                garment_parts.append(
+                    "unfastened and lowered to the hips, still visibly worn around the hips"
+                )
             garment_fragment = " ".join(garment_parts)
             if slot == "bra":
                 garment_fragment = (
@@ -3376,6 +3401,13 @@ def maybe_dressed_panties_reveal(
         return stage
     if rng.random() >= rule["chance"]:
         return stage
+    return dressed_panties_reveal_stage(stage, outfit)
+
+
+def dressed_panties_reveal_stage(
+    stage: dict[str, Any], outfit: dict[str, Any]
+) -> dict[str, Any]:
+    """Author the deterministic lifted-hem state after compatibility is known."""
     result = copy.deepcopy(stage)
     result["id"] = f"{stage['id']}_dressed_panties_reveal"
     result["visual_category"] = "dressed_panties_reveal"
@@ -4195,6 +4227,27 @@ def build_storyboard(
             if args.mode == "photoshoot":
                 removed_slots |= removed
             if removed:
+                previous_scene = previous["scene"] if previous else None
+                if previous_scene:
+                    for slot in sorted(removed):
+                        garment = context["outfit"]["garments"].get(slot)
+                        states = (garment or {}).get("supported_states", [])
+                        intermediate = next((
+                            state for state in states
+                            if state not in {"worn_closed", "removed"}
+                        ), None)
+                        if not intermediate:
+                            continue
+                        previous_scene.setdefault("garment_states", {})[slot] = intermediate
+                        previous_scene["stage"].setdefault("garment_states", {})[slot] = intermediate
+                        if intermediate == "unbuttoned_open" and "bra" in context["outfit"]["garments"]:
+                            previous_scene["stage"]["visible_slots"] = list(dict.fromkeys([
+                                *previous_scene["stage"].get("visible_slots", []), "bra",
+                            ]))
+                        if intermediate == "lowered_to_hips" and "panties" in context["outfit"]["garments"]:
+                            previous_scene["stage"]["visible_slots"] = list(dict.fromkeys([
+                                *previous_scene["stage"].get("visible_slots", []), "panties",
+                            ]))
                 names = [
                     context["outfit"]["garments"][slot]["prompt"]
                     for slot in context["outfit"]["template"]["slots"]
@@ -5327,7 +5380,9 @@ DIRECTOR_LABELS = {
 }
 
 
-def director_stage_options(shot: dict[str, Any], content_mode: str) -> list[dict[str, Any]]:
+def director_stage_options(
+    db: dict[str, Any], shot: dict[str, Any], content_mode: str
+) -> list[dict[str, Any]]:
     template = shot["context"]["outfit"]["template"]
     effective = effective_photoshoot_stages(template)
     if content_mode == "sfw":
@@ -5338,6 +5393,22 @@ def director_stage_options(shot: dict[str, Any], content_mode: str) -> list[dict
     unique: dict[str, dict[str, Any]] = {}
     for stage in effective:
         unique[stage["id"]] = stage
+    reveal_rule = db["settings"]["dressed_panties_reveal"]
+    compatible_ids = set(reveal_rule["compatible_outer_ids"])
+    outfit = shot["context"]["outfit"]
+    reveal_base = next((
+        stage for stage in effective
+        if stage["level"] == "covered"
+        and "panties" in outfit["garments"]
+        and any(
+            outfit["garments"].get(slot, {}).get("id") in compatible_ids
+            and slot in stage.get("visible_slots", [])
+            for slot in reveal_rule["outer_slots"]
+        )
+    ), None)
+    if reveal_base:
+        reveal = dressed_panties_reveal_stage(reveal_base, outfit)
+        unique[reveal["id"]] = reveal
     explicit_base = next(stage for stage in effective if stage["level"] == "explicit")
     kinds = ["provocative_rear", "intimate_closeup", "masturbation"]
     if "panties" in template.get("slots", {}):
@@ -5419,11 +5490,6 @@ def director_transition_options(scene: dict[str, Any]) -> list[dict[str, Any]]:
             "id": f"transition_in_motion_{suffix}",
             "prompt": f"in the act of taking off {garments}",
             "menu_label": f"Taking off {garments}",
-        },
-        {
-            "id": f"transition_half_removed_{suffix}",
-            "prompt": f"{garments} visibly halfway removed from her body",
-            "menu_label": f"Halfway removed: {garments}",
         },
         {
             "id": f"transition_holding_removed_{suffix}",
@@ -5850,7 +5916,7 @@ class WebState:
         groups.append({"id": "camera", "label": "Camera & editorial", "fields": camera_fields})
 
         direction_fields = []
-        stages = director_stage_options(shot, record["args"].content_mode)
+        stages = director_stage_options(db, shot, record["args"].content_mode)
         direction_fields.append({
             "key": "shot.stage", "label": "Stage / content", "scope": "shot",
             "value": shot["stage"]["id"],
@@ -6409,7 +6475,7 @@ class WebState:
         elif field.startswith("shot."):
             key = field.split(".", 1)[1]
             if key == "stage":
-                stages = director_stage_options(shot, record["args"].content_mode)
+                stages = director_stage_options(db, shot, record["args"].content_mode)
                 stage = next((item for item in stages if item["id"] == value), None)
                 if stage is None:
                     raise AppError("Unknown stage")
