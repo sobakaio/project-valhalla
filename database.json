@@ -13645,14 +13645,16 @@
           "required_any_tags": [
             "explicit",
             "sheer"
-          ]
+          ],
+          "color_group": "lingerie"
         },
         "panties": {
           "catalog": "panties",
           "required": true,
           "required_tags": [
             "lingerie"
-          ]
+          ],
+          "color_group": "lingerie"
         },
         "outerwear": {
           "catalog": "outerwear",
@@ -13742,14 +13744,16 @@
           "required_tags": [
             "luxury",
             "sheer"
-          ]
+          ],
+          "color_group": "lingerie"
         },
         "panties": {
           "catalog": "panties",
           "required": true,
           "required_tags": [
             "luxury"
-          ]
+          ],
+          "color_group": "lingerie"
         },
         "outerwear": {
           "catalog": "outerwear",
@@ -14960,14 +14964,16 @@
           "required": true,
           "required_tags": [
             "lingerie"
-          ]
+          ],
+          "color_group": "lingerie"
         },
         "panties": {
           "catalog": "panties",
           "required": true,
           "required_tags": [
             "lingerie"
-          ]
+          ],
+          "color_group": "lingerie"
         },
         "footwear": {
           "catalog": "footwear",
@@ -15029,14 +15035,16 @@
           "required": true,
           "required_tags": [
             "elegant"
-          ]
+          ],
+          "color_group": "lingerie"
         },
         "panties": {
           "catalog": "panties",
           "required": true,
           "required_tags": [
             "elegant"
-          ]
+          ],
+          "color_group": "lingerie"
         },
         "footwear": {
           "catalog": "footwear",
@@ -15233,14 +15241,16 @@
           "required": true,
           "required_tags": [
             "luxury"
-          ]
+          ],
+          "color_group": "lingerie"
         },
         "panties": {
           "catalog": "panties",
           "required": true,
           "required_tags": [
             "luxury"
-          ]
+          ],
+          "color_group": "lingerie"
         },
         "legwear": {
           "catalog": "legwear",
@@ -15420,14 +15430,16 @@
           "required": true,
           "required_tags": [
             "fetish"
-          ]
+          ],
+          "color_group": "lingerie"
         },
         "panties": {
           "catalog": "panties",
           "required": true,
           "required_tags": [
             "fetish"
-          ]
+          ],
+          "color_group": "lingerie"
         },
         "footwear": {
           "catalog": "footwear",

@@ -56,6 +56,39 @@ class StudioGenerationLimitTests(unittest.TestCase):
 
 
 class CatalogQualityTests(unittest.TestCase):
+    def test_every_bra_and_panties_template_uses_one_exact_color_group(self):
+        database, _ = app.load_database()
+        composer = app.Composer(database, app.random.Random(20260724))
+        checked = 0
+        for template in database["outfit_templates"]:
+            if not {"bra", "panties"}.issubset(template["slots"]):
+                continue
+            group = template["slots"]["bra"].get("color_group")
+            self.assertTrue(group, template["id"])
+            self.assertEqual(
+                group, template["slots"]["panties"].get("color_group"),
+                template["id"],
+            )
+            for _ in range(8):
+                outfit = composer.choose_outfit(template)
+                if not {"bra", "panties"}.issubset(outfit["garments"]):
+                    continue
+                self.assertEqual(
+                    outfit["colors"]["bra"]["id"],
+                    outfit["colors"]["panties"]["id"],
+                    template["id"],
+                )
+                checked += 1
+        self.assertGreater(checked, 100)
+        broken = copy.deepcopy(database)
+        template = next(
+            item for item in broken["outfit_templates"]
+            if {"bra", "panties"}.issubset(item["slots"])
+        )
+        template["slots"]["panties"].pop("color_group", None)
+        with self.assertRaisesRegex(app.AppError, "shared color_group"):
+            app.validate_database(broken)
+
     def test_breast_traits_define_safe_covered_and_exposed_anchors(self):
         database, _ = app.load_database()
         for section in ("breast_size", "breast_shape"):
@@ -1479,9 +1512,40 @@ class DirectorRegressionTests(unittest.TestCase):
                     app.color_family(database, colors[outer_slot]["id"]),
                     app.color_family(database, colors[inner_slot]["id"]),
                 )
+
                 if relation["suppress_inner_pattern"]:
                     self.assertNotIn(inner_slot, patterns)
         self.assertTrue(all(count > 10 for count in checked.values()), checked)
+
+    def test_director_changes_a_coordinated_lingerie_color_as_one_group(self):
+        state, storyboard_id = self.make_storyboard(count=4, prompt_seed=8801)
+        state.update_director(
+            storyboard_id,
+            {
+                "shot": 1,
+                "field": "outfit.template",
+                "value": "template_revealing_boudoir",
+            },
+        )
+        fields = director_fields(state.director_payload(storyboard_id, 1))
+        bra = fields["outfit.colors.bra"]
+        panties = fields["outfit.colors.panties"]
+        self.assertEqual(
+            {option["id"] for option in bra["options"]},
+            {option["id"] for option in panties["options"]},
+        )
+        replacement = next(
+            option["id"] for option in bra["options"]
+            if option["id"] != bra["value"]
+        )
+        state.update_director(
+            storyboard_id,
+            {"shot": 1, "field": "outfit.colors.bra", "value": replacement},
+        )
+        for shot in state.get_storyboard(storyboard_id)["shots"]:
+            colors = shot["context"]["outfit"]["colors"]
+            self.assertEqual(colors["bra"]["id"], replacement)
+            self.assertEqual(colors["panties"]["id"], replacement)
 
     def test_optional_bra_relation_is_data_driven_and_drops_invalid_stages(self):
         database, _ = app.load_database()

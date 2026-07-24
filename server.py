@@ -812,6 +812,14 @@ def validate_database(db: dict[str, Any]) -> None:
                 raise AppError(
                     f"Template {template['id']} slot {slot} filters out every enabled garment"
                 )
+        if {"bra", "panties"}.issubset(slots):
+            bra_group = slots["bra"].get("color_group")
+            panties_group = slots["panties"].get("color_group")
+            if not bra_group or bra_group != panties_group:
+                raise AppError(
+                    f"Template {template['id']} must coordinate bra and panties "
+                    "through one shared color_group"
+                )
         for stage in stages:
             if not isinstance(stage.get("id"), str) or not isinstance(stage.get("level"), str):
                 raise AppError(f"Template {template['id']} has an invalid stage")
@@ -1232,6 +1240,79 @@ def validate_outfit_layers(db: dict[str, Any], outfit: dict[str, Any]) -> None:
             raise AppError(
                 f"Garment layers {inner['id']} under {outer['id']} are incompatible"
             )
+
+
+def validate_outfit_color_groups(outfit: dict[str, Any]) -> None:
+    """Keep every selected garment in one authored color group exactly matched."""
+    garments = outfit["garments"]
+    colors = outfit.get("colors", {})
+    grouped: dict[str, list[tuple[str, str]]] = {}
+    for slot, rule in outfit["template"]["slots"].items():
+        group = rule.get("color_group")
+        if not group or slot not in garments:
+            continue
+        color = colors.get(slot)
+        if color is None:
+            raise AppError(f"Garment slot {slot} is missing its coordinated color")
+        grouped.setdefault(group, []).append((slot, color["id"]))
+    for group, selected in grouped.items():
+        color_ids = {color_id for _, color_id in selected}
+        if len(color_ids) > 1:
+            details = ", ".join(
+                f"{slot}={color_id}" for slot, color_id in selected
+            )
+            raise AppError(
+                f"Outfit color group {group} must use one exact color: {details}"
+            )
+
+
+def set_outfit_group_color(
+    db: dict[str, Any], outfit: dict[str, Any], slot: str,
+    requested_color_id: str | None = None,
+) -> None:
+    """Set one slot or its complete authored group to a shared allowed color."""
+    rule = outfit["template"]["slots"][slot]
+    group = rule.get("color_group")
+    grouped_slots = [
+        candidate_slot
+        for candidate_slot, candidate_rule in outfit["template"]["slots"].items()
+        if candidate_slot in outfit["garments"]
+        and (
+            candidate_rule.get("color_group") == group
+            if group else candidate_slot == slot
+        )
+    ]
+    enabled_colors = {
+        item["id"]: item for item in db["colors"] if not item.get("disabled", False)
+    }
+    shared = set(enabled_colors)
+    for candidate_slot in grouped_slots:
+        garment = outfit["garments"][candidate_slot]
+        shared &= set(garment.get("allowed_colors") or enabled_colors)
+    if not shared:
+        raise AppError(
+            f"Outfit color group {group or slot} has no shared enabled color"
+        )
+    if requested_color_id is not None:
+        if requested_color_id not in shared:
+            raise AppError(
+                f"Color {requested_color_id} is incompatible with coordinated "
+                f"outfit group {group or slot}"
+            )
+        selected_id = requested_color_id
+    else:
+        current_ids = {
+            outfit["colors"][candidate_slot]["id"]
+            for candidate_slot in grouped_slots
+            if candidate_slot in outfit["colors"]
+        }
+        selected_id = (
+            next(iter(current_ids))
+            if len(current_ids) == 1 and current_ids <= shared else
+            sorted(shared)[0]
+        )
+    for candidate_slot in grouped_slots:
+        outfit["colors"][candidate_slot] = enabled_colors[selected_id]
 
 
 def garment_allowed_by_layer_rules(
@@ -1940,13 +2021,15 @@ class Composer:
                 assigned_patterns[slot] = pattern
             if texture:
                 assigned_textures[slot] = texture
-        return {
+        outfit = {
             "template": resolved_template,
             "garments": selected,
             "colors": assigned_colors,
             "patterns": assigned_patterns,
             "textures": assigned_textures,
         }
+        validate_outfit_color_groups(outfit)
+        return outfit
 
     def validate_outfit_environment(
         self,
@@ -2491,6 +2574,7 @@ class Composer:
         return dependencies
 
     def validate_scene_rules(self, scene: dict[str, Any]) -> None:
+        validate_outfit_color_groups(scene["outfit"])
         self.validate_outfit_environment(scene["outfit"], scene["interior"])
         validate_pose_zone(scene["pose"], scene["location_zone"])
         if not category_allows(scene["interior"], scene["furniture"]):
@@ -5260,6 +5344,12 @@ class WebState:
                         db,
                         {"template": template, "garments": candidate_garments},
                     )
+                    candidate_outfit = {
+                        "template": template,
+                        "garments": candidate_garments,
+                        "colors": dict(context["outfit"]["colors"]),
+                    }
+                    set_outfit_group_color(db, candidate_outfit, slot)
                     if record["args"].content_mode == "sfw":
                         validate_sfw_outfit({
                             "template": template,
@@ -5288,7 +5378,21 @@ class WebState:
             if not garment:
                 continue
             color = context["outfit"]["colors"][slot]
-            allowed_colors = set(garment.get("allowed_colors") or [item["id"] for item in db["colors"]])
+            allowed_colors = set(
+                garment.get("allowed_colors") or [item["id"] for item in db["colors"]]
+            )
+            color_group = rule.get("color_group")
+            if color_group:
+                for grouped_slot, grouped_rule in template["slots"].items():
+                    grouped_garment = context["outfit"]["garments"].get(grouped_slot)
+                    if (
+                        grouped_garment
+                        and grouped_rule.get("color_group") == color_group
+                    ):
+                        allowed_colors &= set(
+                            grouped_garment.get("allowed_colors")
+                            or [item["id"] for item in db["colors"]]
+                        )
             wardrobe_fields.append({
                 "key": f"outfit.colors.{slot}",
                 "label": f"{slot.replace('_', ' ').title()} color",
@@ -5963,17 +6067,16 @@ class WebState:
                     ]
                     if outfit["colors"].get(slot) not in allowed:
                         outfit["colors"][slot] = allowed[0]
+                    set_outfit_group_color(db, outfit, slot)
                     for modifier_key in ("patterns", "textures"):
                         modifier = outfit.get(modifier_key, {}).get(slot)
                         if modifier and garment["id"] not in modifier["allowed_garment_ids"]:
                             outfit[modifier_key].pop(slot, None)
             elif section == "colors":
                 color = index.get(value)
-                garment = outfit["garments"][slot]
-                allowed_ids = set(garment.get("allowed_colors") or [item["id"] for item in db["colors"]])
-                if color not in db["colors"] or color["id"] not in allowed_ids:
+                if color not in db["colors"]:
                     raise AppError("Color is incompatible with this garment")
-                outfit["colors"][slot] = color
+                set_outfit_group_color(db, outfit, slot, color["id"])
             elif section in {"patterns", "textures"}:
                 source = "patterns" if section == "patterns" else "fabric_textures"
                 if not value:
@@ -5986,6 +6089,7 @@ class WebState:
             else:
                 raise AppError("Unknown wardrobe field")
             validate_outfit_layers(db, outfit)
+            validate_outfit_color_groups(outfit)
             record["composer"].validate_outfit_stage_coverage(outfit)
             if record["args"].content_mode == "sfw":
                 validate_sfw_outfit(outfit)
