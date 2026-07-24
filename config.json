@@ -25,7 +25,7 @@
     "jpeg_quality": 95,
     "strip_exif": true,
     "prompt_debug_log": {
-      "enabled": false,
+      "enabled": true,
       "path": "./outputs/prompt-debug.jsonl"
     }
   },
