@@ -15842,7 +15842,9 @@
         "provocative_action"
       ],
       "shot_size": "shot_rear_closeup",
+      "shot_size_options": ["shot_rear_closeup", "shot_three_quarter"],
       "camera_angle": "angle_rear",
+      "camera_angle_options": ["angle_rear", "angle_over_shoulder"],
       "focus_target": "focus_rear",
       "intensity": "explicit",
       "weight": 1.0
@@ -15860,7 +15862,9 @@
         "provocative_action"
       ],
       "shot_size": "shot_rear_closeup",
+      "shot_size_options": ["shot_rear_closeup", "shot_three_quarter"],
       "camera_angle": "angle_rear",
+      "camera_angle_options": ["angle_rear", "angle_over_shoulder"],
       "focus_target": "focus_rear",
       "intensity": "explicit",
       "weight": 1.0
@@ -15878,7 +15882,9 @@
         "provocative_action"
       ],
       "shot_size": "shot_rear_closeup",
+      "shot_size_options": ["shot_rear_closeup", "shot_three_quarter"],
       "camera_angle": "angle_rear",
+      "camera_angle_options": ["angle_rear", "angle_over_shoulder"],
       "focus_target": "focus_rear",
       "intensity": "explicit",
       "weight": 1.0
@@ -15896,7 +15902,9 @@
         "provocative_action"
       ],
       "shot_size": "shot_rear_closeup",
+      "shot_size_options": ["shot_rear_closeup", "shot_three_quarter"],
       "camera_angle": "angle_rear",
+      "camera_angle_options": ["angle_rear", "angle_over_shoulder"],
       "focus_target": "focus_rear",
       "intensity": "explicit",
       "weight": 1.0
@@ -15915,6 +15923,7 @@
       ],
       "shot_size": "shot_three_quarter",
       "camera_angle": "angle_rear",
+      "camera_angle_options": ["angle_rear", "angle_over_shoulder"],
       "focus_target": "focus_rear",
       "intensity": "explicit",
       "weight": 1.0
@@ -15932,7 +15941,9 @@
         "masturbation_action"
       ],
       "shot_size": "shot_three_quarter",
+      "shot_size_options": ["shot_three_quarter", "shot_torso_closeup"],
       "camera_angle": "angle_eye_level",
+      "camera_angle_options": ["angle_eye_level", "angle_high", "angle_overhead"],
       "focus_target": "focus_intimate",
       "intensity": "peak",
       "weight": 1.0
@@ -15949,7 +15960,9 @@
         "masturbation_action"
       ],
       "shot_size": "shot_torso_closeup",
+      "shot_size_options": ["shot_three_quarter", "shot_torso_closeup"],
       "camera_angle": "angle_eye_level",
+      "camera_angle_options": ["angle_eye_level", "angle_high"],
       "focus_target": "focus_intimate",
       "intensity": "explicit",
       "weight": 1.1
@@ -15966,7 +15979,9 @@
         "closeup_action"
       ],
       "shot_size": "shot_intimate_macro",
+      "shot_size_options": ["shot_three_quarter", "shot_torso_closeup", "shot_intimate_macro"],
       "camera_angle": "angle_eye_level",
+      "camera_angle_options": ["angle_eye_level", "angle_high", "angle_overhead"],
       "focus_target": "focus_intimate",
       "intensity": "peak",
       "weight": 1.0
@@ -15983,7 +15998,9 @@
         "closeup_action"
       ],
       "shot_size": "shot_breast_closeup",
+      "shot_size_options": ["shot_three_quarter", "shot_torso_closeup", "shot_breast_closeup"],
       "camera_angle": "angle_eye_level",
+      "camera_angle_options": ["angle_eye_level", "angle_high"],
       "focus_target": "focus_breasts",
       "intensity": "explicit",
       "weight": 0.9
@@ -16000,7 +16017,9 @@
         "masturbation_action"
       ],
       "shot_size": "shot_torso_closeup",
+      "shot_size_options": ["shot_three_quarter", "shot_torso_closeup"],
       "camera_angle": "angle_high",
+      "camera_angle_options": ["angle_eye_level", "angle_high", "angle_overhead"],
       "focus_target": "focus_intimate",
       "intensity": "explicit",
       "weight": 1.2
@@ -16018,7 +16037,29 @@
         "insertion_action"
       ],
       "shot_size": "shot_three_quarter",
+      "shot_size_options": ["shot_three_quarter", "shot_torso_closeup"],
       "camera_angle": "angle_high",
+      "camera_angle_options": ["angle_eye_level", "angle_high", "angle_overhead"],
+      "focus_target": "focus_intimate",
+      "intensity": "explicit",
+      "weight": 1.0
+    },
+    {
+      "id": "recipe_standing_split",
+      "prompt": "standing split explicit composition with the full pose visible",
+      "menu_label": "Standing split",
+      "plateau_kind": "masturbation",
+      "pose_tags": [
+        "one_leg_balance",
+        "open_legs"
+      ],
+      "action_tags": [
+        "masturbation_action"
+      ],
+      "shot_size": "shot_three_quarter",
+      "shot_size_options": ["shot_three_quarter", "shot_torso_closeup"],
+      "camera_angle": "angle_eye_level",
+      "camera_angle_options": ["angle_eye_level", "angle_low"],
       "focus_target": "focus_intimate",
       "intensity": "explicit",
       "weight": 1.0
@@ -16035,7 +16076,9 @@
         "masturbation_action"
       ],
       "shot_size": "shot_intimate_macro",
+      "shot_size_options": ["shot_three_quarter", "shot_torso_closeup", "shot_intimate_macro"],
       "camera_angle": "angle_high",
+      "camera_angle_options": ["angle_eye_level", "angle_high", "angle_overhead"],
       "focus_target": "focus_intimate",
       "intensity": "peak",
       "weight": 0.8
@@ -16789,6 +16832,25 @@
       ],
       "requires_tags": [
         "lying_surface"
+      ],
+      "allowed_levels": [
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_explicit_standing_split",
+      "prompt": "balancing upright on one straight leg while one hand holds the other straight leg vertically beside her torso",
+      "tags": [
+        "explicit_pose",
+        "masturbation_pose",
+        "open_legs",
+        "standing",
+        "one_leg_balance"
+      ],
+      "hands_required": 1,
+      "requires_tags": [
+        "standing",
+        "genitals"
       ],
       "allowed_levels": [
         "explicit"

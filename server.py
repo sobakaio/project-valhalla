@@ -430,9 +430,21 @@ def validate_database(db: dict[str, Any]) -> None:
             ("camera_angle", "camera_angles"),
             ("focus_target", "focus_targets"),
         ):
-            if recipe.get(field) not in {item["id"] for item in db[section]}:
+            section_ids = {item["id"] for item in db[section]}
+            if recipe.get(field) not in section_ids:
                 raise AppError(
                     f"explicit_recipes.{recipe['id']}.{field} references unknown id"
+                )
+            options = recipe.get(f"{field}_options")
+            if options is not None and (
+                not isinstance(options, list) or not options
+                or len(options) != len(set(options))
+                or not all(isinstance(item_id, str) for item_id in options)
+                or not set(options).issubset(section_ids)
+            ):
+                raise AppError(
+                    f"explicit_recipes.{recipe['id']}.{field}_options must "
+                    f"reference unique existing {section}"
                 )
     human_defaults = settings.get("human_defaults", {})
     if not isinstance(human_defaults, dict):
@@ -1227,6 +1239,14 @@ def compatible_with_requirements(item: dict[str, Any], available_tags: set[str])
         and (not required_any or bool(required_any & available_tags))
         and not (set(item.get("excludes_tags", [])) & available_tags)
     )
+
+
+def recipe_reference_ids(recipe: dict[str, Any] | None, field: str) -> list[str]:
+    if not recipe:
+        return []
+    options = recipe.get(f"{field}_options")
+    reference = recipe.get(field)
+    return list(options) if options else ([reference] if reference else [])
 
 
 INTIMATE_SHOT_SIZE_IDS = {
@@ -2273,11 +2293,6 @@ class Composer:
             editorial_role = choose("editorial_role", candidates or self.db["editorial_roles"])
         camera_tags = available_tags | tags(pose) | tags(action) | tags(editorial_role)
         camera = {}
-        recipe_refs = {
-            "shot_size": recipe.get("shot_size") if recipe else None,
-            "camera_angle": recipe.get("camera_angle") if recipe else None,
-            "focus_target": recipe.get("focus_target") if recipe else None,
-        }
         for key, section in (
             ("shot_size", "shot_sizes"), ("camera_angle", "camera_angles"),
             ("framing", "framings"), ("focus_target", "focus_targets"),
@@ -2289,10 +2304,13 @@ class Composer:
                 and item_allows_intensity(item, intensity)
                 and compatible_with_requirements(item, camera_tags)
             ]
-            wanted = overrides.get(key) or recipe_refs.get(key)
+            wanted = overrides.get(key)
+            recipe_options = recipe_reference_ids(recipe, key)
             if wanted:
                 candidates = [item for item in candidates if item["id"] == wanted]
-            elif key == "framing":
+            elif recipe_options:
+                candidates = [item for item in candidates if item["id"] in recipe_options]
+            elif key == "framing" and stage["level"] != "explicit":
                 casual_framings = {
                     "framing_centered", "framing_tight_crop",
                     "framing_environmental",
@@ -4180,20 +4198,23 @@ def catalog_reachability(db: dict[str, Any]) -> dict[str, Any]:
             ]
 
         shot_sizes = eligible("shot_sizes", camera_tags)
-        if recipe and recipe.get("shot_size"):
-            shot_sizes = [x for x in shot_sizes if x["id"] == recipe["shot_size"]]
+        recipe_shot_sizes = set(recipe_reference_ids(recipe, "shot_size"))
+        if recipe_shot_sizes:
+            shot_sizes = [x for x in shot_sizes if x["id"] in recipe_shot_sizes]
         for shot_size in shot_sizes:
             angle_tags = camera_tags | tags(shot_size)
             angles = eligible("camera_angles", angle_tags)
-            if recipe and recipe.get("camera_angle"):
-                angles = [x for x in angles if x["id"] == recipe["camera_angle"]]
+            recipe_angles = set(recipe_reference_ids(recipe, "camera_angle"))
+            if recipe_angles:
+                angles = [x for x in angles if x["id"] in recipe_angles]
             for angle in angles:
                 framing_tags = angle_tags | tags(angle)
                 for framing in eligible("framings", framing_tags):
                     focus_tags = framing_tags | tags(framing)
                     focuses = eligible("focus_targets", focus_tags)
-                    if recipe and recipe.get("focus_target"):
-                        focuses = [x for x in focuses if x["id"] == recipe["focus_target"]]
+                    recipe_focuses = set(recipe_reference_ids(recipe, "focus_target"))
+                    if recipe_focuses:
+                        focuses = [x for x in focuses if x["id"] in recipe_focuses]
                     for focus in focuses:
                         scene = {
                             **scene_base,

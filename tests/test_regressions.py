@@ -56,6 +56,34 @@ class StudioGenerationLimitTests(unittest.TestCase):
 
 
 class CatalogQualityTests(unittest.TestCase):
+    def test_xxx_camera_recipes_produce_broad_non_macro_compositions(self):
+        database, _ = app.load_database()
+        observed = {
+            key: Counter() for key in ("shot_size", "camera_angle", "framing")
+        }
+        for seed in range(100):
+            run = app.parse_run_config({
+                "mode": "photoshoot", "content_mode": "xxx", "count": 12,
+                "photoshoots": 1, "prompt_seed": seed, "inference_seed": seed + 1,
+            }, database)
+            rng = app.random.Random(seed)
+            board = app.build_storyboard(
+                run, database, app.Composer(database, rng), rng,
+                run.nsfw_percent, run.plateau_percent,
+            )
+            for shot in board:
+                scene = shot["scene"]
+                if scene["stage"]["level"] == "explicit":
+                    for key in observed:
+                        observed[key][scene[key]["id"]] += 1
+        total = observed["shot_size"].total()
+        self.assertGreater(total, 0)
+        self.assertGreaterEqual(len(observed["shot_size"]), 5)
+        self.assertGreaterEqual(len(observed["camera_angle"]), 5)
+        self.assertGreaterEqual(len(observed["framing"]), 4)
+        self.assertLess(observed["shot_size"]["shot_intimate_macro"] / total, 0.1)
+        self.assertLess(observed["shot_size"]["shot_rear_closeup"] / total, 0.35)
+
     def test_database_rejects_data_configured_ambiguous_prompt_phrases(self):
         database, _ = app.load_database()
         configured = copy.deepcopy(database)
@@ -663,7 +691,11 @@ class DirectorRegressionTests(unittest.TestCase):
                 "lingerie": lingerie_marker,
                 "topless": "topless",
                 "nude": "fully nude body",
-                "explicit": "explicit composition",
+                "explicit": (
+                    shot["scene"]["explicit_recipe"]["prompt"].casefold()
+                    if shot["scene"].get("explicit_recipe")
+                    else "explicit adult pose"
+                ),
             }[shot["stage"]["level"]]
             self.assertLess(positive.index("pregnant"), positive.index(stage_marker))
             self.assertLess(
@@ -2791,6 +2823,7 @@ class CameraGrammarRegressionTests(unittest.TestCase):
 
     def test_intimate_macro_rejects_environmental_framing_with_exact_ids(self):
         scene = self.explicit_scene("recipe_intimate_macro")
+        scene["shot_size"] = self.index["shot_intimate_macro"]
         scene["framing"] = self.index["framing_environmental"]
         with self.assertRaisesRegex(
             app.AppError,
