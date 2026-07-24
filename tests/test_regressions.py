@@ -1259,6 +1259,76 @@ class DirectorRegressionTests(unittest.TestCase):
                 self.assertIn("fixed wardrobe colors for this frame:", positive)
                 self.assertLess(positive.index(color), positive.index(source["scene"]["pose"]["prompt"].casefold()))
 
+    def test_partly_undressed_stage_does_not_put_a_bra_over_opaque_upperwear(self):
+        database, _ = app.load_database()
+        template = next(
+            item for item in database["outfit_templates"]
+            if item["id"] == "template_progressive_undressing"
+        )
+        opaque_upperwear = next(
+            item for item in database["garments"]["upperwear"]
+            if item["id"] == "top_corset"
+        )
+        configured = copy.deepcopy(database)
+        for item in configured["garments"]["upperwear"]:
+            item["disabled"] = item["id"] != opaque_upperwear["id"]
+        composer = app.Composer(configured, app.random.Random(77881))
+        outfit = composer.choose_outfit(template)
+        context = composer.fixed_context()
+        context["outfit"] = outfit
+        stage = next(item for item in template["stages"] if item["id"] == "undress_lower_removed")
+        scene = composer.resolve_scene(context, stage)
+        positive, _, _ = app.compile_scene(configured, scene)
+        folded = positive.casefold()
+        self.assertIn("one fully opaque upper-body garment as the visible chest layer", folded)
+        self.assertNotIn("fully opaque lingerie top or bra", folded)
+        self.assertNotIn("underlying", folded)
+
+    def test_sheer_layers_and_hosiery_coordinate_underwear_color_and_pattern(self):
+        database, _ = app.load_database()
+        composer = app.Composer(database, app.random.Random(404404))
+        checked_chest = checked_lower = checked_hosiery = 0
+        for _ in range(1200):
+            template = composer.choose_template()
+            outfit = composer.choose_outfit(template)
+            garments = outfit["garments"]
+            colors = outfit["colors"]
+            patterns = outfit["patterns"]
+            for outer_slot in ("upperwear", "full_body", "outerwear"):
+                outer = garments.get(outer_slot)
+                if outer and app.tags(outer) & {"sheer", "transparent"} and "bra" in garments:
+                    checked_chest += 1
+                    self.assertEqual(
+                        app.color_tone(colors[outer_slot]["id"]),
+                        app.color_tone(colors["bra"]["id"]),
+                    )
+                    self.assertNotIn("bra", patterns)
+                    break
+            for outer_slot in ("full_body", "lowerwear"):
+                outer = garments.get(outer_slot)
+                if outer and app.tags(outer) & {"sheer", "transparent"} and "panties" in garments:
+                    checked_lower += 1
+                    self.assertEqual(
+                        app.color_tone(colors[outer_slot]["id"]),
+                        app.color_tone(colors["panties"]["id"]),
+                    )
+                    self.assertNotIn("panties", patterns)
+                    break
+            legwear = garments.get("legwear")
+            if legwear and "panties" in garments and (
+                app.tags(legwear) & {"pantyhose", "tights"}
+                or any(term in legwear["prompt"].casefold() for term in ("pantyhose", "tights"))
+            ):
+                checked_hosiery += 1
+                self.assertEqual(
+                    app.color_tone(colors["legwear"]["id"]),
+                    app.color_tone(colors["panties"]["id"]),
+                )
+                self.assertNotIn("panties", patterns)
+        self.assertGreater(checked_chest, 10)
+        self.assertGreater(checked_lower, 10)
+        self.assertGreater(checked_hosiery, 100)
+
     def test_covered_chest_positive_contract_is_anatomy_neutral(self):
         state, storyboard_id = self.make_storyboard(count=12, prompt_seed=24680)
         record = state.get_storyboard(storyboard_id)
@@ -2803,14 +2873,15 @@ class VisualCompatibilityRegressionTests(unittest.TestCase):
         for _ in range(300):
             fixed = composer.fixed_context()
             for stage in fixed["outfit"]["template"]["stages"]:
-                visible = [
+                visible_chest = [
                     fixed["outfit"]["garments"][slot]
                     for slot in stage.get("visible_slots", [])
-                    if slot in fixed["outfit"]["garments"]
+                    if slot in {"upperwear", "full_body", "outerwear"}
+                    and slot in fixed["outfit"]["garments"]
                 ]
                 if stage["level"] != "covered" or not any(
-                    "sheer" in app.tags(item) for item in visible
-                ):
+                    app.tags(item) & {"sheer", "transparent"} for item in visible_chest
+                ) or "bra" not in fixed["outfit"]["garments"]:
                     continue
                 found = True
                 bra = fixed["outfit"]["garments"]["bra"]
@@ -2840,7 +2911,18 @@ class VisualCompatibilityRegressionTests(unittest.TestCase):
                 self.assertFalse(app.tags(bra) & {"explicit", "sheer", "transparent", "open_cup"})
                 scene = composer.resolve_scene(fixed, stage)
                 positive, _, _ = app.compile_scene(database, scene)
-                self.assertIn("fully opaque lingerie top or bra", positive)
+                visible_outer = [
+                    fixed["outfit"]["garments"][slot]
+                    for slot in ("upperwear", "full_body", "outerwear")
+                    if slot in stage.get("visible_slots", [])
+                    and slot in fixed["outfit"]["garments"]
+                ]
+                if any(app.tags(item) & {"sheer", "transparent"} for item in visible_outer):
+                    self.assertIn("the bra entirely beneath the outer garment", positive)
+                elif visible_outer:
+                    self.assertIn("one fully opaque upper-body garment as the visible chest layer", positive)
+                else:
+                    self.assertIn("fully opaque lingerie top or bra", positive)
                 for unsafe_concept in ("breast", "nipple", "areola", "bust"):
                     self.assertNotIn(unsafe_concept, positive.casefold())
                 checked += 1

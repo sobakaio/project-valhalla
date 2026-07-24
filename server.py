@@ -870,6 +870,24 @@ OPAQUE_LINGERIE_BLOCKED_TAGS = {
     "explicit", "sheer", "transparent", "open_cup", "crotchless",
 }
 CHEST_GARMENT_SLOTS = {"upperwear", "full_body", "outerwear", "bra"}
+COLOR_TONE_FAMILIES = {
+    "light": {
+        "color_white", "color_ivory", "color_beige", "color_pink", "color_lilac",
+        "color_champagne", "color_silver", "color_tan", "color_coral",
+    },
+    "dark": {
+        "color_black", "color_red", "color_burgundy", "color_navy", "color_emerald",
+        "color_gray", "color_scarlet", "color_crimson", "color_cobalt", "color_teal",
+        "color_purple", "color_chocolate", "color_leopard",
+    },
+}
+
+
+def color_tone(color_id: str) -> str:
+    return next(
+        (family for family, members in COLOR_TONE_FAMILIES.items() if color_id in members),
+        "dark",
+    )
 
 
 def garment_compatible_with_template_stages(
@@ -1575,6 +1593,51 @@ class Composer:
             else:
                 color_id = self.rng.choice(allowed)
             assigned_colors[slot] = self.colors[color_id]
+
+        # Coordinate every underwear layer that remains visible through a sheer
+        # outer garment. Exact matches win; otherwise stay in the same light/dark
+        # family. This is a structural outfit decision, not prompt-time cleanup.
+        covered_inner_slots: set[str] = set()
+
+        def coordinate_color(outer_slot: str, inner_slot: str) -> None:
+            if outer_slot not in selected or inner_slot not in selected:
+                return
+            outer_id = assigned_colors[outer_slot]["id"]
+            allowed_inner = [
+                color_id
+                for color_id in (selected[inner_slot].get("allowed_colors") or list(self.colors))
+                if color_id in self.colors
+            ]
+            if outer_id in allowed_inner:
+                chosen = outer_id
+            else:
+                tonal = [
+                    color_id for color_id in allowed_inner
+                    if color_tone(color_id) == color_tone(outer_id)
+                ]
+                if not tonal:
+                    raise AppError(
+                        f"No {color_tone(outer_id)} color compatibility between "
+                        f"{outer_slot} and {inner_slot}"
+                    )
+                chosen = self.rng.choice(sorted(tonal))
+            assigned_colors[inner_slot] = self.colors[chosen]
+            covered_inner_slots.add(inner_slot)
+
+        for outer_slot in ("upperwear", "full_body", "outerwear"):
+            if outer_slot in selected and tags(selected[outer_slot]) & {"sheer", "transparent"}:
+                coordinate_color(outer_slot, "bra")
+                break
+        for outer_slot in ("full_body", "lowerwear"):
+            if outer_slot in selected and tags(selected[outer_slot]) & {"sheer", "transparent"}:
+                coordinate_color(outer_slot, "panties")
+                break
+        legwear = selected.get("legwear")
+        if legwear and (
+            tags(legwear) & {"pantyhose", "tights"}
+            or any(term in legwear.get("prompt", "").casefold() for term in ("pantyhose", "tights"))
+        ):
+            coordinate_color("legwear", "panties")
         modifier_settings = self.db["settings"].get("garment_modifiers", {})
         assigned_patterns: dict[str, dict[str, Any]] = {}
         assigned_textures: dict[str, dict[str, Any]] = {}
@@ -1585,7 +1648,7 @@ class Composer:
             texture = self.choose_garment_modifier(
                 "fabric_textures", item, float(modifier_settings.get("texture_chance", 0))
             )
-            if pattern:
+            if pattern and slot not in covered_inner_slots:
                 assigned_patterns[slot] = pattern
             if texture:
                 assigned_textures[slot] = texture
@@ -2311,10 +2374,15 @@ def compile_scene(db: dict[str, Any], scene: dict[str, Any]) -> tuple[str, str, 
         fragments.append(
             "fixed wardrobe colors for this frame: " + "; ".join(wardrobe_color_parts)
         )
-    covered_sheer = (
-        stage.get("level") == "covered"
-        and any("sheer" in tags(item) for item in visible_garments)
+    visible_outer_chest = [
+        outfit["garments"][slot]
+        for slot in ("upperwear", "full_body", "outerwear")
+        if slot in visible_slots and slot in outfit["garments"]
+    ]
+    layered_sheer_chest = any(
+        tags(item) & {"sheer", "transparent"} for item in visible_outer_chest
     )
+    covered_sheer = stage.get("level") == "covered" and layered_sheer_chest
     lingerie_sheer = (
         stage.get("level") == "lingerie"
         and any("sheer" in tags(item) for item in visible_garments)
@@ -2331,11 +2399,22 @@ def compile_scene(db: dict[str, Any], scene: dict[str, Any]) -> tuple[str, str, 
             "entire chest, uniform garment color and weave, clean smooth garment surface"
         ),
         "lingerie": (
-            "(fully opaque lingerie top or bra:1.5), uninterrupted fabric across "
-            "the entire chest, uniform material and color, clean smooth garment surface"
-            if covered_chest else
-            "revealing lingerie composition, breasts and nipples visibly framed by "
-            "the lingerie construction"
+            (
+                "one sheer upper-body garment worn as the outer layer over one coordinated "
+                "fully opaque bra underneath, the bra entirely beneath the outer garment, "
+                "clean physically correct clothing layers"
+                if layered_sheer_chest else
+                "one fully opaque upper-body garment as the visible chest layer, clean "
+                "uninterrupted garment surface"
+            )
+            if visible_outer_chest else
+            (
+                "(fully opaque lingerie top or bra:1.5), uninterrupted fabric across "
+                "the entire chest, uniform material and color, clean smooth garment surface"
+                if covered_chest else
+                "revealing lingerie composition, breasts and nipples visibly framed by "
+                "the lingerie construction"
+            )
         ),
         "topless": "topless, bare breasts and visible nipples, lower-body garments visible",
         "nude": "fully nude body, bare breasts, visible nipples, pubic area and genitals visible",
@@ -2396,7 +2475,7 @@ def compile_scene(db: dict[str, Any], scene: dict[str, Any]) -> tuple[str, str, 
                 )
             fragments.append(garment_fragment)
             reveals_cameltoe = reveals_cameltoe or garment.get("reveals_cameltoe", False)
-    if covered_sheer and "bra" not in visible_slots:
+    if layered_sheer_chest and "bra" not in visible_slots:
         bra = outfit["garments"].get("bra")
         if bra:
             bra_parts = [
@@ -2510,14 +2589,14 @@ def compile_scene(db: dict[str, Any], scene: dict[str, Any]) -> tuple[str, str, 
     for value in scene["human"].values():
         ids.extend(item["id"] for item in value) if isinstance(value, list) else ids.append(value["id"])
     ids.extend(item["id"] for slot, item in outfit["garments"].items() if slot in visible_slots)
-    if covered_sheer and "bra" in outfit["garments"]:
+    if layered_sheer_chest and "bra" in outfit["garments"]:
         ids.append(outfit["garments"]["bra"]["id"])
     for modifier_key in ("patterns", "textures"):
         ids.extend(
             item["id"] for slot, item in outfit.get(modifier_key, {}).items()
             if slot in visible_slots
         )
-        if covered_sheer and "bra" in outfit.get(modifier_key, {}):
+        if layered_sheer_chest and "bra" in outfit.get(modifier_key, {}):
             ids.append(outfit[modifier_key]["bra"]["id"])
     ids.extend(scene[key]["id"] for key in ("pose", "action", "expression", "interior", "furniture", "location_zone", "mood", "photography_style", "editorial_role", "shot_size", "camera_angle", "framing", "focus_target"))
     ids.extend(
