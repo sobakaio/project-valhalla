@@ -583,6 +583,39 @@ class CatalogQualityTests(unittest.TestCase):
             self.assertIn(color, prompts)
         self.assertTrue(all("playful_prop" in app.tags(item) for item in teddy_bears))
 
+    def test_requested_gestures_and_intimate_spread_have_real_hand_budgets(self):
+        database, _ = app.load_database()
+        actions = {item["id"]: item for item in database["actions"]}
+        finger = actions["action_finger_tip_in_mouth"]
+        middle = actions["action_middle_finger_to_viewer"]
+        spread = actions["action_spread_intimate_anatomy"]
+        self.assertEqual(
+            set(finger["allowed_levels"]),
+            {"covered", "lingerie", "topless", "nude", "explicit"},
+        )
+        self.assertEqual(app.hands_required(finger), 1)
+        self.assertEqual(app.hands_required(middle), 1)
+        self.assertEqual(app.hands_required(spread), 1)
+        self.assertIn("index and middle fingers", spread["prompt"])
+        self.assertIn("uncovered vulva", spread["prompt"])
+        self.assertTrue({"genitals", "open_legs"}.issubset(spread["requires_tags"]))
+
+        both_hands_pose = next(
+            item for item in database["poses"]
+            if "both hands" in item["prompt"].casefold()
+        )
+        self.assertEqual(app.hands_required(both_hands_pose), 2)
+        self.assertGreater(app.hands_required(both_hands_pose) + app.hands_required(finger), 2)
+
+    def test_hand_budget_fallback_understands_legacy_pose_action_and_prop_text(self):
+        self.assertEqual(app.hands_required({"prompt": "resting both hands at her waist"}), 2)
+        self.assertEqual(app.hands_required({"prompt": "tracing one hand along her hip"}), 1)
+        self.assertEqual(app.hands_required({"prompt": "holding a teddy bear"}), 1)
+        self.assertEqual(
+            app.hands_required({"prompt": "holding a teddy bear", "hands_required": 2}),
+            2,
+        )
+
     def test_age_catalog_contains_only_three_explicit_adult_presets(self):
         database, _ = app.load_database()
         ages = database["human_model_parts"]["age"]

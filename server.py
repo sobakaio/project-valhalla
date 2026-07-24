@@ -1255,7 +1255,23 @@ def garment_matches_template_slot(
 
 
 def hands_required(item: dict[str, Any] | None) -> int:
-    return int((item or {}).get("hands_required", 0))
+    if not item:
+        return 0
+    if "hands_required" in item:
+        return int(item["hands_required"])
+    wording = item.get("prompt", "").casefold()
+    if any(term in wording for term in (
+        "both hands", "her hands", "on hands and knees", "on all fours",
+        "leaning back on her hands", "squeezing both breasts", "both nipples",
+    )):
+        return 2
+    if any(term in wording for term in (
+        "one hand", "her hand", "with a hand", "fingertip", "finger", "touching",
+        "adjusting", "holding", "cupping", "pinching", "tracing", "lifting",
+        "pulling", "sliding", "smoothing",
+    )):
+        return 1
+    return 0
 
 
 def lowerwear_covers_legs(item: dict[str, Any] | None) -> bool:

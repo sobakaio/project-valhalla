@@ -17946,6 +17946,44 @@
   ],
   "actions": [
     {
+      "id": "action_finger_tip_in_mouth",
+      "prompt": "playfully holding the tip of her index finger between her lips while looking toward the viewer",
+      "menu_label": "Finger tip between lips",
+      "tags": [
+        "fashion_action",
+        "erotic_action",
+        "explicit_action",
+        "provocative_action"
+      ],
+      "hands_required": 1,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "action_middle_finger_to_viewer",
+      "prompt": "deliberately showing one raised middle finger directly toward the viewer",
+      "menu_label": "Middle finger to viewer",
+      "tags": [
+        "fashion_action",
+        "erotic_action",
+        "explicit_action",
+        "provocative_action"
+      ],
+      "hands_required": 1,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
       "id": "action_camera_gaze",
       "prompt": "looking directly into the camera",
       "tags": [
@@ -18334,7 +18372,7 @@
     },
     {
       "id": "action_spread_intimate_anatomy",
-      "prompt": "using two fingers to spread her exposed intimate anatomy wide for the camera",
+      "prompt": "using the index and middle fingers of one hand to spread her uncovered vulva for the camera",
       "tags": [
         "explicit_action",
         "closeup_action",
@@ -18347,6 +18385,7 @@
       "requires_expression_tags": [
         "aroused_expression"
       ],
+      "hands_required": 1,
       "allowed_levels": [
         "explicit"
       ]

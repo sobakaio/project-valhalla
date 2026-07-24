@@ -132,6 +132,13 @@ while a pose may still move to a genuinely different support such as a bed, wall
 or floor. Random generations receive a fresh context. Teddy-bear props use authored
 brown, cream, muted pink, and soft gray variants instead of an unspecified color.
 
+Pose, action, and prop compatibility shares one two-hand budget. Explicit
+`hands_required` values override a conservative wording-based fallback for legacy
+catalog records, so one-hand gestures cannot be paired with a pose already using
+both hands. Finger-to-mouth and middle-finger gestures are available across the
+authored covered-to-explicit range; intimate spreading explicitly uses one hand's
+index and middle fingers and requires uncovered anatomy plus open-leg geometry.
+
 If `comfy.workflow_source` is set to `live`, Valhalla reads the latest compatible ComfyUI workflow instead of the selected saved profiles. Saved profiles are recommended for reproducible production.
 
 ## Production workflow
