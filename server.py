@@ -445,6 +445,81 @@ def validate_database(db: dict[str, Any]) -> None:
     }
     if not enabled_color_ids:
         raise AppError("colors must contain at least one enabled item")
+    wardrobe_compatibility = settings.get("wardrobe_compatibility")
+    if not isinstance(wardrobe_compatibility, dict):
+        raise AppError("settings.wardrobe_compatibility must be an object")
+    color_families = wardrobe_compatibility.get("color_families")
+    if not isinstance(color_families, dict) or not color_families:
+        raise AppError("settings.wardrobe_compatibility.color_families must be an object")
+    family_colors: list[str] = []
+    for family, members in color_families.items():
+        if (
+            not isinstance(family, str) or not family
+            or not isinstance(members, list) or not members
+            or not all(isinstance(color_id, str) for color_id in members)
+            or len(members) != len(set(members))
+        ):
+            raise AppError(
+                f"settings.wardrobe_compatibility.color_families.{family} "
+                "must be a non-empty unique list"
+            )
+        family_colors.extend(members)
+    if set(family_colors) != color_ids or len(family_colors) != len(set(family_colors)):
+        raise AppError(
+            "settings.wardrobe_compatibility.color_families must assign every color "
+            "to exactly one family"
+        )
+    known_slots = {
+        slot for template in db["outfit_templates"] for slot in template["slots"]
+    }
+    known_garment_tags = set().union(*(
+        tags(item) for values in db["garments"].values() for item in values
+    ))
+    for section in ("visible_layer_rules", "optional_inner_layers"):
+        rules = wardrobe_compatibility.get(section)
+        if not isinstance(rules, list):
+            raise AppError(f"settings.wardrobe_compatibility.{section} must be a list")
+        for rule in rules:
+            context = f"settings.wardrobe_compatibility.{section}"
+            if not isinstance(rule, dict) or not isinstance(rule.get("id"), str):
+                raise AppError(f"Every {context} entry needs a string id")
+            outer_slots = rule.get("outer_slots")
+            if (
+                not isinstance(outer_slots, list) or not outer_slots
+                or len(outer_slots) != len(set(outer_slots))
+                or not set(outer_slots).issubset(known_slots)
+            ):
+                raise AppError(f"{context}.{rule['id']}.outer_slots contains invalid slots")
+            if rule.get("inner_slot") not in known_slots:
+                raise AppError(f"{context}.{rule['id']}.inner_slot is invalid")
+            required_tags = rule.get("outer_tags_any")
+            if (
+                not isinstance(required_tags, list) or not required_tags
+                or len(required_tags) != len(set(required_tags))
+                or not set(required_tags).issubset(known_garment_tags)
+            ):
+                raise AppError(f"{context}.{rule['id']}.outer_tags_any contains invalid tags")
+            if section == "visible_layer_rules":
+                if rule.get("color_relation") != "same_family":
+                    raise AppError(f"{context}.{rule['id']}.color_relation is unsupported")
+                if not isinstance(rule.get("suppress_inner_pattern"), bool):
+                    raise AppError(f"{context}.{rule['id']}.suppress_inner_pattern must be boolean")
+            else:
+                chance = rule.get("chance")
+                if not isinstance(chance, (int, float)) or not 0 <= chance <= 1:
+                    raise AppError(f"{context}.{rule['id']}.chance must be between zero and one")
+                levels = rule.get("drop_uncovered_stage_levels")
+                if (
+                    not isinstance(levels, list) or not levels
+                    or not set(levels).issubset({"covered", "lingerie", *NSFW_LEVELS})
+                ):
+                    raise AppError(f"{context}.{rule['id']}.drop_uncovered_stage_levels is invalid")
+                coverage_slots = rule.get("coverage_slots")
+                if (
+                    not isinstance(coverage_slots, list) or not coverage_slots
+                    or not set(coverage_slots).issubset(known_slots)
+                ):
+                    raise AppError(f"{context}.{rule['id']}.coverage_slots is invalid")
     surface_pool_sections = {
         "colors": {item["id"] for item in db["colors"] if not item.get("disabled", False)},
         "textures": {
@@ -870,24 +945,11 @@ OPAQUE_LINGERIE_BLOCKED_TAGS = {
     "explicit", "sheer", "transparent", "open_cup", "crotchless",
 }
 CHEST_GARMENT_SLOTS = {"upperwear", "full_body", "outerwear", "bra"}
-COLOR_TONE_FAMILIES = {
-    "light": {
-        "color_white", "color_ivory", "color_beige", "color_pink", "color_lilac",
-        "color_champagne", "color_silver", "color_tan", "color_coral",
-    },
-    "dark": {
-        "color_black", "color_red", "color_burgundy", "color_navy", "color_emerald",
-        "color_gray", "color_scarlet", "color_crimson", "color_cobalt", "color_teal",
-        "color_purple", "color_chocolate", "color_leopard",
-    },
-}
 
 
-def color_tone(color_id: str) -> str:
-    return next(
-        (family for family, members in COLOR_TONE_FAMILIES.items() if color_id in members),
-        "dark",
-    )
+def color_family(db: dict[str, Any], color_id: str) -> str:
+    families = db["settings"]["wardrobe_compatibility"]["color_families"]
+    return next(family for family, members in families.items() if color_id in members)
 
 
 def garment_compatible_with_template_stages(
@@ -982,6 +1044,27 @@ def legwear_extends_above_ankle(item: dict[str, Any] | None) -> bool:
 def validate_outfit_layers(db: dict[str, Any], outfit: dict[str, Any]) -> None:
     template_id = outfit["template"]["id"]
     garments = outfit["garments"]
+    optional_relations = db["settings"]["wardrobe_compatibility"]["optional_inner_layers"]
+    for relation in optional_relations:
+        slot = relation["inner_slot"]
+        slot_rule = outfit["template"]["slots"].get(slot, {})
+        if not slot_rule.get("required", False) or slot in garments:
+            continue
+        present_outers = [
+            outer_slot for outer_slot in relation["outer_slots"]
+            if outer_slot in garments
+        ]
+        if not present_outers:
+            continue
+        permitted = any(
+            outer_slot in garments
+            and tags(garments[outer_slot]) & set(relation["outer_tags_any"])
+            for outer_slot in present_outers
+        )
+        if not permitted:
+            raise AppError(
+                f"Required garment slot {slot} is missing from outfit {template_id}"
+            )
     incompatible_categories = [
         item["id"] for item in garments.values()
         if not category_allows(outfit["template"], item)
@@ -1554,6 +1637,34 @@ class Composer:
                 mix = set(choice.get("mix_tags", choice.get("tags", [])))
                 group_tags[match_group] = group_tags.get(match_group, mix) & mix
 
+        resolved_template = copy.deepcopy(template)
+        compatibility = self.db["settings"]["wardrobe_compatibility"]
+        for relation in compatibility["optional_inner_layers"]:
+            inner_slot = relation["inner_slot"]
+            if inner_slot not in selected:
+                continue
+            compatible_outer = next((
+                slot for slot in relation["outer_slots"]
+                if slot in selected
+                and tags(selected[slot]) & set(relation["outer_tags_any"])
+            ), None)
+            if compatible_outer is None or self.rng.random() >= float(relation["chance"]):
+                continue
+            selected.pop(inner_slot)
+            droppable_levels = set(relation["drop_uncovered_stage_levels"])
+            coverage_slots = set(relation["coverage_slots"])
+            resolved_template["stages"] = [
+                stage for stage in resolved_template["stages"]
+                if not (
+                    stage["level"] in droppable_levels
+                    and not (
+                        set(stage.get("visible_slots", []))
+                        & coverage_slots
+                        & set(selected)
+                    )
+                )
+            ]
+
         occupied: dict[str, str] = {}
         for slot, item in selected.items():
             for occupied_slot in item.get("occupies_slots", [slot]):
@@ -1563,13 +1674,13 @@ class Composer:
 
         validate_outfit_layers(
             self.db,
-            {"template": template, "garments": selected},
+            {"template": resolved_template, "garments": selected},
         )
 
         assigned_colors: dict[str, dict[str, Any]] = {}
         grouped_slots: dict[str, list[str]] = {}
         for slot in selected:
-            group = template["slots"][slot].get("color_group")
+            group = resolved_template["slots"][slot].get("color_group")
             if group:
                 grouped_slots.setdefault(group, []).append(slot)
         color_groups: dict[str, str] = {}
@@ -1586,7 +1697,7 @@ class Composer:
                 for color_id in (item.get("allowed_colors") or list(self.colors))
                 if color_id in self.colors
             ]
-            rule = template["slots"][slot]
+            rule = resolved_template["slots"][slot]
             group = rule.get("color_group")
             if group:
                 color_id = color_groups[group]
@@ -1594,50 +1705,49 @@ class Composer:
                 color_id = self.rng.choice(allowed)
             assigned_colors[slot] = self.colors[color_id]
 
-        # Coordinate every underwear layer that remains visible through a sheer
-        # outer garment. Exact matches win; otherwise stay in the same light/dark
-        # family. This is a structural outfit decision, not prompt-time cleanup.
         covered_inner_slots: set[str] = set()
+        active_relations: dict[str, list[tuple[str, dict[str, Any]]]] = {}
+        for relation in compatibility["visible_layer_rules"]:
+            outer_slot = next((
+                slot for slot in relation["outer_slots"]
+                if slot in selected
+                and tags(selected[slot]) & set(relation["outer_tags_any"])
+            ), None)
+            inner_slot = relation["inner_slot"]
+            if outer_slot is None or inner_slot not in selected:
+                continue
+            active_relations.setdefault(inner_slot, []).append((outer_slot, relation))
 
-        def coordinate_color(outer_slot: str, inner_slot: str) -> None:
-            if outer_slot not in selected or inner_slot not in selected:
-                return
-            outer_id = assigned_colors[outer_slot]["id"]
+        for inner_slot, constraints in active_relations.items():
+            outer_ids = [assigned_colors[outer_slot]["id"] for outer_slot, _ in constraints]
+            required_families = {color_family(self.db, color_id) for color_id in outer_ids}
+            if len(required_families) != 1:
+                raise AppError(
+                    f"Visible layers for {inner_slot} require conflicting color families: "
+                    f"{sorted(required_families)}"
+                )
+            required_family = next(iter(required_families))
             allowed_inner = [
                 color_id
                 for color_id in (selected[inner_slot].get("allowed_colors") or list(self.colors))
                 if color_id in self.colors
             ]
-            if outer_id in allowed_inner:
-                chosen = outer_id
+            exact = [color_id for color_id in set(outer_ids) if color_id in allowed_inner]
+            if len(set(outer_ids)) == 1 and exact:
+                chosen = exact[0]
             else:
                 tonal = [
                     color_id for color_id in allowed_inner
-                    if color_tone(color_id) == color_tone(outer_id)
+                    if color_family(self.db, color_id) == required_family
                 ]
                 if not tonal:
                     raise AppError(
-                        f"No {color_tone(outer_id)} color compatibility between "
-                        f"{outer_slot} and {inner_slot}"
+                        f"No {required_family} color compatibility for visible {inner_slot}"
                     )
                 chosen = self.rng.choice(sorted(tonal))
             assigned_colors[inner_slot] = self.colors[chosen]
-            covered_inner_slots.add(inner_slot)
-
-        for outer_slot in ("upperwear", "full_body", "outerwear"):
-            if outer_slot in selected and tags(selected[outer_slot]) & {"sheer", "transparent"}:
-                coordinate_color(outer_slot, "bra")
-                break
-        for outer_slot in ("full_body", "lowerwear"):
-            if outer_slot in selected and tags(selected[outer_slot]) & {"sheer", "transparent"}:
-                coordinate_color(outer_slot, "panties")
-                break
-        legwear = selected.get("legwear")
-        if legwear and (
-            tags(legwear) & {"pantyhose", "tights"}
-            or any(term in legwear.get("prompt", "").casefold() for term in ("pantyhose", "tights"))
-        ):
-            coordinate_color("legwear", "panties")
+            if any(relation["suppress_inner_pattern"] for _, relation in constraints):
+                covered_inner_slots.add(inner_slot)
         modifier_settings = self.db["settings"].get("garment_modifiers", {})
         assigned_patterns: dict[str, dict[str, Any]] = {}
         assigned_textures: dict[str, dict[str, Any]] = {}
@@ -1653,7 +1763,7 @@ class Composer:
             if texture:
                 assigned_textures[slot] = texture
         return {
-            "template": template,
+            "template": resolved_template,
             "garments": selected,
             "colors": assigned_colors,
             "patterns": assigned_patterns,

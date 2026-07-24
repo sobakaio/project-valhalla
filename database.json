@@ -114,6 +114,100 @@
       "pattern_chance": 0.22,
       "texture_chance": 0.28
     },
+    "wardrobe_compatibility": {
+      "color_families": {
+        "light": [
+          "color_white",
+          "color_ivory",
+          "color_beige",
+          "color_pink",
+          "color_lilac",
+          "color_champagne",
+          "color_silver",
+          "color_tan",
+          "color_coral"
+        ],
+        "dark": [
+          "color_black",
+          "color_red",
+          "color_burgundy",
+          "color_navy",
+          "color_emerald",
+          "color_gray",
+          "color_scarlet",
+          "color_crimson",
+          "color_cobalt",
+          "color_teal",
+          "color_purple",
+          "color_chocolate",
+          "color_leopard"
+        ]
+      },
+      "visible_layer_rules": [
+        {
+          "id": "sheer_chest_over_bra",
+          "outer_slots": [
+            "upperwear",
+            "full_body",
+            "outerwear"
+          ],
+          "inner_slot": "bra",
+          "outer_tags_any": [
+            "sheer"
+          ],
+          "color_relation": "same_family",
+          "suppress_inner_pattern": true
+        },
+        {
+          "id": "sheer_lower_over_panties",
+          "outer_slots": [
+            "full_body",
+            "lowerwear"
+          ],
+          "inner_slot": "panties",
+          "outer_tags_any": [
+            "sheer"
+          ],
+          "color_relation": "same_family",
+          "suppress_inner_pattern": true
+        },
+        {
+          "id": "hosiery_over_panties",
+          "outer_slots": [
+            "legwear"
+          ],
+          "inner_slot": "panties",
+          "outer_tags_any": [
+            "pantyhose"
+          ],
+          "color_relation": "same_family",
+          "suppress_inner_pattern": true
+        }
+      ],
+      "optional_inner_layers": [
+        {
+          "id": "braless_self_supporting_upperwear",
+          "inner_slot": "bra",
+          "chance": 0.3,
+          "outer_slots": [
+            "upperwear",
+            "full_body"
+          ],
+          "outer_tags_any": [
+            "bra_optional"
+          ],
+          "drop_uncovered_stage_levels": [
+            "lingerie"
+          ],
+          "coverage_slots": [
+            "upperwear",
+            "full_body",
+            "outerwear",
+            "bra"
+          ]
+        }
+      ]
+    },
     "garment_layer_rules": [
       {
         "id": "concealed_bra_under_dress",
@@ -5827,7 +5921,8 @@
           "corset",
           "boudoir",
           "erotic",
-          "elegant"
+          "elegant",
+          "bra_optional"
         ],
         "mix_tags": [
           "corset"
@@ -5847,7 +5942,8 @@
           "corset",
           "silk",
           "erotic",
-          "elegant"
+          "elegant",
+          "bra_optional"
         ],
         "mix_tags": [
           "elegant_lingerie"
@@ -6104,7 +6200,8 @@
           "normal_clothes",
           "casual",
           "everyday",
-          "sexy_casual"
+          "sexy_casual",
+          "bra_optional"
         ]
       },
       {
@@ -6115,7 +6212,8 @@
           "normal_clothes",
           "casual",
           "everyday",
-          "sexy_casual"
+          "sexy_casual",
+          "bra_optional"
         ]
       },
       {
@@ -6226,7 +6324,8 @@
           "normal_clothes",
           "casual",
           "everyday",
-          "sexy_casual"
+          "sexy_casual",
+          "bra_optional"
         ]
       },
       {
@@ -6237,7 +6336,8 @@
           "normal_clothes",
           "casual",
           "everyday",
-          "sexy_casual"
+          "sexy_casual",
+          "bra_optional"
         ]
       },
       {
@@ -8473,7 +8573,8 @@
           "normal_clothes",
           "casual",
           "everyday",
-          "sexy_casual"
+          "sexy_casual",
+          "bra_optional"
         ],
         "occupies_slots": [
           "upperwear",
@@ -8489,7 +8590,8 @@
           "casual",
           "everyday",
           "home",
-          "sexy_casual"
+          "sexy_casual",
+          "bra_optional"
         ],
         "occupies_slots": [
           "upperwear",
@@ -8504,7 +8606,8 @@
           "normal_clothes",
           "casual",
           "everyday",
-          "sexy_casual"
+          "sexy_casual",
+          "bra_optional"
         ],
         "occupies_slots": [
           "upperwear",
@@ -8550,7 +8653,8 @@
           "casual",
           "everyday",
           "home",
-          "sexy_casual"
+          "sexy_casual",
+          "bra_optional"
         ],
         "occupies_slots": [
           "upperwear",

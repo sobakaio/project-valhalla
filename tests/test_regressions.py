@@ -1287,47 +1287,124 @@ class DirectorRegressionTests(unittest.TestCase):
     def test_sheer_layers_and_hosiery_coordinate_underwear_color_and_pattern(self):
         database, _ = app.load_database()
         composer = app.Composer(database, app.random.Random(404404))
-        checked_chest = checked_lower = checked_hosiery = 0
+        relations = database["settings"]["wardrobe_compatibility"]["visible_layer_rules"]
+        checked = {rule["id"]: 0 for rule in relations}
         for _ in range(1200):
             template = composer.choose_template()
             outfit = composer.choose_outfit(template)
             garments = outfit["garments"]
             colors = outfit["colors"]
             patterns = outfit["patterns"]
-            for outer_slot in ("upperwear", "full_body", "outerwear"):
-                outer = garments.get(outer_slot)
-                if outer and app.tags(outer) & {"sheer", "transparent"} and "bra" in garments:
-                    checked_chest += 1
-                    self.assertEqual(
-                        app.color_tone(colors[outer_slot]["id"]),
-                        app.color_tone(colors["bra"]["id"]),
-                    )
-                    self.assertNotIn("bra", patterns)
-                    break
-            for outer_slot in ("full_body", "lowerwear"):
-                outer = garments.get(outer_slot)
-                if outer and app.tags(outer) & {"sheer", "transparent"} and "panties" in garments:
-                    checked_lower += 1
-                    self.assertEqual(
-                        app.color_tone(colors[outer_slot]["id"]),
-                        app.color_tone(colors["panties"]["id"]),
-                    )
-                    self.assertNotIn("panties", patterns)
-                    break
-            legwear = garments.get("legwear")
-            if legwear and "panties" in garments and (
-                app.tags(legwear) & {"pantyhose", "tights"}
-                or any(term in legwear["prompt"].casefold() for term in ("pantyhose", "tights"))
-            ):
-                checked_hosiery += 1
+            for relation in relations:
+                inner_slot = relation["inner_slot"]
+                outer_slot = next((
+                    slot for slot in relation["outer_slots"]
+                    if slot in garments
+                    and app.tags(garments[slot]) & set(relation["outer_tags_any"])
+                ), None)
+                if outer_slot is None or inner_slot not in garments:
+                    continue
+                checked[relation["id"]] += 1
                 self.assertEqual(
-                    app.color_tone(colors["legwear"]["id"]),
-                    app.color_tone(colors["panties"]["id"]),
+                    app.color_family(database, colors[outer_slot]["id"]),
+                    app.color_family(database, colors[inner_slot]["id"]),
                 )
-                self.assertNotIn("panties", patterns)
-        self.assertGreater(checked_chest, 10)
-        self.assertGreater(checked_lower, 10)
-        self.assertGreater(checked_hosiery, 100)
+                if relation["suppress_inner_pattern"]:
+                    self.assertNotIn(inner_slot, patterns)
+        self.assertTrue(all(count > 10 for count in checked.values()), checked)
+
+    def test_optional_bra_relation_is_data_driven_and_drops_invalid_stages(self):
+        database, _ = app.load_database()
+        configured = copy.deepcopy(database)
+        relation = configured["settings"]["wardrobe_compatibility"]["optional_inner_layers"][0]
+        relation["chance"] = 1
+        template = next(
+            item for item in configured["outfit_templates"]
+            if item["id"] == "template_progressive_undressing"
+        )
+        for item in configured["garments"]["upperwear"]:
+            item["disabled"] = item["id"] != "top_corset"
+        composer = app.Composer(configured, app.random.Random(818181))
+        outfit = composer.choose_outfit(template)
+        self.assertNotIn("bra", outfit["garments"])
+        self.assertTrue(all(
+            "bra" not in stage.get("visible_slots", [])
+            for stage in outfit["template"]["stages"]
+        ))
+        self.assertTrue(all(
+            not (
+                stage["level"] == "lingerie"
+                and not set(stage.get("visible_slots", []))
+                & {"upperwear", "full_body", "outerwear"}
+            )
+            for stage in outfit["template"]["stages"]
+        ))
+        app.validate_outfit_layers(configured, outfit)
+
+        incompatible = copy.deepcopy(outfit)
+        incompatible["garments"]["upperwear"] = next(
+            item for item in configured["garments"]["upperwear"]
+            if item["id"] == "top_cotton_tee"
+        )
+        with self.assertRaisesRegex(app.AppError, "Required garment slot bra"):
+            app.validate_outfit_layers(configured, incompatible)
+
+    def test_optional_bra_probability_zero_preserves_required_bra(self):
+        database, _ = app.load_database()
+        configured = copy.deepcopy(database)
+        configured["settings"]["wardrobe_compatibility"]["optional_inner_layers"][0]["chance"] = 0
+        template = next(
+            item for item in configured["outfit_templates"]
+            if item["id"] == "template_progressive_undressing"
+        )
+        for item in configured["garments"]["upperwear"]:
+            item["disabled"] = item["id"] != "top_corset"
+        outfit = app.Composer(configured, app.random.Random(919191)).choose_outfit(template)
+        self.assertIn("bra", outfit["garments"])
+        self.assertTrue(any(
+            "bra" in stage.get("visible_slots", [])
+            for stage in outfit["template"]["stages"]
+        ))
+
+    def test_braless_shaping_dress_remains_structurally_sfw(self):
+        database, _ = app.load_database()
+        configured = copy.deepcopy(database)
+        configured["settings"]["wardrobe_compatibility"]["optional_inner_layers"][0]["chance"] = 1
+        template = next(
+            item for item in configured["outfit_templates"]
+            if item["id"] == "template_day_dress"
+        )
+        for item in configured["garments"]["full_body"]:
+            item["disabled"] = item["id"] != "dress_scoopneck_shaping"
+        composer = app.Composer(configured, app.random.Random(717171))
+        outfit = composer.choose_outfit(template, content_mode="sfw")
+        self.assertNotIn("bra", outfit["garments"])
+        app.validate_sfw_outfit(outfit)
+        covered = next(stage for stage in outfit["template"]["stages"] if stage["level"] == "covered")
+        context = composer.fixed_context("sfw")
+        context["outfit"] = outfit
+        positive, _, selected = app.compile_scene(
+            configured, composer.resolve_scene(context, covered)
+        )
+        self.assertIn("body-shaping scoop-neck jersey dress", positive)
+        self.assertFalse(any(item_id.startswith("bra_") for item_id in selected))
+
+    def test_color_compatibility_relations_live_in_database(self):
+        database, _ = app.load_database()
+        settings = database["settings"]["wardrobe_compatibility"]
+        configured_colors = [
+            color_id
+            for members in settings["color_families"].values()
+            for color_id in members
+        ]
+        self.assertEqual(set(configured_colors), {item["id"] for item in database["colors"]})
+        self.assertEqual(len(configured_colors), len(set(configured_colors)))
+        self.assertEqual(
+            {rule["id"] for rule in settings["visible_layer_rules"]},
+            {"sheer_chest_over_bra", "sheer_lower_over_panties", "hosiery_over_panties"},
+        )
+        source = Path(app.__file__).read_text(encoding="utf-8")
+        self.assertNotIn("COLOR_TONE_FAMILIES", source)
 
     def test_covered_chest_positive_contract_is_anatomy_neutral(self):
         state, storyboard_id = self.make_storyboard(count=12, prompt_seed=24680)
@@ -3001,7 +3078,7 @@ class VisualCompatibilityRegressionTests(unittest.TestCase):
 
         composer = app.Composer(database, app.random.Random(884422))
         checked = 0
-        for _ in range(1000):
+        for _ in range(2000):
             fixed = composer.fixed_context()
             lowerwear = fixed["outfit"]["garments"].get("lowerwear")
             legwear = fixed["outfit"]["garments"].get("legwear")
