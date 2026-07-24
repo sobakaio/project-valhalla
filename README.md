@@ -145,8 +145,10 @@ and jeans (`worn_closed` → `lowered_to_hips` → `removed`). The intermediate 
 is compiled while the garment remains physically visible, with the underlying bra
 or panties exposed as appropriate; a later removal shot only describes full removal.
 
-`skin_marking` is a weighted fixed subject trait with even, bra-line, panty-line,
-and combined variants. Bra tan lines compile only with physically exposed chest
+`skin_marking` is a weighted fixed subject trait with a dominant no-tan-lines state
+(80%) plus bra-line, panty-line, and combined variants. Tan-line contrast adapts to
+the selected light, medium, or dark skin tone. Bra tan lines compile only with
+physically exposed chest
 anatomy; panty tan lines compile only when the hips/pubic area is uncovered. The
 selected marking remains stable across a Photoshoot and covered/SFW prompts do not
 mention hidden tan-line anatomy.

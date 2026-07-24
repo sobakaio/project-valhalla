@@ -709,9 +709,9 @@
     ],
     "skin_marking": [
       {
-        "id": "skin_marking_even",
-        "prompt": "even natural body tanning",
-        "weight": 7,
+        "id": "skin_marking_none",
+        "prompt": "no visible tan lines",
+        "weight": 12,
         "bra_line_prompt": "",
         "panty_line_prompt": ""
       },
@@ -719,7 +719,12 @@
         "id": "skin_marking_bra_tan_lines",
         "prompt": "bra-shaped tan-line pattern",
         "weight": 1,
-        "bra_line_prompt": "distinct natural pale bra tan lines across the exposed chest",
+        "bra_line_prompt": "subtle natural bra tan lines across the exposed chest",
+        "bra_line_prompt_by_skin": {
+          "light_skin": "subtle low-contrast bra tan lines, with slightly paler skin beneath the former bra coverage",
+          "medium_skin": "natural visible bra tan lines, with slightly paler skin beneath the former bra coverage",
+          "dark_skin": "subtle tonal bra tan lines, with gently lighter skin beneath the former bra coverage"
+        },
         "panty_line_prompt": ""
       },
       {
@@ -727,14 +732,29 @@
         "prompt": "panty-shaped tan-line pattern",
         "weight": 1,
         "bra_line_prompt": "",
-        "panty_line_prompt": "distinct natural pale panty tan lines around the exposed hips and pubic area"
+        "panty_line_prompt": "subtle natural bikini-bottom tan lines around the exposed hips and pubic area",
+        "panty_line_prompt_by_skin": {
+          "light_skin": "subtle low-contrast bikini-bottom tan lines, with slightly paler skin beneath the former coverage",
+          "medium_skin": "natural visible bikini-bottom tan lines, with slightly paler skin beneath the former coverage",
+          "dark_skin": "subtle tonal bikini-bottom tan lines, with gently lighter skin beneath the former coverage"
+        }
       },
       {
         "id": "skin_marking_bra_panty_tan_lines",
         "prompt": "matching bra-and-panty tan-line pattern",
         "weight": 1,
-        "bra_line_prompt": "distinct natural pale bra tan lines across the exposed chest",
-        "panty_line_prompt": "distinct natural pale panty tan lines around the exposed hips and pubic area"
+        "bra_line_prompt": "subtle natural bra tan lines across the exposed chest",
+        "panty_line_prompt": "subtle natural bikini-bottom tan lines around the exposed hips and pubic area",
+        "bra_line_prompt_by_skin": {
+          "light_skin": "subtle low-contrast bra tan lines, with slightly paler skin beneath the former bra coverage",
+          "medium_skin": "natural visible bra tan lines, with slightly paler skin beneath the former bra coverage",
+          "dark_skin": "subtle tonal bra tan lines, with gently lighter skin beneath the former bra coverage"
+        },
+        "panty_line_prompt_by_skin": {
+          "light_skin": "subtle low-contrast bikini-bottom tan lines, with slightly paler skin beneath the former coverage",
+          "medium_skin": "natural visible bikini-bottom tan lines, with slightly paler skin beneath the former coverage",
+          "dark_skin": "subtle tonal bikini-bottom tan lines, with gently lighter skin beneath the former coverage"
+        }
       }
     ],
     "face_shape": [

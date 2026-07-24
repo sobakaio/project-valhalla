@@ -736,9 +736,9 @@ class CatalogQualityTests(unittest.TestCase):
         database, _ = app.load_database()
         composer = app.Composer(database, app.random.Random(919191))
         selected = [composer.choose_human()["skin_marking"] for _ in range(1000)]
-        marked = [item for item in selected if item["id"] != "skin_marking_even"]
-        self.assertGreater(len(marked), 240)
-        self.assertLess(len(marked), 360)
+        marked = [item for item in selected if item["id"] != "skin_marking_none"]
+        self.assertGreater(len(marked), 160)
+        self.assertLess(len(marked), 240)
 
         combined = next(
             item for item in database["human_model_parts"]["skin_marking"]
@@ -746,6 +746,12 @@ class CatalogQualityTests(unittest.TestCase):
         )
         human = composer.choose_human()
         human["skin_marking"] = combined
+        human["skin_tone"] = next(
+            item for item in database["human_model_parts"]["skin_tone"]
+            if item["id"] == "skin_fair"
+        )
+        bra_prompt = combined["bra_line_prompt_by_skin"]["light_skin"]
+        panty_prompt = combined["panty_line_prompt_by_skin"]["light_skin"]
         covered = " ".join(app.human_fragments(human, set(), {}))
         chest = " ".join(app.human_fragments(human, {"breasts", "nipples"}, {}))
         lower = " ".join(app.human_fragments(human, {"pubic_area", "genitals"}, {}))
@@ -753,18 +759,38 @@ class CatalogQualityTests(unittest.TestCase):
             human, {"breasts", "nipples", "pubic_area", "genitals"}, {}
         ))
         self.assertNotIn("tan lines", covered)
-        self.assertIn(combined["bra_line_prompt"], chest)
-        self.assertNotIn(combined["panty_line_prompt"], chest)
-        self.assertIn(combined["panty_line_prompt"], lower)
-        self.assertNotIn(combined["bra_line_prompt"], lower)
-        self.assertIn(combined["bra_line_prompt"], both)
-        self.assertIn(combined["panty_line_prompt"], both)
+        self.assertIn(bra_prompt, chest)
+        self.assertNotIn(panty_prompt, chest)
+        self.assertIn(panty_prompt, lower)
+        self.assertNotIn(bra_prompt, lower)
+        self.assertIn(bra_prompt, both)
+        self.assertIn(panty_prompt, both)
+
+        neutral = next(
+            item for item in database["human_model_parts"]["skin_marking"]
+            if item["id"] == "skin_marking_none"
+        )
+        human["skin_marking"] = neutral
+        self.assertNotIn("tan lines", " ".join(app.human_fragments(human, {
+            "breasts", "nipples", "pubic_area", "genitals",
+        }, {})))
 
     def test_skin_marking_schema_requires_separate_gated_components(self):
         database, _ = app.load_database()
         broken = copy.deepcopy(database)
         broken["human_model_parts"]["skin_marking"][0].pop("bra_line_prompt")
         with self.assertRaisesRegex(app.AppError, "bra_line_prompt"):
+            app.validate_database(broken)
+
+    def test_skin_marking_tone_variants_require_all_skin_classes(self):
+        database, _ = app.load_database()
+        broken = copy.deepcopy(database)
+        marked = next(
+            item for item in broken["human_model_parts"]["skin_marking"]
+            if item.get("bra_line_prompt_by_skin")
+        )
+        marked["bra_line_prompt_by_skin"].pop("dark_skin")
+        with self.assertRaisesRegex(app.AppError, "bra_line_prompt_by_skin"):
             app.validate_database(broken)
 
     def test_age_catalog_contains_only_three_explicit_adult_presets(self):

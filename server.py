@@ -465,6 +465,23 @@ def validate_database(db: dict[str, Any]) -> None:
                     f"human_model_parts.skin_marking.{item['id']} must declare "
                     "text bra_line_prompt and panty_line_prompt fields"
                 )
+            if section == "skin_marking":
+                for field in ("bra_line_prompt_by_skin", "panty_line_prompt_by_skin"):
+                    variants = item.get(field)
+                    if variants is None:
+                        continue
+                    if (
+                        not isinstance(variants, dict)
+                        or set(variants) != {"light_skin", "medium_skin", "dark_skin"}
+                        or any(
+                            not isinstance(value, str) or not value.strip()
+                            for value in variants.values()
+                        )
+                    ):
+                        raise AppError(
+                            f"human_model_parts.skin_marking.{item['id']}.{field} "
+                            "must define non-empty light_skin, medium_skin and dark_skin text"
+                        )
             if item["id"] in ids:
                 raise AppError(f"Duplicate id: {item['id']}")
             ids.add(item["id"]); index[item["id"]] = item
@@ -2843,10 +2860,23 @@ def human_fragments(
     if "genitals" in visibility:
         fragments.append(custom.get("human.genital_appearance") or human["genital_appearance"]["prompt"])
     skin_marking = human.get("skin_marking", {})
+    skin_tags = tags(human.get("skin_tone", {}))
+    skin_class = next(
+        (
+            value for value in ("light_skin", "medium_skin", "dark_skin")
+            if value in skin_tags
+        ),
+        None,
+    )
+
+    def marking_prompt(field: str) -> str:
+        variants = skin_marking.get(f"{field}_by_skin", {})
+        return variants.get(skin_class, skin_marking.get(field, ""))
+
     if "nipples" in visibility and skin_marking.get("bra_line_prompt"):
-        fragments.append(skin_marking["bra_line_prompt"])
+        fragments.append(marking_prompt("bra_line_prompt"))
     if visibility & {"pubic_area", "genitals"} and skin_marking.get("panty_line_prompt"):
-        fragments.append(skin_marking["panty_line_prompt"])
+        fragments.append(marking_prompt("panty_line_prompt"))
     return [fragment for fragment in fragments if fragment]
 
 
