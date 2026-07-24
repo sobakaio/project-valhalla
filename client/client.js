@@ -261,9 +261,9 @@ const RANDOM_FILENAME = /^(\d{8}_\d{6}_\d{6})_random_shot_(\d+)_/;
 const LEGACY_RUN_FILENAME = /^(\d{8}_\d{6}_\d{6})_/;
 
 function outputGroupIdentity(item) {
-  if (item.pending) {
+  if (item.pending || item.pending_job_id) {
     return {
-      key: `pending:${item.job_id}`,
+      key: `pending:${item.job_id || item.pending_job_id}`,
       run: item.render_kind === 'preview' ? 'Preview queue' : 'Production queue',
       kind: 'pending',
       number: null,
@@ -1288,7 +1288,12 @@ function addOutputs(outputs) {
       ? state.outputs.findIndex((output) => output.pending && output.key === item.pending_key)
       : -1;
     if (pendingIndex >= 0) {
-      state.outputs[pendingIndex] = item;
+      const placeholder = state.outputs[pendingIndex];
+      state.outputs[pendingIndex] = {
+        ...item,
+        pending_job_id: placeholder.job_id,
+        render_kind: placeholder.render_kind,
+      };
       keys.add(key);
       added = true;
       return;
@@ -1317,12 +1322,20 @@ function pendingOutput(frame, job) {
 
 function syncJobPlaceholders(job) {
   if (!job) return false;
+  const active = ['queued', 'running'].includes(job.status);
   const firstPendingIndex = state.outputs.findIndex(
     (item) => item.pending && item.job_id === job.id,
   );
   const before = state.outputs.filter((item) => item.pending && item.job_id === job.id);
-  const retained = state.outputs.filter((item) => !(item.pending && item.job_id === job.id));
-  const pending = ['queued', 'running'].includes(job.status)
+  const releasedCompleted = !active && state.outputs.some(
+    (item) => item.pending_job_id === job.id,
+  );
+  const retained = state.outputs
+    .filter((item) => !(item.pending && item.job_id === job.id))
+    .map((item) => !active && item.pending_job_id === job.id
+      ? Object.fromEntries(Object.entries(item).filter(([key]) => key !== 'pending_job_id'))
+      : item);
+  const pending = active
     ? (job.pending_frames || []).map((frame) => pendingOutput(frame, job))
     : [];
   const beforeSignature = before.map((item) => `${item.key}:${item.status}:${item.eta_seconds}`).join('|');
@@ -1330,7 +1343,7 @@ function syncJobPlaceholders(job) {
   const insertionIndex = firstPendingIndex < 0 ? retained.length : firstPendingIndex;
   retained.splice(insertionIndex, 0, ...pending);
   state.outputs = retained;
-  if (beforeSignature === nextSignature) return false;
+  if (beforeSignature === nextSignature && !releasedCompleted) return false;
   renderOutputs();
   return true;
 }
