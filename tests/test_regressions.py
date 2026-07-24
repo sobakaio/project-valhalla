@@ -321,6 +321,7 @@ class CatalogQualityTests(unittest.TestCase):
     def test_slavic_human_defaults_are_universal_except_explicit_constraints(self):
         database, _ = app.load_database()
         pools = database["settings"]["human_defaults"]["pools"]
+        self.assertNotIn("hair_style_half_up", pools["hair_style"])
         self.assertEqual(pools["ethnic_appearance"], ["appearance_slavic"])
         self.assertEqual(
             set(pools["breast_size"]),
