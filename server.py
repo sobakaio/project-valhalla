@@ -457,6 +457,14 @@ def validate_database(db: dict[str, Any]) -> None:
                     f"human_model_parts.{section}.{item['id']}.covered_prompt "
                     "must be non-empty text"
                 )
+            if section == "skin_marking" and any(
+                not isinstance(item.get(field), str)
+                for field in ("bra_line_prompt", "panty_line_prompt")
+            ):
+                raise AppError(
+                    f"human_model_parts.skin_marking.{item['id']} must declare "
+                    "text bra_line_prompt and panty_line_prompt fields"
+                )
             if item["id"] in ids:
                 raise AppError(f"Duplicate id: {item['id']}")
             ids.add(item["id"]); index[item["id"]] = item
@@ -1799,7 +1807,7 @@ def progressive_stage(stages: list[dict[str, Any]], index: int, count: int) -> d
 
 
 HUMAN_SELECTION_ORDER = (
-    "age", "ethnic_appearance", "skin_tone", "face_shape", "eye_shape",
+    "age", "ethnic_appearance", "skin_tone", "skin_marking", "face_shape", "eye_shape",
     "eye_color", "eyebrows", "nose", "lips", "cheekbones", "jawline",
     "hair_texture", "hair_length", "hair_style", "hair_color", "height",
     "body_frame", "body_state", "waist", "hips", "breast_size", "breast_shape",
@@ -2834,6 +2842,11 @@ def human_fragments(
         fragments.append(custom.get("human.pubic_hair") or human["pubic_hair"]["prompt"])
     if "genitals" in visibility:
         fragments.append(custom.get("human.genital_appearance") or human["genital_appearance"]["prompt"])
+    skin_marking = human.get("skin_marking", {})
+    if "nipples" in visibility and skin_marking.get("bra_line_prompt"):
+        fragments.append(skin_marking["bra_line_prompt"])
+    if visibility & {"pubic_area", "genitals"} and skin_marking.get("panty_line_prompt"):
+        fragments.append(skin_marking["panty_line_prompt"])
     return [fragment for fragment in fragments if fragment]
 
 
@@ -5358,7 +5371,7 @@ def decode_database_refs(value: Any, index: dict[str, dict[str, Any]]) -> Any:
 
 
 DIRECTOR_HUMAN_GROUPS = (
-    ("Identity", ("age", "ethnic_appearance", "skin_tone")),
+    ("Identity", ("age", "ethnic_appearance", "skin_tone", "skin_marking")),
     ("Face", ("face_shape", "eye_shape", "eye_color", "eyebrows", "nose", "lips", "cheekbones", "jawline", "facial_accents")),
     ("Hair", ("hair_texture", "hair_length", "hair_style", "hair_color")),
     ("Body", ("height", "body_frame", "body_state", "waist", "hips", "breast_size", "breast_shape", "areola_size", "areola_color", "nipple_size", "nipple_shape", "pubic_hair", "genital_appearance")),
@@ -5367,6 +5380,7 @@ DIRECTOR_HUMAN_GROUPS = (
 
 DIRECTOR_LABELS = {
     "age": "Age", "ethnic_appearance": "Nationality / appearance", "skin_tone": "Skin tone",
+    "skin_marking": "Tan lines",
     "face_shape": "Face shape", "eye_shape": "Eye shape", "eye_color": "Eye color",
     "eyebrows": "Eyebrows", "nose": "Nose", "lips": "Lips", "cheekbones": "Cheekbones",
     "jawline": "Jawline", "facial_accents": "Facial detail", "hair_texture": "Hair texture",

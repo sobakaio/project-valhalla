@@ -708,6 +708,36 @@
         ]
       }
     ],
+    "skin_marking": [
+      {
+        "id": "skin_marking_even",
+        "prompt": "even natural body tanning",
+        "weight": 7,
+        "bra_line_prompt": "",
+        "panty_line_prompt": ""
+      },
+      {
+        "id": "skin_marking_bra_tan_lines",
+        "prompt": "bra-shaped tan-line pattern",
+        "weight": 1,
+        "bra_line_prompt": "distinct natural pale bra tan lines across the exposed chest",
+        "panty_line_prompt": ""
+      },
+      {
+        "id": "skin_marking_panty_tan_lines",
+        "prompt": "panty-shaped tan-line pattern",
+        "weight": 1,
+        "bra_line_prompt": "",
+        "panty_line_prompt": "distinct natural pale panty tan lines around the exposed hips and pubic area"
+      },
+      {
+        "id": "skin_marking_bra_panty_tan_lines",
+        "prompt": "matching bra-and-panty tan-line pattern",
+        "weight": 1,
+        "bra_line_prompt": "distinct natural pale bra tan lines across the exposed chest",
+        "panty_line_prompt": "distinct natural pale panty tan lines around the exposed hips and pubic area"
+      }
+    ],
     "face_shape": [
       {
         "id": "face_oval",

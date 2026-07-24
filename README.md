@@ -145,6 +145,12 @@ and jeans (`worn_closed` → `lowered_to_hips` → `removed`). The intermediate 
 is compiled while the garment remains physically visible, with the underlying bra
 or panties exposed as appropriate; a later removal shot only describes full removal.
 
+`skin_marking` is a weighted fixed subject trait with even, bra-line, panty-line,
+and combined variants. Bra tan lines compile only with physically exposed chest
+anatomy; panty tan lines compile only when the hips/pubic area is uncovered. The
+selected marking remains stable across a Photoshoot and covered/SFW prompts do not
+mention hidden tan-line anatomy.
+
 If `comfy.workflow_source` is set to `live`, Valhalla reads the latest compatible ComfyUI workflow instead of the selected saved profiles. Saved profiles are recommended for reproducible production.
 
 ## Production workflow

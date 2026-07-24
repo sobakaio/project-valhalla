@@ -679,6 +679,41 @@ class CatalogQualityTests(unittest.TestCase):
         self.assertTrue(options)
         self.assertFalse(any("half" in item["prompt"].casefold() for item in options))
 
+    def test_tan_lines_are_probable_fixed_traits_with_visibility_gating(self):
+        database, _ = app.load_database()
+        composer = app.Composer(database, app.random.Random(919191))
+        selected = [composer.choose_human()["skin_marking"] for _ in range(1000)]
+        marked = [item for item in selected if item["id"] != "skin_marking_even"]
+        self.assertGreater(len(marked), 240)
+        self.assertLess(len(marked), 360)
+
+        combined = next(
+            item for item in database["human_model_parts"]["skin_marking"]
+            if item["id"] == "skin_marking_bra_panty_tan_lines"
+        )
+        human = composer.choose_human()
+        human["skin_marking"] = combined
+        covered = " ".join(app.human_fragments(human, set(), {}))
+        chest = " ".join(app.human_fragments(human, {"breasts", "nipples"}, {}))
+        lower = " ".join(app.human_fragments(human, {"pubic_area", "genitals"}, {}))
+        both = " ".join(app.human_fragments(
+            human, {"breasts", "nipples", "pubic_area", "genitals"}, {}
+        ))
+        self.assertNotIn("tan lines", covered)
+        self.assertIn(combined["bra_line_prompt"], chest)
+        self.assertNotIn(combined["panty_line_prompt"], chest)
+        self.assertIn(combined["panty_line_prompt"], lower)
+        self.assertNotIn(combined["bra_line_prompt"], lower)
+        self.assertIn(combined["bra_line_prompt"], both)
+        self.assertIn(combined["panty_line_prompt"], both)
+
+    def test_skin_marking_schema_requires_separate_gated_components(self):
+        database, _ = app.load_database()
+        broken = copy.deepcopy(database)
+        broken["human_model_parts"]["skin_marking"][0].pop("bra_line_prompt")
+        with self.assertRaisesRegex(app.AppError, "bra_line_prompt"):
+            app.validate_database(broken)
+
     def test_age_catalog_contains_only_three_explicit_adult_presets(self):
         database, _ = app.load_database()
         ages = database["human_model_parts"]["age"]
