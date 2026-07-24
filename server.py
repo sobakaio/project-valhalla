@@ -2682,13 +2682,49 @@ def compile_scene(
     custom = scene.get("custom_values", {})
     stage = scene["stage"]
     stage_visibility = set(stage.get("body_visibility", []))
-    covered_chest = not bool({"breasts", "nipples"} & stage_visibility)
+    visible_slots = set(stage.get("visible_slots", []))
+    outfit = scene["outfit"]
+    visible_chest_layers = [
+        outfit["garments"][slot]
+        for slot in CHEST_GARMENT_SLOTS
+        if slot in visible_slots and slot in outfit["garments"]
+    ]
+    layered_sheer_outer = any(
+        slot in visible_slots
+        and slot in outfit["garments"]
+        and tags(outfit["garments"][slot]) & {"sheer", "transparent"}
+        for slot in ("upperwear", "full_body", "outerwear")
+    )
+    if layered_sheer_outer and "bra" in outfit["garments"]:
+        visible_chest_layers.append(outfit["garments"]["bra"])
+    opaque_chest_layers = [
+        item for item in visible_chest_layers
+        if not (tags(item) & OPAQUE_LINGERIE_BLOCKED_TAGS)
+    ]
+    sheer_chest_layers = [
+        item for item in visible_chest_layers
+        if tags(item) & {"sheer", "transparent"}
+    ]
+    if opaque_chest_layers:
+        chest_coverage = "opaque"
+    elif sheer_chest_layers:
+        chest_coverage = "sheer"
+    elif any("open_cup" in tags(item) for item in visible_chest_layers):
+        chest_coverage = "open"
+    else:
+        chest_coverage = "none"
+    covered_chest = (
+        chest_coverage in {"opaque", "sheer"}
+        or not bool({"breasts", "nipples"} & stage_visibility)
+    )
     visibility = set(stage_visibility)
     recipe = scene.get("explicit_recipe")
     plateau_kind = stage.get("plateau_kind") or (
         recipe.get("plateau_kind") if recipe else None
     )
     if plateau_kind == "provocative_rear":
+        visibility -= {"breasts", "nipples"}
+    if covered_chest:
         visibility -= {"breasts", "nipples"}
     xxx_prompt = defaults.get("xxx_plateau_prompts", {}).get(plateau_kind, "")
     age_prompt = (
@@ -2749,11 +2785,6 @@ def compile_scene(
         ):
             return casual_role_prompts.get(item["id"], item["prompt"])
         return item["prompt"]
-    visible_slots = set(stage.get("visible_slots", []))
-    outfit = scene["outfit"]
-    visible_garments = [
-        item for slot, item in outfit["garments"].items() if slot in visible_slots
-    ]
     wardrobe_color_parts = [
         f"the {slot.replace('_', ' ')} layer is exactly "
         f"{custom.get(f'outfit.colors.{slot}') or outfit['colors'][slot]['prompt']}"
@@ -2773,10 +2804,7 @@ def compile_scene(
         tags(item) & {"sheer", "transparent"} for item in visible_outer_chest
     )
     covered_sheer = stage.get("level") == "covered" and layered_sheer_chest
-    lingerie_sheer = (
-        stage.get("level") == "lingerie"
-        and any("sheer" in tags(item) for item in visible_garments)
-    )
+    lingerie_sheer = stage.get("level") == "lingerie" and chest_coverage == "sheer"
     # A stage label alone is UI metadata. These anchors state the visual contract
     # explicitly in vocabulary image models reliably understand.
     stage_anchors = {
@@ -2799,11 +2827,18 @@ def compile_scene(
             )
             if visible_outer_chest else
             (
-                "(one fully opaque chest-covering lingerie garment:1.5), uninterrupted fabric across "
-                "the entire chest, uniform material and color, clean smooth garment surface"
-                if covered_chest else
-                "revealing lingerie composition, breasts and nipples visibly framed by "
-                "the lingerie construction"
+                "(one intact sheer chest-covering lingerie garment:1.5), translucent "
+                "fabric continuously covers the entire chest, fabric remains visibly "
+                "between skin and camera, smooth realistic tension without openings or protrusions"
+                if chest_coverage == "sheer" else
+                (
+                    "(one fully opaque chest-covering lingerie garment:1.5), opaque cups "
+                    "form complete continuous uninterrupted fabric coverage, smooth low-relief cup surface, "
+                    "all body contours fully contained beneath the garment, clean smooth garment surface"
+                    if covered_chest else
+                    "open-cup lingerie composition with exposed chest anatomy framed by "
+                    "the garment construction"
+                )
             )
         ),
         "topless": "topless, bare breasts and visible nipples, lower-body garments visible",
@@ -2854,7 +2889,7 @@ def compile_scene(
             garment
             and slot in visible_slots
             and tags(garment) & set(contract["garment_tags_any"])
-            and visibility & set(contract["body_visibility_any"])
+            and stage_visibility & set(contract["body_visibility_any"])
         ):
             fragments.append(contract["positive_prompt"])
     if scene.get("intimate_arousal_modifier"):

@@ -296,7 +296,7 @@
             "breasts",
             "nipples"
           ],
-          "positive_prompt": "one anatomically fitted sheer bra with continuous intact translucent fabric lying smoothly across both breasts and nipples, soft anatomy visible through the fabric weave, realistic fabric tension and cup construction"
+          "positive_prompt": "one anatomically fitted sheer bra with continuous intact translucent fabric covering the entire chest, fabric remains visibly between skin and camera, smooth realistic tension and cup construction without openings or protrusions"
         },
         {
           "id": "continuous_sheer_full_body_fabric",
@@ -310,7 +310,7 @@
             "pubic_area",
             "genitals"
           ],
-          "positive_prompt": "one intact sheer full-body garment continuously covering the torso and pelvis, translucent fabric lying smoothly over the anatomy with realistic weave, seams, tension, and garment construction"
+          "positive_prompt": "one intact sheer full-body garment continuously covering the torso and pelvis, translucent fabric remains visibly between skin and camera with realistic weave, seams, smooth tension, and no openings or protrusions"
         }
       ]
     },
@@ -9972,7 +9972,8 @@
         "tags": [
           "lingerie",
           "fetish",
-          "explicit"
+          "explicit",
+          "open_cup"
         ],
         "mix_tags": [
           "fetish",
@@ -9991,7 +9992,8 @@
         "tags": [
           "lingerie",
           "fetish",
-          "explicit"
+          "explicit",
+          "open_cup"
         ],
         "mix_tags": [
           "fetish",

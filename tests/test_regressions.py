@@ -3284,6 +3284,71 @@ class PreviewVisualAuditTests(unittest.TestCase):
 
 
 class VisualCompatibilityRegressionTests(unittest.TestCase):
+    def test_chest_coverage_distinguishes_opaque_sheer_and_open_lingerie(self):
+        database, _ = app.load_database()
+        for garment in database["garments"]["bra"]:
+            wording = f"{garment['id']} {garment['prompt']}".casefold()
+            if "open_cup" in wording or "open-cup" in wording or "quarter-cup" in wording:
+                self.assertIn("open_cup", app.tags(garment), garment["id"])
+
+        def compile_template(template_id, stage_id, seed, required_bra_tag=None):
+            template = next(
+                item for item in database["outfit_templates"]
+                if item["id"] == template_id
+            )
+            composer = app.Composer(database, app.random.Random(seed))
+            context = composer.fixed_context()
+            for _ in range(200):
+                outfit = composer.choose_outfit(template, context["interior"])
+                if (
+                    required_bra_tag is None
+                    or required_bra_tag in app.tags(outfit["garments"]["bra"])
+                ):
+                    break
+            else:
+                self.fail(f"Could not select {required_bra_tag} for {template_id}")
+            context["outfit"] = outfit
+            stage = next(item for item in outfit["template"]["stages"] if item["id"] == stage_id)
+            scene = composer.resolve_scene(context, stage)
+            positive, _, _ = app.compile_scene(database, scene)
+            return scene, positive.casefold()
+
+        opaque, opaque_prompt = compile_template(
+            "template_classic_lingerie_normal", "classic_lingerie_layered", 7001
+        )
+        self.assertIn("opaque cups form complete continuous uninterrupted fabric coverage", opaque_prompt)
+        self.assertIn(
+            opaque["human"]["breast_size"]["covered_prompt"].casefold(),
+            opaque_prompt,
+        )
+        self.assertNotIn(
+            opaque["human"]["breast_size"]["prompt"].casefold(), opaque_prompt
+        )
+        for term in ("visible nipples", "areola", "breasts visibly framed"):
+            self.assertNotIn(term, opaque_prompt)
+
+        sheer, sheer_prompt = compile_template(
+            "template_pearl_boudoir", "pearl_boudoir_reveal", 7002, "sheer"
+        )
+        self.assertIn("fabric remains visibly between skin and camera", sheer_prompt)
+        self.assertIn("without openings or protrusions", sheer_prompt)
+        self.assertIn(
+            sheer["human"]["breast_size"]["covered_prompt"].casefold(),
+            sheer_prompt,
+        )
+        self.assertNotIn(
+            sheer["human"]["breast_size"]["prompt"].casefold(), sheer_prompt
+        )
+        for phrase in (
+            "breasts and nipples visibly framed", "soft anatomy visible through",
+            "visible nipples", "small areolas", "medium areolas", "large areolas",
+        ):
+            self.assertNotIn(phrase, sheer_prompt)
+
+        opened, open_prompt = compile_template(
+            "template_revealing_boudoir", "revealing_boudoir_bra", 7003, "open_cup"
+        )
+        self.assertIn("open-cup lingerie composition", open_prompt)
     def test_every_enabled_garment_is_reachable_through_a_matching_outfit_recipe(self):
         database, _ = app.load_database()
         enabled_templates = [
