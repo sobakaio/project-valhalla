@@ -326,6 +326,14 @@ def validate_database(db: dict[str, Any]) -> None:
             "settings.semantic_prompt_audit.ambiguous_phrases must be a "
             "non-empty unique list of phrases"
         )
+    panties_reveal = settings.get("dressed_panties_reveal")
+    if not isinstance(panties_reveal, dict):
+        raise AppError("settings.dressed_panties_reveal must be an object")
+    reveal_chance = panties_reveal.get("chance")
+    if not isinstance(reveal_chance, (int, float)) or not 0 <= reveal_chance <= 1:
+        raise AppError("settings.dressed_panties_reveal.chance must be between zero and one")
+    if not isinstance(panties_reveal.get("positive_prompt"), str) or not panties_reveal["positive_prompt"].strip():
+        raise AppError("settings.dressed_panties_reveal.positive_prompt must be text")
     positive_prefix = db["prompt_defaults"].get("positive_prefix")
     if not isinstance(positive_prefix, str) or positive_prefix.count("{age}") != 1:
         raise AppError(
@@ -647,6 +655,20 @@ def validate_database(db: dict[str, Any]) -> None:
     garment_ids = {
         item["id"] for values in db["garments"].values() for item in values
     }
+    reveal_outer_slots = panties_reveal.get("outer_slots")
+    reveal_outer_ids = panties_reveal.get("compatible_outer_ids")
+    if (
+        not isinstance(reveal_outer_slots, list) or not reveal_outer_slots
+        or len(reveal_outer_slots) != len(set(reveal_outer_slots))
+        or not set(reveal_outer_slots).issubset({"lowerwear", "full_body"})
+    ):
+        raise AppError("settings.dressed_panties_reveal.outer_slots is invalid")
+    if (
+        not isinstance(reveal_outer_ids, list) or not reveal_outer_ids
+        or len(reveal_outer_ids) != len(set(reveal_outer_ids))
+        or not set(reveal_outer_ids).issubset(garment_ids)
+    ):
+        raise AppError("settings.dressed_panties_reveal.compatible_outer_ids is invalid")
     template_ids = {item["id"] for item in db["outfit_templates"]}
     layer_rules = settings.get("garment_layer_rules", [])
     if not isinstance(layer_rules, list):
@@ -2074,7 +2096,11 @@ class Composer:
     ) -> dict[str, Any]:
         overrides = overrides or {}
         avoid = avoid or {}
-        family = stage.get("plateau_kind") or stage["level"]
+        family = (
+            stage.get("visual_category")
+            or stage.get("plateau_kind")
+            or stage["level"]
+        )
 
         def choose(section: str, candidates: list[dict[str, Any]]) -> dict[str, Any]:
             if bag_scope:
@@ -2108,6 +2134,8 @@ class Composer:
         )
         surface_style = self.surface_style(fixed, furniture, overrides)
         available_tags = set(stage.get("body_visibility", [])) | {stage["level"]}
+        if stage.get("visual_category"):
+            available_tags.add(stage["visual_category"])
         available_tags |= set(stage.get("visible_slots", []))
         available_tags |= tags(furniture) | tags(fixed["interior"])
         available_tags |= set(location_zone.get("capabilities", []))
@@ -2185,6 +2213,16 @@ class Composer:
             actions = [
                 item for item in actions
                 if tags(item) & {"erotic_action", "undressing_action"}
+            ]
+        if stage.get("visual_category") == "dressed_panties_reveal":
+            actions = [
+                item for item in actions
+                if "dressed_panties_reveal_action" in tags(item)
+            ]
+        else:
+            actions = [
+                item for item in actions
+                if "dressed_panties_reveal_action" not in tags(item)
             ]
         if plateau_kind == "provocative_rear":
             actions = [item for item in actions if "provocative_action" in tags(item)]
@@ -2444,6 +2482,8 @@ class Composer:
         ids = {item["id"] for item in flattened}
         all_tags = set().union(*(tags(item) for item in flattened))
         all_tags |= set(scene["stage"].get("body_visibility", [])) | set(scene["stage"].get("visible_slots", [])) | {scene["stage"]["level"]}
+        if scene["stage"].get("visual_category"):
+            all_tags.add(scene["stage"]["visual_category"])
         hand_total = sum(hands_required(scene.get(key)) for key in ("pose", "action", "prop"))
         if hand_total > 2:
             raise AppError(f"Pose, action and prop require {hand_total} hands")
@@ -2664,7 +2704,11 @@ def compile_scene(db: dict[str, Any], scene: dict[str, Any]) -> tuple[str, str, 
         "nude": "fully nude body, bare breasts, visible nipples, pubic area and genitals visible",
         "explicit": "explicit adult pose, bare breasts, visible nipples, pubic area and genitals visible",
     }
-    stage_anchor = stage_anchors.get(stage.get("level"), "")
+    stage_anchor = (
+        db["settings"]["dressed_panties_reveal"]["positive_prompt"]
+        if stage.get("visual_category") == "dressed_panties_reveal"
+        else stage_anchors.get(stage.get("level"), "")
+    )
     # Explicit compiler priority: subject -> camera/direction -> anatomy ->
     # traits/garments -> location/treatment. Keep the order data-declared and
     # stable because diffusion models give earlier structural tokens more weight.
@@ -2996,6 +3040,36 @@ def stage_for_index(
         result["body_visibility"] = ["breasts", "nipples", "pubic_area", "genitals"]
         return result
     return weighted_choice(rng, stages)
+
+
+def maybe_dressed_panties_reveal(
+    db: dict[str, Any],
+    stage: dict[str, Any],
+    outfit: dict[str, Any],
+    rng: random.Random,
+) -> dict[str, Any]:
+    """Turn a compatible dressed frame into a probabilistic panties reveal."""
+    rule = db["settings"]["dressed_panties_reveal"]
+    if stage["level"] != "covered" or "panties" not in outfit["garments"]:
+        return stage
+    compatible_ids = set(rule["compatible_outer_ids"])
+    if not any(
+        outfit["garments"].get(slot, {}).get("id") in compatible_ids
+        and slot in stage.get("visible_slots", [])
+        for slot in rule["outer_slots"]
+    ):
+        return stage
+    if rng.random() >= rule["chance"]:
+        return stage
+    result = copy.deepcopy(stage)
+    result["id"] = f"{stage['id']}_dressed_panties_reveal"
+    result["visual_category"] = "dressed_panties_reveal"
+    result.pop("sfw", None)
+    result["visible_slots"] = list(dict.fromkeys([
+        *stage.get("visible_slots", []), "panties",
+    ]))
+    result["body_visibility"] = []
+    return result
 
 
 def weighted_shuffle_sequence(
@@ -3642,6 +3716,10 @@ def build_storyboard(
                     )
                 )
             )
+            if args.content_mode == "progressive":
+                stage = maybe_dressed_panties_reveal(
+                    db, stage, context["outfit"], rng
+                )
             if (
                 args.mode == "photoshoot"
                 and args.content_mode == "progressive"
@@ -3769,6 +3847,9 @@ def camera_grammar_stress_test(
             context = composer.fixed_context()
             stages = effective_photoshoot_stages(context["outfit"]["template"])
         stage = stages[index % len(stages)]
+        stage = maybe_dressed_panties_reveal(
+            db, stage, context["outfit"], rng
+        )
         scene = composer.resolve_scene(context, stage)
         validate_camera_grammar(scene)
         checked += 1
@@ -3872,6 +3953,7 @@ def catalog_reachability(db: dict[str, Any]) -> dict[str, Any]:
     for template in enabled["outfit_templates"]:
         template_has_required_candidates = True
         visible_tag_unions: dict[str, set[str]] = {}
+        visible_id_unions: dict[str, set[str]] = {}
         for slot, rule in template["slots"].items():
             candidates = [
                 item for item in garment_enabled[rule["catalog"]]
@@ -3896,6 +3978,7 @@ def catalog_reachability(db: dict[str, Any]) -> dict[str, Any]:
             visible_tag_unions[slot] = set().union(
                 *(tags(item) for item in candidates), set()
             )
+            visible_id_unions[slot] = {item["id"] for item in candidates}
         if template_has_required_candidates:
             reachable["outfit_templates"].add(template["id"])
             if catalog_category(template) in wardrobe_categories:
@@ -3922,6 +4005,29 @@ def catalog_reachability(db: dict[str, Any]) -> dict[str, Any]:
                     for slot in panties_aside["visible_slots"]
                 ), set())
                 template_stage_states.append((panties_aside, panties_tags))
+        reveal_rule = db["settings"]["dressed_panties_reveal"]
+        reveal_ids = set(reveal_rule["compatible_outer_ids"])
+        reveal_stage = next((
+            stage for stage in effective_photoshoot_stages(template)
+            if stage["level"] == "covered"
+            and "panties" in template["slots"]
+            and any(
+                slot in stage.get("visible_slots", [])
+                and bool(visible_id_unions.get(slot, set()) & reveal_ids)
+                for slot in reveal_rule["outer_slots"]
+            )
+        ), None)
+        if reveal_stage:
+            dressed_reveal = copy.deepcopy(reveal_stage)
+            dressed_reveal["visual_category"] = "dressed_panties_reveal"
+            dressed_reveal["visible_slots"] = list(dict.fromkeys([
+                *dressed_reveal.get("visible_slots", []), "panties",
+            ]))
+            dressed_tags = set().union(*(
+                visible_tag_unions.get(slot, set())
+                for slot in dressed_reveal["visible_slots"]
+            ), set())
+            template_stage_states.append((dressed_reveal, dressed_tags))
 
     reachable["colors"].update(
         color["id"] for color in enabled["colors"]
@@ -4050,6 +4156,8 @@ def catalog_reachability(db: dict[str, Any]) -> dict[str, Any]:
                 | set(stage.get("visible_slots", []))
                 | garment_tags | environment_tags
             )
+            if stage.get("visual_category"):
+                base.add(stage["visual_category"])
             for recipe in recipes:
                 available = base | (tags(recipe) if recipe else set())
                 intensity = recipe.get("intensity", "explicit") if recipe else {
@@ -4853,6 +4961,8 @@ def director_prop_options(db: dict[str, Any], shot: dict[str, Any]) -> list[dict
         | tags(scene["furniture"])
         | tags(scene["action"])
     )
+    if stage.get("visual_category"):
+        available.add(stage["visual_category"])
     visible_slots = set(stage.get("visible_slots", []))
     available |= set().union(*(
         tags(item) for slot, item in scene["outfit"]["garments"].items()
@@ -5327,6 +5437,8 @@ class WebState:
                 | {stage["level"]} | tags(shot["scene"]["furniture"])
                 | tags(shot["scene"]["interior"])
             )
+            if stage.get("visual_category"):
+                available.add(stage["visual_category"])
             visible_slots = set(stage.get("visible_slots", []))
             available |= set().union(*(
                 tags(item) for slot, item in shot["scene"]["outfit"]["garments"].items()

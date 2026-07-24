@@ -124,6 +124,25 @@
         " and/or "
       ]
     },
+    "dressed_panties_reveal": {
+      "chance": 0.18,
+      "outer_slots": ["lowerwear", "full_body"],
+      "compatible_outer_ids": [
+        "lower_pleated_skirt",
+        "lower_mini_skirt",
+        "lower_micro_skirt",
+        "lower_cotton_mini_skirt",
+        "lower_aline_skirt",
+        "lower_jersey_skirt",
+        "lower_jersey_micro_skirt",
+        "lower_knit_mini_skirt",
+        "dress_casual_bodycon_mini",
+        "dress_square_neck_mini",
+        "dress_cotton_shirt_mini",
+        "dress_tshirt_bodycon"
+      ],
+      "positive_prompt": "still fully dressed in the coordinated outer outfit, the outer garment hem deliberately lifted just enough to show the intact panties underneath"
+    },
     "wardrobe_compatibility": {
       "color_families": {
         "light": [
@@ -6114,7 +6133,8 @@
         "tags": [
           "sporty",
           "casual",
-          "home"
+          "home",
+          "bra_optional"
         ],
         "allowed_colors": [
           "color_black",
@@ -13161,6 +13181,66 @@
       ]
     },
     {
+      "id": "template_sportswear_set",
+      "catalog_category": "normal",
+      "weight": 1.4,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_tags": ["sporty"],
+          "excludes_tags": ["explicit", "fetish", "sheer"],
+          "color_group": "main"
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_tags": ["sporty"],
+          "excludes_tags": ["explicit", "fetish", "sheer"]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": ["sporty", "everyday"],
+          "excludes_tags": ["luxury", "fetish", "explicit"],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": ["sporty", "everyday"],
+          "excludes_tags": ["luxury", "fetish", "explicit"],
+          "color_group": "lingerie"
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.65,
+          "required_any_tags": ["sporty", "socks"],
+          "excludes_tags": ["luxury", "fetish", "explicit"]
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_tags": ["sporty"]
+        }
+      },
+      "stages": [
+        {
+          "id": "sportswear_dressed",
+          "level": "covered",
+          "visible_slots": ["upperwear", "lowerwear", "legwear", "footwear"],
+          "body_visibility": []
+        },
+        {
+          "id": "sportswear_underwear",
+          "level": "lingerie",
+          "visible_slots": ["bra", "panties", "legwear"],
+          "body_visibility": []
+        }
+      ]
+    },
+    {
       "id": "template_day_dress",
       "catalog_category": "normal",
       "weight": 2,
@@ -19160,6 +19240,36 @@
       ],
       "requires_expression_tags": [
         "pleasure_expression"
+      ]
+    },
+    {
+      "id": "action_lift_skirt_hem",
+      "prompt": "lifting the front hem with one hand to deliberately show the panties underneath",
+      "tags": [
+        "dressed_panties_reveal_action",
+        "erotic_action"
+      ],
+      "requires_tags": [
+        "dressed_panties_reveal"
+      ],
+      "hands_required": 1,
+      "allowed_levels": [
+        "covered"
+      ]
+    },
+    {
+      "id": "action_hold_skirt_to_side",
+      "prompt": "holding the skirt hem to one side so the panties underneath are clearly visible",
+      "tags": [
+        "dressed_panties_reveal_action",
+        "erotic_action"
+      ],
+      "requires_tags": [
+        "dressed_panties_reveal"
+      ],
+      "hands_required": 1,
+      "allowed_levels": [
+        "covered"
       ]
     }
   ],

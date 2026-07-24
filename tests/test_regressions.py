@@ -56,6 +56,80 @@ class StudioGenerationLimitTests(unittest.TestCase):
 
 
 class CatalogQualityTests(unittest.TestCase):
+    def test_sportswear_template_pairs_sporty_tops_and_pants(self):
+        database, _ = app.load_database()
+        template = next(
+            item for item in database["outfit_templates"]
+            if item["id"] == "template_sportswear_set"
+        )
+        composer = app.Composer(database, app.random.Random(62026))
+        observed_tops = set()
+        observed_bottoms = set()
+        for _ in range(120):
+            outfit = composer.choose_outfit(template)
+            top = outfit["garments"]["upperwear"]
+            bottom = outfit["garments"]["lowerwear"]
+            self.assertIn("sporty", app.tags(top))
+            self.assertIn("sporty", app.tags(bottom))
+            observed_tops.add(top["id"])
+            observed_bottoms.add(bottom["id"])
+        self.assertGreaterEqual(len(observed_tops), 3)
+        self.assertGreaterEqual(len(observed_bottoms), 4)
+
+    def test_tshirts_are_automatically_reachable_in_default_catalog(self):
+        database, _ = app.load_database()
+        tshirts = {
+            "top_boxy_tshirt", "top_crewneck_tshirt",
+            "top_vneck_tshirt", "top_longsleeve_tshirt",
+        }
+        reachability = app.catalog_reachability(database)
+        self.assertTrue(tshirts.issubset(reachability["automatic"]["garments"]))
+
+    def test_dressed_panties_reveal_is_probable_and_structurally_integrated(self):
+        database, _ = app.load_database()
+        rule = database["settings"]["dressed_panties_reveal"]
+        stage = {
+            "id": "test_dressed", "level": "covered",
+            "visible_slots": ["upperwear", "lowerwear"], "body_visibility": [],
+        }
+        outfit = {"garments": {
+            "lowerwear": {"id": rule["compatible_outer_ids"][0]},
+            "panties": {"id": "panties_test"},
+        }}
+        rng = app.random.Random(90210)
+        selected = sum(
+            app.maybe_dressed_panties_reveal(
+                database, stage, outfit, rng
+            ).get("visual_category") == "dressed_panties_reveal"
+            for _ in range(2000)
+        )
+        self.assertGreater(selected, 280)
+        self.assertLess(selected, 440)
+
+        seed = 811001
+        run = app.parse_run_config({
+            "mode": "random", "content_mode": "progressive", "count": 12,
+            "photoshoots": 1, "prompt_seed": seed, "inference_seed": seed + 1,
+            "nsfw_percent": 50, "plateau_percent": 20,
+        }, database)
+        scene_rng = app.random.Random(seed)
+        board = app.build_storyboard(
+            run, database, app.Composer(database, scene_rng), scene_rng,
+            run.nsfw_percent, run.plateau_percent,
+        )
+        reveals = [
+            shot for shot in board
+            if shot["stage"].get("visual_category") == "dressed_panties_reveal"
+        ]
+        self.assertTrue(reveals)
+        for shot in reveals:
+            self.assertIn("panties", shot["stage"]["visible_slots"])
+            self.assertIn(
+                "dressed_panties_reveal_action", app.tags(shot["scene"]["action"])
+            )
+            positive, _, _ = app.compile_scene(database, shot["scene"])
+            self.assertIn(rule["positive_prompt"], positive)
+
     def test_xxx_camera_recipes_produce_broad_non_macro_compositions(self):
         database, _ = app.load_database()
         observed = {
