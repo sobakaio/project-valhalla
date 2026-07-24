@@ -3090,9 +3090,11 @@ class FrontendContractTests(unittest.TestCase):
         self.assertNotIn("/api/thumbnails/", pending_card)
         self.assertNotIn("download=", pending_card)
         self.assertNotIn("data-action=\"delete-output\"", pending_card)
+        self.assertNotIn("<i>", pending_card)
+        self.assertNotIn("<span>Waiting</span>", pending_card)
         self.assertIn(".output-card.pending-output", css)
-        self.assertIn("@keyframes pending-spin", css)
-        self.assertIn("prefers-reduced-motion: reduce", css)
+        self.assertNotIn("@keyframes pending-spin", css)
+        self.assertNotIn(".render-placeholder i", css)
 
     def test_privacy_cover_is_persistent_high_priority_and_releases_image_sources(self):
         root = Path(app.__file__).parent

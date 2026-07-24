@@ -1661,8 +1661,8 @@ function outputCardHtml(item, index, layout, position) {
       : '';
     return `<article class="output-card pending-output" data-pending-key="${escapeHtml(item.key)}"
       aria-label="${escapeHtml(shotLabel)} ${escapeHtml(status)}">
-      <div class="render-placeholder" aria-hidden="true"><i></i><strong>${escapeHtml(item.render_kind === 'preview' ? 'Preview' : 'Production')}</strong><span>${escapeHtml(status)}</span><em data-pending-deadline="${deadline}">${deadline ? `≈ ${formatTime(item.eta_seconds)}` : 'Estimating…'}</em></div>
-      <footer><span>${escapeHtml(shotLabel)}</span><span>Waiting</span></footer>
+      <div class="render-placeholder" aria-hidden="true"><strong>${escapeHtml(item.render_kind === 'preview' ? 'Preview' : 'Production')}</strong><span>${escapeHtml(status)}</span><em data-pending-deadline="${deadline}">${deadline ? `≈ ${formatTime(item.eta_seconds)}` : 'Estimating…'}</em></div>
+      <footer><span>${escapeHtml(shotLabel)}</span></footer>
     </article>`;
   }
   const visual = state.privacyCovered
@@ -1703,7 +1703,7 @@ function photoshootCardHtml(group, index) {
   const run = group.identity ? formatOutputRun(group.identity.run) : 'Files without photoshoot naming';
   const runTitle = group.identity ? `Render ID: ${group.identity.run}` : '';
   const visual = representative.pending
-    ? `<div class="render-placeholder"><i></i><strong>${escapeHtml(title)}</strong><span>${group.items.length} frame${group.items.length === 1 ? '' : 's'} waiting</span><em>Open for ETA</em></div>`
+    ? `<div class="render-placeholder"><strong>${escapeHtml(title)}</strong><span>${group.items.length} frame${group.items.length === 1 ? '' : 's'} waiting</span><em>Open for ETA</em></div>`
     : state.privacyCovered
     ? '<div class="privacy-placeholder" aria-label="Image hidden by privacy cover"></div>'
     : `<img src="${encodeURI(representative.thumbnail_url || representative.url)}" alt="${escapeHtml(title)} representative frame" loading="lazy" decoding="async">`;
