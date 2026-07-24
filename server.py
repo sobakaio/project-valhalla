@@ -2248,6 +2248,22 @@ def compile_scene(db: dict[str, Any], scene: dict[str, Any]) -> tuple[str, str, 
     age_prompt = custom.get("human.age") or scene["human"]["age"]["prompt"]
     positive_prefix = defaults.get("positive_prefix", "").replace("{age}", age_prompt)
     fragments = [positive_prefix]
+    human = scene["human"]
+    breast_size_prompt = custom.get("human.breast_size") or human["breast_size"]["prompt"]
+    breast_shape_prompt = custom.get("human.breast_shape") or human["breast_shape"]["prompt"]
+    hair_parts = [
+        custom.get(f"human.{key}") or human[key]["prompt"]
+        for key in ("hair_texture", "hair_length", "hair_style", "hair_color")
+    ]
+    anatomy_identity = (
+        "the same unchanged upper-body proportions and silhouette"
+        if covered_chest else
+        f"consistently {breast_size_prompt} with {breast_shape_prompt}"
+    )
+    fragments.append(
+        f"the same {age_prompt} with a consistent face and body in every frame, "
+        f"{anatomy_identity}, consistently {' '.join(hair_parts)}"
+    )
     body_state_prompt = (
         custom.get("human.body_state")
         or scene["human"].get("body_state", {}).get("prompt", "")
@@ -2285,6 +2301,16 @@ def compile_scene(db: dict[str, Any], scene: dict[str, Any]) -> tuple[str, str, 
     visible_garments = [
         item for slot, item in outfit["garments"].items() if slot in visible_slots
     ]
+    wardrobe_color_parts = [
+        f"the {slot.replace('_', ' ')} layer is exactly "
+        f"{custom.get(f'outfit.colors.{slot}') or outfit['colors'][slot]['prompt']}"
+        for slot in outfit["template"]["slots"]
+        if slot in visible_slots and slot in outfit["garments"]
+    ]
+    if wardrobe_color_parts:
+        fragments.append(
+            "fixed wardrobe colors for this frame: " + "; ".join(wardrobe_color_parts)
+        )
     covered_sheer = (
         stage.get("level") == "covered"
         and any("sheer" in tags(item) for item in visible_garments)

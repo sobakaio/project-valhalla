@@ -1230,6 +1230,35 @@ class DirectorRegressionTests(unittest.TestCase):
             ],
         )
 
+    def test_photoshoot_prompts_repeat_stable_age_anatomy_and_visible_colors_early(self):
+        state, storyboard_id = self.make_storyboard(count=12, prompt_seed=616161)
+        record = state.get_storyboard(storyboard_id)
+        payload = state.storyboard_payload(record)
+        human = record["shots"][0]["scene"]["human"]
+        for source, rendered in zip(record["shots"], payload["shots"]):
+            positive = rendered["positive_prompt"].casefold()
+            visible_anatomy = bool(
+                {"breasts", "nipples"} & set(source["stage"].get("body_visibility", []))
+            )
+            anatomy_identity = (
+                f"consistently {human['breast_size']['prompt']} with {human['breast_shape']['prompt']}"
+                if visible_anatomy else
+                "the same unchanged upper-body proportions and silhouette"
+            )
+            stable_subject = (
+                f"the same {human['age']['prompt']} with a consistent face and body in every frame, "
+                f"{anatomy_identity}"
+            ).casefold()
+            self.assertIn(stable_subject, positive)
+            self.assertLess(positive.index(stable_subject), positive.index(source["scene"]["pose"]["prompt"].casefold()))
+            visible = set(source["stage"].get("visible_slots", []))
+            for slot in visible:
+                if slot not in source["scene"]["outfit"]["garments"]:
+                    continue
+                color = source["scene"]["outfit"]["colors"][slot]["prompt"].casefold()
+                self.assertIn("fixed wardrobe colors for this frame:", positive)
+                self.assertLess(positive.index(color), positive.index(source["scene"]["pose"]["prompt"].casefold()))
+
     def test_covered_chest_positive_contract_is_anatomy_neutral(self):
         state, storyboard_id = self.make_storyboard(count=12, prompt_seed=24680)
         record = state.get_storyboard(storyboard_id)
