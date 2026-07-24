@@ -56,6 +56,29 @@ class StudioGenerationLimitTests(unittest.TestCase):
 
 
 class CatalogQualityTests(unittest.TestCase):
+    def test_database_rejects_data_configured_ambiguous_prompt_phrases(self):
+        database, _ = app.load_database()
+        configured = copy.deepcopy(database)
+        configured["location_zones"][0]["prompt"] = "on the floor or a rug"
+        with self.assertRaisesRegex(app.AppError, "ambiguous alternatives: or"):
+            app.validate_database(configured)
+
+    def test_compiled_prompts_pass_semantic_ambiguity_audit(self):
+        database, _ = app.load_database()
+        run = app.parse_run_config({
+            "mode": "photoshoot", "content_mode": "progressive", "count": 12,
+            "photoshoots": 1, "prompt_seed": 73119, "inference_seed": 73120,
+            "nsfw_percent": 50, "plateau_percent": 20,
+        }, database)
+        rng = app.random.Random(run.prompt_seed)
+        board = app.build_storyboard(
+            run, database, app.Composer(database, rng), rng,
+            run.nsfw_percent, run.plateau_percent,
+        )
+        prompts = [app.compile_scene(database, shot["scene"])[0] for shot in board]
+        self.assertTrue(prompts)
+        self.assertTrue(all(not app.semantic_prompt_issues(database, prompt) for prompt in prompts))
+
     def test_validate_cli_is_read_only_and_does_not_start_the_server(self):
         report = {
             "templates": 1, "interiors": 1, "garments": 1,
@@ -633,7 +656,7 @@ class DirectorRegressionTests(unittest.TestCase):
             lingerie_marker = (
                 "revealing lingerie composition"
                 if {"breasts", "nipples"} & set(shot["stage"].get("body_visibility", []))
-                else "fully opaque lingerie top or bra"
+                else "one fully opaque chest-covering lingerie garment"
             )
             stage_marker = {
                 "covered": "fully opaque upper-body garment",
@@ -1071,7 +1094,7 @@ class DirectorRegressionTests(unittest.TestCase):
     def test_compiler_preserves_stage_and_visible_garments(self):
         anchors = {
             "covered": "fully opaque upper-body garment",
-            "lingerie": "fully opaque lingerie top or bra",
+            "lingerie": "one fully opaque chest-covering lingerie garment",
             "topless": "topless, bare breasts and visible nipples",
             "nude": "fully nude body",
             "explicit": "explicit adult pose",
@@ -1282,7 +1305,7 @@ class DirectorRegressionTests(unittest.TestCase):
         positive, _, _ = app.compile_scene(configured, scene)
         folded = positive.casefold()
         self.assertIn("one fully opaque upper-body garment as the visible chest layer", folded)
-        self.assertNotIn("fully opaque lingerie top or bra", folded)
+        self.assertNotIn("one fully opaque chest-covering lingerie garment", folded)
         self.assertNotIn("underlying", folded)
 
     def test_sheer_layers_and_hosiery_coordinate_underwear_color_and_pattern(self):
@@ -3082,7 +3105,7 @@ class VisualCompatibilityRegressionTests(unittest.TestCase):
                 elif visible_outer:
                     self.assertIn("one fully opaque upper-body garment as the visible chest layer", positive)
                 else:
-                    self.assertIn("fully opaque lingerie top or bra", positive)
+                    self.assertIn("one fully opaque chest-covering lingerie garment", positive)
                 for unsafe_concept in ("breast", "nipple", "areola", "bust"):
                     self.assertNotIn(unsafe_concept, positive.casefold())
                 checked += 1

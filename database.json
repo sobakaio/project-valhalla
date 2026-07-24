@@ -114,6 +114,16 @@
       "pattern_chance": 0.22,
       "texture_chance": 0.28
     },
+    "semantic_prompt_audit": {
+      "ambiguous_phrases": [
+        " or ",
+        " either ",
+        " maybe ",
+        " possibly ",
+        " perhaps ",
+        " and/or "
+      ]
+    },
     "wardrobe_compatibility": {
       "color_families": {
         "light": [
@@ -19319,13 +19329,13 @@
   ],
   "location_zones": [
     {"id": "zone_bed_edge", "prompt": "at the edge of the bed", "match_any_tags": ["bed"], "match_id_terms": ["bed_edge"], "capabilities": ["standing", "seated", "kneeling", "supported", "closeup"], "environment_tags": ["bedroom"]},
-    {"id": "zone_bed", "prompt": "on or beside the bed", "match_any_tags": ["bed"], "capabilities": ["standing", "seated", "reclining", "kneeling", "supported", "closeup"], "environment_tags": ["bedroom"]},
+    {"id": "zone_bed", "prompt": "at the bed", "match_any_tags": ["bed"], "capabilities": ["standing", "seated", "reclining", "kneeling", "supported", "closeup"], "environment_tags": ["bedroom"]},
     {"id": "zone_wall", "prompt": "beside the wall", "match_any_tags": ["wall"], "capabilities": ["standing", "supported", "closeup"], "environment_tags": ["indoor", "outdoor"]},
-    {"id": "zone_vanity", "prompt": "at the vanity or counter", "match_any_tags": ["vanity", "counter"], "capabilities": ["standing", "seated", "supported", "closeup"], "environment_tags": ["indoor"]},
+    {"id": "zone_vanity", "prompt": "at the vanity counter", "match_any_tags": ["vanity", "counter"], "capabilities": ["standing", "seated", "supported", "closeup"], "environment_tags": ["indoor"]},
     {"id": "zone_window", "prompt": "at the window", "match_any_tags": ["window"], "capabilities": ["standing", "seated", "supported", "closeup"], "environment_tags": ["indoor"]},
-    {"id": "zone_rug", "prompt": "on the rug or floor surface", "match_any_tags": ["floor", "blanket"], "capabilities": ["standing", "seated", "reclining", "kneeling", "closeup"], "environment_tags": ["indoor", "outdoor"]},
-    {"id": "zone_sofa", "prompt": "on or beside the sofa", "match_any_tags": ["sofa", "lounger"], "capabilities": ["standing", "seated", "reclining", "kneeling", "supported", "closeup"], "environment_tags": ["indoor", "outdoor"]},
-    {"id": "zone_chair", "prompt": "on or beside the chair", "match_any_tags": ["chair", "bench"], "capabilities": ["standing", "seated", "kneeling", "supported", "closeup"], "environment_tags": ["indoor", "outdoor"]},
+    {"id": "zone_rug", "prompt": "on the rug-covered floor", "match_any_tags": ["floor", "blanket"], "capabilities": ["standing", "seated", "reclining", "kneeling", "closeup"], "environment_tags": ["indoor", "outdoor"]},
+    {"id": "zone_sofa", "prompt": "at the sofa", "match_any_tags": ["sofa", "lounger"], "capabilities": ["standing", "seated", "reclining", "kneeling", "supported", "closeup"], "environment_tags": ["indoor", "outdoor"]},
+    {"id": "zone_chair", "prompt": "at the chair", "match_any_tags": ["chair", "bench"], "capabilities": ["standing", "seated", "kneeling", "supported", "closeup"], "environment_tags": ["indoor", "outdoor"]},
     {"id": "zone_pool_edge", "prompt": "at the pool edge", "match_any_tags": ["pool_edge"], "capabilities": ["standing", "seated", "reclining", "kneeling", "supported", "closeup"], "environment_tags": ["pool"]},
     {"id": "zone_bath", "prompt": "in the private bathing area", "match_any_tags": ["bathtub"], "capabilities": ["seated", "reclining", "kneeling", "supported", "closeup"], "environment_tags": ["bathroom"]},
     {"id": "zone_garden_surface", "prompt": "on a private garden surface", "match_any_tags": ["garden", "nature", "tree"], "capabilities": ["standing", "seated", "reclining", "kneeling", "supported", "closeup"], "environment_tags": ["outdoor"]}

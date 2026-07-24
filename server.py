@@ -258,6 +258,16 @@ def iter_content_items(db: dict[str, Any]) -> Iterable[dict[str, Any]]:
         yield from db.get(section, [])
 
 
+def semantic_prompt_issues(db: dict[str, Any], prompt: str) -> list[str]:
+    """Return data-configured ambiguous wording present in a prompt."""
+    normalized = f" {re.sub(r'\s+', ' ', prompt.casefold()).strip()} "
+    return [
+        phrase.strip()
+        for phrase in db["settings"]["semantic_prompt_audit"]["ambiguous_phrases"]
+        if phrase.casefold() in normalized
+    ]
+
+
 def validate_item(item: Any, context: str) -> None:
     if not isinstance(item, dict) or not isinstance(item.get("id"), str):
         raise AppError(f"{context}: every item needs a string id")
@@ -302,6 +312,20 @@ def validate_database(db: dict[str, Any]) -> None:
         if section not in db:
             raise AppError(f"database.json is missing the '{section}' section")
     settings = db["settings"]
+    semantic_audit = settings.get("semantic_prompt_audit")
+    ambiguous_phrases = (
+        semantic_audit.get("ambiguous_phrases")
+        if isinstance(semantic_audit, dict) else None
+    )
+    if (
+        not isinstance(ambiguous_phrases, list) or not ambiguous_phrases
+        or not all(isinstance(phrase, str) and phrase.strip() for phrase in ambiguous_phrases)
+        or len({phrase.casefold() for phrase in ambiguous_phrases}) != len(ambiguous_phrases)
+    ):
+        raise AppError(
+            "settings.semantic_prompt_audit.ambiguous_phrases must be a "
+            "non-empty unique list of phrases"
+        )
     positive_prefix = db["prompt_defaults"].get("positive_prefix")
     if not isinstance(positive_prefix, str) or positive_prefix.count("{age}") != 1:
         raise AppError(
@@ -690,6 +714,12 @@ def validate_database(db: dict[str, Any]) -> None:
         if internal:
             raise AppError(
                 f"{item['id']}.prompt contains internal non-visual wording: {internal}"
+            )
+        ambiguous = semantic_prompt_issues(db, prompt)
+        if ambiguous:
+            raise AppError(
+                f"{item['id']}.prompt contains ambiguous alternatives: "
+                + ", ".join(ambiguous)
             )
         if len(prompt.split()) > 48:
             raise AppError(f"{item['id']}.prompt is too long for a catalog fragment")
@@ -2605,7 +2635,7 @@ def compile_scene(db: dict[str, Any], scene: dict[str, Any]) -> tuple[str, str, 
             )
             if visible_outer_chest else
             (
-                "(fully opaque lingerie top or bra:1.5), uninterrupted fabric across "
+                "(one fully opaque chest-covering lingerie garment:1.5), uninterrupted fabric across "
                 "the entire chest, uniform material and color, clean smooth garment surface"
                 if covered_chest else
                 "revealing lingerie composition, breasts and nipples visibly framed by "
@@ -2714,7 +2744,7 @@ def compile_scene(db: dict[str, Any], scene: dict[str, Any]) -> tuple[str, str, 
     )
     if layered_hosiery:
         fragments.append(
-            "the panties are worn underneath the pantyhose or tights, hosiery forms the "
+            "the panties are worn underneath the hosiery garment, hosiery forms the "
             "continuous outer layer over the panties"
         )
     if lowerwear_covers_legs(lowerwear) and legwear:
@@ -2831,7 +2861,7 @@ def prompt_lint(scene: dict[str, Any], positive: str) -> list[str]:
             scene["stage"].get("body_visibility", [])
         ))
     ):
-        coverage_anchors["lingerie"] = "fully opaque lingerie top or bra"
+        coverage_anchors["lingerie"] = "one fully opaque chest-covering lingerie garment"
     expected_anchor = coverage_anchors.get(scene["stage"]["level"])
     if expected_anchor and expected_anchor not in folded:
         warnings.append("Clothing coverage contract is missing")
@@ -4323,7 +4353,13 @@ def validate_production_catalog(db: dict[str, Any]) -> dict[str, Any]:
                 removed_by_photoshoot: dict[int, set[str]] = {}
                 for shot in board:
                     validate_camera_grammar(shot["scene"])
-                    compile_scene(db, shot["scene"])
+                    positive, _, _ = compile_scene(db, shot["scene"])
+                    ambiguous = semantic_prompt_issues(db, positive)
+                    if ambiguous:
+                        raise AppError(
+                            "Compiled prompt contains ambiguous alternatives: "
+                            + ", ".join(ambiguous)
+                        )
                     removed = removed_by_photoshoot.setdefault(
                         shot["photoshoot_index"], set()
                     )
