@@ -6856,7 +6856,10 @@ class WebState:
             "total": len(shot_numbers),
             "shot_numbers": shot_numbers,
             "kind": "shot" if len(shot_numbers) == 1 else "storyboard",
-            "render_kind": "preview" if fast else "production",
+            "render_kind": (
+                "preview" if fast
+                else ("random" if record["args"].mode == "random" else "production")
+            ),
             "storyboard_mode": record["args"].mode,
             "current_shot": None,
             "progress": 0,
@@ -7323,7 +7326,10 @@ class WebState:
                 for path in paths:
                     append_prompt_debug_record({
                         "time": _iso_now(),
-                        "kind": "preview_render" if job["fast"] else "production",
+                        "kind": (
+                            "preview_render" if job["render_kind"] == "preview"
+                            else job["render_kind"]
+                        ),
                         "result": path.name,
                         "job_id": job_id,
                         "storyboard_id": job["storyboard_id"],

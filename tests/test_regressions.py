@@ -1296,6 +1296,16 @@ class DirectorRegressionTests(unittest.TestCase):
         self.assertNotIn("retrying", job)
         self.assertNotIn("last_error", job)
 
+    def test_random_storyboards_publish_a_distinct_render_subtype(self):
+        state, storyboard_id = self.make_storyboard(mode="random")
+        with patch.object(app.threading, "Thread"):
+            random_job = state.create_job(storyboard_id, False, [1, 2])
+            preview_job = state.create_job(storyboard_id, True, [1])
+        self.assertEqual(random_job["storyboard_mode"], "random")
+        self.assertEqual(random_job["render_kind"], "random")
+        self.assertEqual(random_job["pending_plan"]["render_kind"], "random")
+        self.assertEqual(preview_job["render_kind"], "preview")
+
     def test_render_jobs_queue_in_fifo_order_and_snapshot_the_storyboard(self):
         state, storyboard_id = self.make_storyboard()
         original_prompt = state.get_storyboard(storyboard_id)["shots"][0]["scene"]["pose"]["prompt"]
@@ -3148,7 +3158,10 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("rendering ? (deadline ? `ETA ${formatDuration(item.eta_seconds)}`", js)
         self.assertIn(": 'Queued'", js)
         self.assertIn("plan.completion_eta_seconds", js)
-        self.assertIn("`${representative.render_kind === 'preview' ? 'Preview' : 'Photoshoot'} ${group.displayNumber}`", js)
+        self.assertIn("function renderKindName(kind)", js)
+        self.assertIn("kind === 'random' ? 'random'", js)
+        self.assertIn("function pendingGroupKind(kind)", js)
+        self.assertIn("`${renderKindTitle(pendingGroupKind(representative.render_kind))} ${group.displayNumber}`", js)
         self.assertIn("completionDeadline", js)
         self.assertIn("if (!item || item.pending) return", js)
         self.assertIn("if (card.classList.contains('pending-output')) return", js)

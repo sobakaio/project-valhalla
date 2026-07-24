@@ -261,11 +261,25 @@ const PREVIEW_FILENAME = /^(\d{8}_\d{6}_\d{6})_preview_(\d+)_shot_(\d+)_/;
 const RANDOM_FILENAME = /^(\d{8}_\d{6}_\d{6})_random_shot_(\d+)_/;
 const LEGACY_RUN_FILENAME = /^(\d{8}_\d{6}_\d{6})_/;
 
+function renderKindName(kind) {
+  return kind === 'preview' ? 'preview' : (kind === 'random' ? 'random' : 'production');
+}
+
+function renderKindTitle(kind) {
+  if (kind === 'photoshoot') return 'Photoshoot';
+  const name = renderKindName(kind);
+  return `${name[0].toUpperCase()}${name.slice(1)}`;
+}
+
+function pendingGroupKind(kind) {
+  return kind === 'preview' ? 'preview' : (kind === 'random' ? 'random' : 'photoshoot');
+}
+
 function outputGroupIdentity(item) {
   if (item.pending || item.pending_job_id) {
     return {
       key: `pending:${item.job_id || item.pending_job_id}`,
-      run: item.render_kind === 'preview' ? 'Preview queue' : 'Production queue',
+      run: `${renderKindTitle(item.render_kind)} queue`,
       kind: 'pending',
       number: null,
     };
@@ -332,7 +346,7 @@ function photoshootGroups() {
     const key = `pending:${plan.job_id}`;
     const identity = {
       key,
-      run: plan.render_kind === 'preview' ? 'Preview queue' : 'Production queue',
+      run: `${renderKindTitle(plan.render_kind)} queue`,
       kind: 'pending',
       number: null,
     };
@@ -359,9 +373,10 @@ function photoshootGroups() {
     if (group.identity?.kind === 'preview') group.displayNumber = ++previewNumber;
     if (group.identity?.kind === 'random') group.displayNumber = ++randomNumber;
     if (group.identity?.kind === 'pending') {
-      group.displayNumber = group.pendingPlan.render_kind === 'preview'
-        ? ++previewNumber
-        : ++photoshootNumber;
+      const pendingKind = pendingGroupKind(group.pendingPlan.render_kind);
+      if (pendingKind === 'preview') group.displayNumber = ++previewNumber;
+      if (pendingKind === 'random') group.displayNumber = ++randomNumber;
+      if (pendingKind === 'photoshoot') group.displayNumber = ++photoshootNumber;
     }
   });
   return ordered;
@@ -1049,7 +1064,7 @@ async function startGeneration() {
     await trackQueuedJob(queuedJob, previousActiveId);
     switchView('outputs');
     toast(
-      alreadyActive ? 'Added to render queue' : 'Production queued',
+      alreadyActive ? 'Added to render queue' : `${renderKindTitle(queuedJob.render_kind)} queued`,
       `${queuedJob.total} images queued${alreadyActive ? ` at position ${queuedJob.queue_position}` : ''}.`,
       'success',
     );
@@ -1280,7 +1295,7 @@ function showJob() {
     : (job.status === 'queued'
       ? `Waiting to start${queueSuffix}`
       : (allImagesRendered
-        ? `Finalizing production…${queueSuffix}`
+        ? `Finalizing ${renderKindName(job.render_kind)}…${queueSuffix}`
         : `Image ${job.completed} of ${job.total} · ${formatTime(job.eta_seconds)}${queueSuffix}`));
   $('#cancel-job').classList.toggle('hidden', allImagesRendered);
   $('#cancel-job').disabled = Boolean(job.cancel_requested) || allImagesRendered;
@@ -1312,12 +1327,12 @@ async function finishJob() {
   syncRenderControls();
   $('#job-dock').classList.add('hidden');
   if (job.status === 'completed') {
-    toast('Production complete', `${job.outputs.length} output${job.outputs.length === 1 ? '' : 's'} saved.`, 'success');
+    toast(`${renderKindTitle(job.render_kind)} complete`, `${job.outputs.length} output${job.outputs.length === 1 ? '' : 's'} saved.`, 'success');
     switchView('outputs');
   } else if (job.status === 'cancelled') {
-    toast('Production cancelled', `${job.completed} of ${job.total} images completed.`);
+    toast(`${renderKindTitle(job.render_kind)} cancelled`, `${job.completed} of ${job.total} images completed.`);
   } else {
-    toast('Production failed', job.error || 'Unknown render error', 'error');
+    toast(`${renderKindTitle(job.render_kind)} failed`, job.error || 'Unknown render error', 'error');
   }
   try {
     const session = await api('/api/jobs');
@@ -1736,7 +1751,7 @@ function outputCardHtml(item, index, layout, position, group = null) {
   const shotLabel = displayShot == null ? 'Output' : `Shot ${displayShot}`;
   if (item.pending) {
     const rendering = item.status === 'rendering';
-    const kind = item.render_kind === 'preview' ? 'preview' : 'production';
+    const kind = renderKindName(item.render_kind);
     const status = `Shot ${displayShot} (${kind})`;
     const deadline = item.eta_seconds != null && Number.isFinite(Number(item.eta_seconds))
       ? new Date(item.observed_at).getTime() + Number(item.eta_seconds) * 1000
@@ -1774,7 +1789,7 @@ function photoshootCardHtml(group, index) {
   const representative = group.items[0]?.item
     || pendingOutput(group.pendingPlan, group.pendingPlan.start_position);
   const title = group.identity?.kind === 'pending'
-    ? `${representative.render_kind === 'preview' ? 'Preview' : 'Photoshoot'} ${group.displayNumber}`
+    ? `${renderKindTitle(pendingGroupKind(representative.render_kind))} ${group.displayNumber}`
     : group.identity?.kind === 'photoshoot'
     ? `Photoshoot ${group.displayNumber}`
     : (group.identity?.kind === 'preview'
