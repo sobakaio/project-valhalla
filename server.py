@@ -1855,7 +1855,17 @@ class Composer:
         overrides: dict[str, str],
     ) -> dict[str, dict[str, Any] | None]:
         styles = fixed.setdefault("surface_styles", {})
-        if furniture["id"] not in styles:
+        continuity_tags = (
+            "bed", "sofa", "chair", "bathtub", "shower", "counter",
+            "windowsill", "rug", "floor", "wall", "bench", "lounger",
+            "blanket", "tree", "deck",
+        )
+        family = next(
+            (tag for tag in continuity_tags if tag in tags(furniture)),
+            furniture["id"],
+        )
+        continuity_key = f"{fixed['interior']['id']}:{family}"
+        if continuity_key not in styles:
             settings = self.db["settings"].get("surface_modifiers", {})
             style: dict[str, dict[str, Any] | None] = {}
             for kind in ("color", "texture"):
@@ -1865,8 +1875,8 @@ class Composer:
                     weighted_choice(self.rng, candidates)
                     if candidates and self.rng.random() < chance else None
                 )
-            styles[furniture["id"]] = style
-        style = dict(styles[furniture["id"]])
+            styles[continuity_key] = style
+        style = dict(styles[continuity_key])
         for kind in ("color", "texture"):
             key = f"surface_{kind}"
             if key not in overrides:

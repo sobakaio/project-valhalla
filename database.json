@@ -19529,7 +19529,34 @@
     },
     {
       "id": "prop_teddy_bear",
-      "prompt": "holding a soft cuddly teddy bear close to her chest",
+      "prompt": "holding a classic warm brown teddy bear close to her chest",
+      "tags": [
+        "home_prop",
+        "casual_prop",
+        "playful_prop"
+      ]
+    },
+    {
+      "id": "prop_teddy_bear_cream",
+      "prompt": "holding a soft cream teddy bear close to her chest",
+      "tags": [
+        "home_prop",
+        "casual_prop",
+        "playful_prop"
+      ]
+    },
+    {
+      "id": "prop_teddy_bear_dusty_pink",
+      "prompt": "holding a muted dusty-pink teddy bear close to her chest",
+      "tags": [
+        "home_prop",
+        "casual_prop",
+        "playful_prop"
+      ]
+    },
+    {
+      "id": "prop_teddy_bear_soft_gray",
+      "prompt": "holding a soft dove-gray teddy bear close to her chest",
       "tags": [
         "home_prop",
         "casual_prop",

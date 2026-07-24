@@ -543,6 +543,46 @@ class CatalogQualityTests(unittest.TestCase):
             5,
         )
 
+    def test_photoshoot_keeps_surface_style_per_furniture_family(self):
+        database, _ = app.load_database()
+        composer = app.Composer(database, app.random.Random(606060))
+        fixed = composer.fixed_context()
+        stages = app.effective_photoshoot_stages(fixed["outfit"]["template"])
+        scenes = [
+            composer.resolve_scene(fixed, stages[index % len(stages)])
+            for index in range(20)
+        ]
+        family_tags = ("bed", "sofa", "chair", "rug", "floor", "wall")
+        styles = {}
+        checked = 0
+        for scene in scenes:
+            family = next((
+                tag for tag in family_tags if tag in app.tags(scene["furniture"])
+            ), None)
+            if not family:
+                continue
+            style = (
+                (scene.get("surface_color") or {}).get("id"),
+                (scene.get("surface_texture") or {}).get("id"),
+            )
+            if family in styles:
+                self.assertEqual(style, styles[family])
+                checked += 1
+            styles[family] = style
+        self.assertGreater(checked, 0)
+
+    def test_teddy_bears_have_multiple_authored_plausible_colors(self):
+        database, _ = app.load_database()
+        teddy_bears = [
+            item for item in database["props"]
+            if item["id"].startswith("prop_teddy_bear")
+        ]
+        self.assertEqual(len(teddy_bears), 4)
+        prompts = " ".join(item["prompt"].casefold() for item in teddy_bears)
+        for color in ("brown", "cream", "dusty-pink", "dove-gray"):
+            self.assertIn(color, prompts)
+        self.assertTrue(all("playful_prop" in app.tags(item) for item in teddy_bears))
+
     def test_age_catalog_contains_only_three_explicit_adult_presets(self):
         database, _ = app.load_database()
         ages = database["human_model_parts"]["age"]

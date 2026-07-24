@@ -126,6 +126,12 @@ construction contract for each mode. Garter-supported stockings can only be
 composed with the dedicated visible support belt; ordinary pantyhose and stay-up
 stockings cannot acquire that belt through Composer or Director edits.
 
+Within a Photoshoot, surface color and texture are cached by interior and physical
+furniture family. Alternate sofa catalog records therefore retain one sofa style,
+while a pose may still move to a genuinely different support such as a bed, wall,
+or floor. Random generations receive a fresh context. Teddy-bear props use authored
+brown, cream, muted pink, and soft gray variants instead of an unspecified color.
+
 If `comfy.workflow_source` is set to `live`, Valhalla reads the latest compatible ComfyUI workflow instead of the selected saved profiles. Saved profiles are recommended for reproducible production.
 
 ## Production workflow
