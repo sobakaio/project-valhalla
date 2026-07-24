@@ -1777,79 +1777,97 @@
     "breast_size": [
       {
         "id": "breasts_small",
-        "prompt": "small breasts"
+        "prompt": "small breasts",
+        "covered_prompt": "a slight natural upper-body contour"
       },
       {
         "id": "breasts_medium",
-        "prompt": "medium-sized breasts"
+        "prompt": "medium-sized breasts",
+        "covered_prompt": "a balanced medium upper-body contour"
       },
       {
         "id": "breasts_large",
-        "prompt": "large breasts"
+        "prompt": "large breasts",
+        "covered_prompt": "a pronounced full upper-body contour"
       },
       {
         "id": "breasts_full",
-        "prompt": "full heavy breasts"
+        "prompt": "full heavy breasts",
+        "covered_prompt": "a pronounced heavy upper-body contour"
       },
       {
         "id": "breasts_very_small",
-        "prompt": "very small natural breasts"
+        "prompt": "very small natural breasts",
+        "covered_prompt": "a very slight natural upper-body contour"
       },
       {
         "id": "breasts_small_full",
-        "prompt": "small full breasts"
+        "prompt": "small full breasts",
+        "covered_prompt": "a compact full upper-body contour"
       },
       {
         "id": "breasts_medium_full",
-        "prompt": "full medium-sized breasts"
+        "prompt": "full medium-sized breasts",
+        "covered_prompt": "a balanced full upper-body contour"
       },
       {
         "id": "breasts_very_large",
-        "prompt": "very large natural breasts"
+        "prompt": "very large natural breasts",
+        "covered_prompt": "a very pronounced heavy upper-body contour"
       },
       {
         "id": "breasts_extremely_large",
         "prompt": "extremely large heavy natural breasts",
+        "covered_prompt": "an exceptionally pronounced heavy upper-body contour",
         "weight": 0.35
       },
       {
         "id": "breasts_asymmetric_subtle",
         "prompt": "naturally full breasts with subtle realistic asymmetry",
+        "covered_prompt": "a naturally full upper-body contour with subtle asymmetry",
         "weight": 0.6
       }
     ],
     "breast_shape": [
       {
         "id": "breasts_round",
-        "prompt": "round natural breast shape"
+        "prompt": "round natural breast shape",
+        "covered_prompt": "a rounded upper-body silhouette"
       },
       {
         "id": "breasts_teardrop",
-        "prompt": "natural teardrop breast shape"
+        "prompt": "natural teardrop breast shape",
+        "covered_prompt": "a gently tapered upper-body silhouette"
       },
       {
         "id": "breasts_perky",
-        "prompt": "firm uplifted breast shape"
+        "prompt": "firm uplifted breast shape",
+        "covered_prompt": "a firm uplifted upper-body silhouette"
       },
       {
         "id": "breasts_bell",
-        "prompt": "natural bell-shaped breasts"
+        "prompt": "natural bell-shaped breasts",
+        "covered_prompt": "a softly lower-full upper-body silhouette"
       },
       {
         "id": "breasts_wide_set",
-        "prompt": "naturally wide-set breasts"
+        "prompt": "naturally wide-set breasts",
+        "covered_prompt": "a wider-spaced upper-body contour"
       },
       {
         "id": "breasts_close_set",
-        "prompt": "naturally close-set breasts"
+        "prompt": "naturally close-set breasts",
+        "covered_prompt": "a close-centred upper-body contour"
       },
       {
         "id": "breasts_soft_heavy",
-        "prompt": "soft naturally hanging breast shape"
+        "prompt": "soft naturally hanging breast shape",
+        "covered_prompt": "a soft naturally lowered upper-body silhouette"
       },
       {
         "id": "breasts_shallow",
-        "prompt": "shallow gently sloped breast shape"
+        "prompt": "shallow gently sloped breast shape",
+        "covered_prompt": "a shallow gently sloped upper-body silhouette"
       }
     ],
     "areola_size": [

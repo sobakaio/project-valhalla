@@ -56,6 +56,19 @@ class StudioGenerationLimitTests(unittest.TestCase):
 
 
 class CatalogQualityTests(unittest.TestCase):
+    def test_breast_traits_define_safe_covered_and_exposed_anchors(self):
+        database, _ = app.load_database()
+        for section in ("breast_size", "breast_shape"):
+            for item in database["human_model_parts"][section]:
+                self.assertTrue(item["prompt"].strip())
+                self.assertTrue(item["covered_prompt"].strip())
+                for exposed_term in ("breast", "nipple", "areola", "bust"):
+                    self.assertNotIn(exposed_term, item["covered_prompt"].casefold())
+        broken = copy.deepcopy(database)
+        broken["human_model_parts"]["breast_size"][0].pop("covered_prompt")
+        with self.assertRaisesRegex(app.AppError, "covered_prompt"):
+            app.validate_database(broken)
+
     def test_location_alternatives_are_separate_concrete_entities(self):
         database, _ = app.load_database()
         self.assertNotIn("semantic_prompt_audit", database["settings"])
@@ -1389,16 +1402,24 @@ class DirectorRegressionTests(unittest.TestCase):
             visible_anatomy = bool(
                 {"breasts", "nipples"} & set(source["stage"].get("body_visibility", []))
             )
-            anatomy_identity = (
-                f"consistently {human['breast_size']['prompt']} with {human['breast_shape']['prompt']}"
-                if visible_anatomy else
-                "the same unchanged upper-body proportions and silhouette"
+            breast_size = human["breast_size"][
+                "prompt" if visible_anatomy else "covered_prompt"
+            ]
+            breast_shape = human["breast_shape"][
+                "prompt" if visible_anatomy else "covered_prompt"
+            ]
+            hair = " ".join(
+                human[key]["prompt"] for key in (
+                    "hair_texture", "hair_length", "hair_style", "hair_color",
+                )
             )
             stable_subject = (
-                f"the same {human['age']['prompt']} with a consistent face and body in every frame, "
-                f"{anatomy_identity}"
+                f"subject has {breast_size} with {breast_shape}; subject has {hair}"
             ).casefold()
             self.assertIn(stable_subject, positive)
+            self.assertEqual(positive.count(stable_subject), 1)
+            self.assertEqual(positive.count(human["age"]["prompt"].casefold()), 1)
+            self.assertNotIn("consistent face and body in every frame", positive)
             self.assertLess(positive.index(stable_subject), positive.index(source["scene"]["pose"]["prompt"].casefold()))
             visible = set(source["stage"].get("visible_slots", []))
             for slot in visible:

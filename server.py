@@ -388,6 +388,14 @@ def validate_database(db: dict[str, Any]) -> None:
             raise AppError(f"human_model_parts.{section} must be a non-empty list")
         for item in values:
             validate_item(item, f"human_model_parts.{section}")
+            if section in {"breast_size", "breast_shape"} and (
+                not isinstance(item.get("covered_prompt"), str)
+                or not item["covered_prompt"].strip()
+            ):
+                raise AppError(
+                    f"human_model_parts.{section}.{item['id']}.covered_prompt "
+                    "must be non-empty text"
+                )
             if item["id"] in ids:
                 raise AppError(f"Duplicate id: {item['id']}")
             ids.add(item["id"]); index[item["id"]] = item
@@ -2545,15 +2553,13 @@ class Composer:
 
 ALWAYS_HUMAN_PARTS = (
     "ethnic_appearance", "skin_tone", "face_shape", "eye_shape", "eye_color",
-    "eyebrows", "nose", "lips", "cheekbones", "jawline", "hair_texture", "hair_length",
-    "hair_style", "hair_color", "height", "body_frame", "waist", "hips", "makeup",
-    "manicure",
+    "eyebrows", "nose", "lips", "cheekbones", "jawline", "height", "body_frame",
+    "waist", "hips", "makeup", "manicure",
 )
 
 def human_fragments(
     human: dict[str, Any],
     visibility: set[str],
-    covered_chest: bool,
     custom: dict[str, str],
 ) -> list[str]:
     pregnant = (
@@ -2573,11 +2579,6 @@ def human_fragments(
             item["prompt"] for item in human.get("facial_accents", [])
             if item.get("prompt")
         )
-    if "breasts" in visibility or "nipples" in visibility:
-        fragments.extend([
-            custom.get("human.breast_size") or human["breast_size"]["prompt"],
-            custom.get("human.breast_shape") or human["breast_shape"]["prompt"],
-        ])
     if "nipples" in visibility:
         fragments.extend(
             custom.get(f"human.{key}") or human[key]["prompt"]
@@ -2614,20 +2615,23 @@ def compile_scene(
     positive_prefix = defaults.get("positive_prefix", "").replace("{age}", age_prompt)
     fragments = [positive_prefix]
     human = scene["human"]
-    breast_size_prompt = custom.get("human.breast_size") or human["breast_size"]["prompt"]
-    breast_shape_prompt = custom.get("human.breast_shape") or human["breast_shape"]["prompt"]
+    breast_size_prompt = (
+        human["breast_size"]["covered_prompt"]
+        if covered_chest else
+        custom.get("human.breast_size") or human["breast_size"]["prompt"]
+    )
+    breast_shape_prompt = (
+        human["breast_shape"]["covered_prompt"]
+        if covered_chest else
+        custom.get("human.breast_shape") or human["breast_shape"]["prompt"]
+    )
     hair_parts = [
         custom.get(f"human.{key}") or human[key]["prompt"]
         for key in ("hair_texture", "hair_length", "hair_style", "hair_color")
     ]
-    anatomy_identity = (
-        "the same unchanged upper-body proportions and silhouette"
-        if covered_chest else
-        f"consistently {breast_size_prompt} with {breast_shape_prompt}"
-    )
+    anatomy_identity = f"{breast_size_prompt} with {breast_shape_prompt}"
     fragments.append(
-        f"the same {age_prompt} with a consistent face and body in every frame, "
-        f"{anatomy_identity}, consistently {' '.join(hair_parts)}"
+        f"subject has {anatomy_identity}; subject has {' '.join(hair_parts)}"
     )
     body_state_prompt = (
         custom.get("human.body_state")
@@ -2757,7 +2761,7 @@ def compile_scene(
             custom.get("shot.intensity") or f"{scene['intensity']} visual intensity"
         )
     fragments.extend(
-        human_fragments(scene["human"], visibility, covered_chest, custom)
+        human_fragments(scene["human"], visibility, custom)
     )
     for contract in db["settings"]["wardrobe_compatibility"]["render_contracts"]:
         slot = contract["slot"]
@@ -2932,6 +2936,12 @@ def prompt_lint(scene: dict[str, Any], positive: str) -> list[str]:
     folded = positive.casefold()
     if folded.count("single subject") > 1:
         warnings.append("Subject identity is repeated")
+    stale_sequence_phrases = (
+        "consistent face and body in every frame",
+        "the same subject in every frame",
+    )
+    if any(phrase in folded for phrase in stale_sequence_phrases):
+        warnings.append("Prompt claims cross-frame model memory")
     if scene["stage"]["level"] == "covered" and any(term in folded for term in ("fully nude", "exposed genitals")):
         warnings.append("Covered stage contains exposed-content wording")
     coverage_anchors = {"covered": "fully opaque"}
