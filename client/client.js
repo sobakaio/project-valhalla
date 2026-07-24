@@ -261,6 +261,14 @@ const RANDOM_FILENAME = /^(\d{8}_\d{6}_\d{6})_random_shot_(\d+)_/;
 const LEGACY_RUN_FILENAME = /^(\d{8}_\d{6}_\d{6})_/;
 
 function outputGroupIdentity(item) {
+  if (item.pending) {
+    return {
+      key: `pending:${item.job_id}`,
+      run: item.render_kind === 'preview' ? 'Preview queue' : 'Production queue',
+      kind: 'pending',
+      number: null,
+    };
+  }
   const preview = item.name.match(PREVIEW_FILENAME);
   if (preview) {
     return {
@@ -372,7 +380,9 @@ function displayedOutputs() {
 }
 
 function previewOutputs() {
-  return activePhotoshootGroup()?.items || state.outputs.map((item, outputIndex) => ({ item, outputIndex }));
+  const items = activePhotoshootGroup()?.items
+    || state.outputs.map((item, outputIndex) => ({ item, outputIndex }));
+  return items.filter(({ item }) => !item.pending);
 }
 
 function formatOutputRun(run) {
@@ -954,9 +964,11 @@ async function trackQueuedJob(queuedJob, previousActiveId) {
   let session = null;
   try { session = await api('/api/jobs'); } catch { /* regular polling will retry */ }
   if (!session && previousActiveId) return;
+  if (session) syncQueuePlaceholders(session.jobs || []);
   const active = session?.active_job || null;
   if (previousActiveId && active?.id === previousActiveId) return;
   const submitted = session?.jobs?.find((job) => job.id === queuedJob.id) || queuedJob;
+  if (!session) syncQueuePlaceholders([submitted]);
   state.job = active || submitted;
   showJob();
   pollJob();
@@ -1227,6 +1239,7 @@ async function pollJob() {
   try {
     state.job = await api(`/api/jobs/${state.job.id}`);
     addOutputs(state.job.outputs || []);
+    syncJobPlaceholders(state.job);
     showJob();
     if (['queued', 'running'].includes(state.job.status)) {
       state.jobTimer = setTimeout(pollJob, 1200);
@@ -1241,6 +1254,7 @@ async function pollJob() {
 
 async function finishJob() {
   const job = state.job;
+  syncJobPlaceholders(job);
   syncRenderControls();
   $('#job-dock').classList.add('hidden');
   if (job.status === 'completed') {
@@ -1253,6 +1267,7 @@ async function finishJob() {
   }
   try {
     const session = await api('/api/jobs');
+    syncQueuePlaceholders(session.jobs || []);
     if (session.active_job && session.active_job.id !== job.id) {
       state.job = session.active_job;
       showJob();
@@ -1266,18 +1281,65 @@ async function finishJob() {
 function addOutputs(outputs) {
   const keys = new Set(state.outputs.map(outputIdentity));
   let added = false;
+  let appended = false;
   outputs.forEach((item) => {
     const key = outputIdentity(item);
+    const pendingIndex = item.pending_key
+      ? state.outputs.findIndex((output) => output.pending && output.key === item.pending_key)
+      : -1;
+    if (pendingIndex >= 0) {
+      state.outputs[pendingIndex] = item;
+      keys.add(key);
+      added = true;
+      return;
+    }
     if (!keys.has(key) && !state.deletedOutputs.has(key)) {
       state.outputs.push(item);
       keys.add(key);
       added = true;
+      appended = true;
     }
   });
   if (!added) return false;
-  sortOutputsByFilename();
+  if (appended) sortOutputsByFilename();
   renderOutputs();
   return true;
+}
+
+function pendingOutput(frame, job) {
+  return {
+    ...frame,
+    pending: true,
+    name: `pending_${job.id}_${String(frame.position).padStart(4, '0')}`,
+    queue_position: job.queue_position || null,
+  };
+}
+
+function syncJobPlaceholders(job) {
+  if (!job) return false;
+  const firstPendingIndex = state.outputs.findIndex(
+    (item) => item.pending && item.job_id === job.id,
+  );
+  const before = state.outputs.filter((item) => item.pending && item.job_id === job.id);
+  const retained = state.outputs.filter((item) => !(item.pending && item.job_id === job.id));
+  const pending = ['queued', 'running'].includes(job.status)
+    ? (job.pending_frames || []).map((frame) => pendingOutput(frame, job))
+    : [];
+  const beforeSignature = before.map((item) => `${item.key}:${item.status}:${item.eta_seconds}`).join('|');
+  const nextSignature = pending.map((item) => `${item.key}:${item.status}:${item.eta_seconds}`).join('|');
+  const insertionIndex = firstPendingIndex < 0 ? retained.length : firstPendingIndex;
+  retained.splice(insertionIndex, 0, ...pending);
+  state.outputs = retained;
+  if (beforeSignature === nextSignature) return false;
+  renderOutputs();
+  return true;
+}
+
+function syncQueuePlaceholders(jobs) {
+  const active = (jobs || []).filter((job) => ['queued', 'running'].includes(job.status));
+  const activeIds = new Set(active.map((job) => job.id));
+  state.outputs = state.outputs.filter((item) => !item.pending || activeIds.has(item.job_id));
+  active.forEach((job) => syncJobPlaceholders(job));
 }
 
 function outputIdentity(item) {
@@ -1336,9 +1398,12 @@ function syncDeleteControls() {
   const disabled = Boolean(isRenderActive());
   const deleteButton = $('#delete-all-outputs');
   const group = activePhotoshootGroup();
+  const hasCompleted = (group?.items.map(({ item }) => item) || state.outputs)
+    .some((item) => !item.pending);
   const photoshootList = state.galleryView === 'photoshoots' && !group;
   deleteButton.classList.toggle(
-    'hidden', state.outputs.length === 0 || state.galleryBenchmark || photoshootList,
+    'hidden', state.outputs.length === 0 || state.galleryBenchmark
+      || photoshootList || !hasCompleted,
   );
   deleteButton.disabled = disabled || state.galleryBenchmark;
   const groupLabel = group?.identity?.kind === 'preview' ? 'preview' : 'photoshoot';
@@ -1371,7 +1436,7 @@ function resolveDeletion(value) {
 
 async function deleteOutput(index) {
   const item = state.outputs[index];
-  if (!item) return;
+  if (!item || item.pending) return;
   const previewScope = imageDialog.open ? previewOutputs() : [];
   const previewPosition = previewScope.findIndex((entry) => entry.outputIndex === index);
   const confirmed = await confirmDeletion(
@@ -1401,7 +1466,7 @@ async function deleteOutput(index) {
 }
 
 async function deleteAllOutputs() {
-  if (!state.outputs.length) return;
+  if (!state.outputs.some((item) => !item.pending)) return;
   if (isRenderActive()) {
     toast('Deletion unavailable', 'Wait for the active render job to finish or cancel it first.', 'error');
     return;
@@ -1409,8 +1474,8 @@ async function deleteAllOutputs() {
   const group = activePhotoshootGroup();
   const groupLabel = group?.identity?.kind === 'preview' ? 'preview' : 'photoshoot';
   const targets = group
-    ? group.items.map(({ item }) => item)
-    : [...state.outputs];
+    ? group.items.map(({ item }) => item).filter((item) => !item.pending)
+    : state.outputs.filter((item) => !item.pending);
   const count = targets.length;
   const confirmed = await confirmDeletion(
     group ? `Delete this ${groupLabel} (${count} images)?` : `Delete all ${count} images?`,
@@ -1482,6 +1547,7 @@ async function restoreApplication() {
     const session = await api('/api/jobs');
     state.previewJob = session.latest_preview || null;
     state.job = session.active_job || session.jobs?.[0] || null;
+    syncQueuePlaceholders(session.jobs || []);
     renderLogger();
     if (state.job) {
       try {
@@ -1509,8 +1575,10 @@ async function restoreApplication() {
 
 function renderOutputs() {
   const count = state.outputs.length;
+  const pendingCount = state.outputs.filter((item) => item.pending).length;
+  const completedCount = count - pendingCount;
   if (state.galleryGroup && !activePhotoshootGroup()) state.galleryGroup = null;
-  $('#output-count').textContent = count;
+  $('#output-count').textContent = completedCount;
   $('#outputs-empty').classList.toggle('hidden', count > 0);
   const group = activePhotoshootGroup();
   const groups = photoshootGroups();
@@ -1519,7 +1587,8 @@ function renderOutputs() {
   const groupedSummary = [
     photoshootCount ? `${photoshootCount} photoshoot${photoshootCount === 1 ? '' : 's'}` : '',
     previewCount ? `${previewCount} preview${previewCount === 1 ? '' : 's'}` : '',
-    `${count} images`,
+    `${completedCount} images`,
+    pendingCount ? `${pendingCount} waiting` : '',
   ].filter(Boolean).join(' · ');
   $$('#gallery-view-toggle button').forEach((button) => {
     button.classList.toggle('active', button.dataset.galleryView === state.galleryView);
@@ -1531,7 +1600,7 @@ function renderOutputs() {
         ? `${group.items.length} image${group.items.length === 1 ? '' : 's'} in this group.`
         : (state.galleryView === 'photoshoots'
           ? `${groupedSummary}.`
-          : `${count} generated image${count === 1 ? '' : 's'}.`)))
+          : `${completedCount} generated image${completedCount === 1 ? '' : 's'}${pendingCount ? ` · ${pendingCount} waiting` : ''}.`)))
     : 'No generated images.';
   outputRenderSignature = '';
   renderVirtualOutputs(true);
@@ -1570,6 +1639,19 @@ function outputDisplayShot(item) {
 function outputCardHtml(item, index, layout, position) {
   const displayShot = outputDisplayShot(item);
   const shotLabel = displayShot == null ? 'Output' : `Shot ${displayShot}`;
+  if (item.pending) {
+    const status = item.status === 'rendering'
+      ? 'Rendering'
+      : (item.queue_position ? `Queued · position ${item.queue_position}` : 'Queued');
+    const deadline = item.eta_seconds != null && Number.isFinite(Number(item.eta_seconds))
+      ? new Date(item.observed_at).getTime() + Number(item.eta_seconds) * 1000
+      : '';
+    return `<article class="output-card pending-output" data-pending-key="${escapeHtml(item.key)}"
+      aria-label="${escapeHtml(shotLabel)} ${escapeHtml(status)}">
+      <div class="render-placeholder" aria-hidden="true"><i></i><strong>${escapeHtml(item.render_kind === 'preview' ? 'Preview' : 'Production')}</strong><span>${escapeHtml(status)}</span><em data-pending-deadline="${deadline}">${deadline ? `≈ ${formatTime(item.eta_seconds)}` : 'Estimating…'}</em></div>
+      <footer><span>${escapeHtml(shotLabel)}</span><span>Waiting</span></footer>
+    </article>`;
+  }
   const visual = state.privacyCovered
     ? '<div class="privacy-placeholder" aria-label="Image hidden by privacy cover"></div>'
     : `<img src="${encodeURI(item.thumbnail_url || item.url)}" alt="Generated ${escapeHtml(shotLabel)}" loading="lazy" decoding="async">`;
@@ -1580,9 +1662,25 @@ function outputCardHtml(item, index, layout, position) {
   </article>`;
 }
 
+function refreshPendingCountdowns() {
+  $$('[data-pending-deadline]', outputGrid).forEach((node) => {
+    const deadline = Number(node.dataset.pendingDeadline);
+    if (!Number.isFinite(deadline) || deadline <= 0) {
+      node.textContent = 'Estimating…';
+      return;
+    }
+    const remaining = Math.max(0, (deadline - Date.now()) / 1000);
+    node.textContent = remaining > 0 ? `≈ ${formatTime(remaining)}` : '≈ finishing…';
+  });
+}
+
+setInterval(refreshPendingCountdowns, 1000);
+
 function photoshootCardHtml(group, index) {
   const representative = group.items[0].item;
-  const title = group.identity?.kind === 'photoshoot'
+  const title = group.identity?.kind === 'pending'
+    ? (representative.render_kind === 'preview' ? 'Preview rendering' : 'Production rendering')
+    : group.identity?.kind === 'photoshoot'
     ? `Photoshoot ${group.displayNumber}`
     : (group.identity?.kind === 'preview'
       ? `Preview ${group.displayNumber}`
@@ -1591,7 +1689,9 @@ function photoshootCardHtml(group, index) {
       : (group.identity?.kind === 'legacy' ? 'Render run' : 'Ungrouped')));
   const run = group.identity ? formatOutputRun(group.identity.run) : 'Files without photoshoot naming';
   const runTitle = group.identity ? `Render ID: ${group.identity.run}` : '';
-  const visual = state.privacyCovered
+  const visual = representative.pending
+    ? `<div class="render-placeholder"><i></i><strong>${escapeHtml(title)}</strong><span>${group.items.length} frame${group.items.length === 1 ? '' : 's'} waiting</span><em>Open for ETA</em></div>`
+    : state.privacyCovered
     ? '<div class="privacy-placeholder" aria-label="Image hidden by privacy cover"></div>'
     : `<img src="${encodeURI(representative.thumbnail_url || representative.url)}" alt="${escapeHtml(title)} representative frame" loading="lazy" decoding="async">`;
   return `<article class="output-card photoshoot-card" data-group-key="${escapeHtml(group.key)}" data-group-index="${index}" tabindex="0" role="button"
@@ -1809,6 +1909,7 @@ function setPreviewFit(value) {
 function showPreview(index) {
   if (!state.outputs.length) return;
   const scope = previewOutputs();
+  if (!scope.length) return;
   let position = scope.findIndex((entry) => entry.outputIndex === index);
   if (position < 0) position = 0;
   state.previewIndex = scope[position].outputIndex;
@@ -2015,6 +2116,7 @@ outputGrid.addEventListener('click', (event) => {
     openPhotoshoot(card.dataset.groupKey);
     return;
   }
+  if (card.classList.contains('pending-output')) return;
   if (event.target.closest('[data-action="delete-output"]')) {
     deleteOutput(Number(card.dataset.outputIndex));
     return;
@@ -2081,6 +2183,7 @@ outputGrid.addEventListener('keydown', (event) => {
     }
     return;
   }
+  if (card.classList.contains('pending-output')) return;
   const index = Number(card.dataset.outputIndex);
   if (['Enter', ' '].includes(event.key)) {
     event.preventDefault();
@@ -3099,6 +3202,7 @@ $('#cancel-job').addEventListener('click', async () => {
   if (!state.job) return;
   try {
     state.job = await api(`/api/jobs/${state.job.id}/cancel`, { method: 'POST', body: '{}' });
+    syncJobPlaceholders(state.job);
     showJob();
   } catch (error) { toast('Could not cancel', error.message, 'error'); }
 });

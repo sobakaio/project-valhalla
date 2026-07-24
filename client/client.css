@@ -449,6 +449,14 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: .42; }
 .output-card footer { position: absolute; inset: auto 0 0; padding: 35px 11px 10px; display: flex; justify-content: space-between; align-items: end; color: white; background: linear-gradient(transparent, rgb(0 0 0 / 70%)); font-size: 0.625rem; }
 .output-card a { color: white; text-decoration: none; font-weight: 700; }
 .output-card.photoshoot-card { cursor: pointer; }
+.output-card.pending-output { cursor: default; border-style: dashed; }
+.render-placeholder { width: 100%; height: 100%; display: grid; place-content: center; justify-items: center; gap: 8px; padding: 18px; text-align: center; color: var(--muted); background: radial-gradient(circle at 50% 35%, var(--brand-soft), transparent 44%), linear-gradient(145deg, var(--surface-3), var(--surface-2)); }
+.render-placeholder i { width: 34px; height: 34px; border: 3px solid color-mix(in srgb, var(--brand) 22%, transparent); border-top-color: var(--brand); border-radius: 50%; animation: pending-spin 1.1s linear infinite; }
+.render-placeholder strong { color: var(--text); font-size: 0.75rem; }
+.render-placeholder span { font-size: 0.6875rem; font-weight: 700; }
+.render-placeholder em { color: var(--faint); font-size: 0.625rem; font-style: normal; font-variant-numeric: tabular-nums; }
+@keyframes pending-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .render-placeholder i { animation: none; } }
 .photoshoot-count { padding: 3px 7px; border-radius: 99px; background: rgb(0 0 0 / 45%); font-weight: 750; }
 .empty-state.compact { min-height: 450px; border: 1px dashed var(--line-strong); border-radius: var(--radius); background: var(--surface); }
 .output-placeholder { font-size: 2.375rem; color: var(--faint); margin-bottom: 16px; }

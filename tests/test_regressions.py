@@ -1266,6 +1266,60 @@ class DirectorRegressionTests(unittest.TestCase):
         self.assertEqual(order, [first["id"], second["id"]])
         self.assertFalse(state._job_worker_running)
 
+    def test_render_jobs_expose_stable_pending_frames_and_opportunistic_eta(self):
+        state, storyboard_id = self.make_storyboard()
+        with patch.object(app.threading, "Thread"):
+            job = state.create_job(storyboard_id, False, [1, 2, 3])
+        self.assertEqual(
+            [item["key"] for item in job["pending_frames"]],
+            [f"pending:{job['id']}:{position}" for position in (1, 2, 3)],
+        )
+        self.assertEqual([item["shot"] for item in job["pending_frames"]], [1, 2, 3])
+        self.assertTrue(all(item["eta_seconds"] is None for item in job["pending_frames"]))
+        self.assertTrue(all(item["status"] == "queued" for item in job["pending_frames"]))
+
+        timing_key = (False, job["workflow_profile"])
+        state._render_timings[timing_key] = [8.0, 10.0, 60.0]
+        estimated = state.get_job(job["id"])
+        self.assertEqual(estimated["estimated_frame_seconds"], 10.0)
+        self.assertEqual(
+            [item["eta_seconds"] for item in estimated["pending_frames"]],
+            [10.0, 20.0, 30.0],
+        )
+        self.assertTrue(all(item["observed_at"] for item in estimated["pending_frames"]))
+
+    def test_pending_eta_counts_fifo_work_and_ignores_incompatible_history(self):
+        state, storyboard_id = self.make_storyboard()
+        with patch.object(app.threading, "Thread"):
+            first = state.create_job(storyboard_id, False, [1, 2])
+            second = state.create_job(storyboard_id, False, [3])
+            preview = state.create_job(storyboard_id, True, [4])
+        state._render_timings[(False, first["workflow_profile"])] = [12.0]
+        session = state.jobs_payload()
+        queued = {job["id"]: job for job in session["queued_jobs"]}
+        self.assertEqual(queued[first["id"]]["pending_frames"][-1]["eta_seconds"], 24.0)
+        self.assertEqual(queued[second["id"]]["pending_frames"][0]["eta_seconds"], 36.0)
+        self.assertIsNone(queued[preview["id"]]["estimated_frame_seconds"])
+        self.assertIsNone(queued[preview["id"]]["pending_frames"][0]["eta_seconds"])
+
+        cancelled = state.cancel_job(second["id"])
+        self.assertEqual(cancelled["pending_frames"], [])
+
+    def test_running_pending_frame_is_rendering_and_countdown_never_negative(self):
+        state, storyboard_id = self.make_storyboard()
+        with patch.object(app.threading, "Thread"):
+            job = state.create_job(storyboard_id, False, [1, 2, 3])
+        record = state.jobs[job["id"]]
+        record["status"] = "running"
+        record["completed"] = 1
+        record["_frame_durations"] = [10.0]
+        record["_started_monotonic"] = app.time.monotonic() - 15
+        record["_shot_started_monotonic"] = app.time.monotonic() - 20
+        payload = state.get_job(job["id"])
+        self.assertEqual(payload["pending_frames"][0]["status"], "rendering")
+        self.assertEqual(payload["pending_frames"][0]["eta_seconds"], 0.0)
+        self.assertEqual(payload["pending_frames"][1]["eta_seconds"], 10.0)
+
     def test_queued_job_can_be_cancelled_before_it_starts(self):
         state, storyboard_id = self.make_storyboard()
         with patch.object(app.threading, "Thread"):
@@ -2231,6 +2285,10 @@ class PromptDebugLogTests(unittest.TestCase):
             ):
                 state._run_job(job["id"])
         self.assertEqual(state.jobs[job["id"]]["status"], "completed")
+        self.assertEqual(
+            state.jobs[job["id"]]["outputs"][0]["pending_key"],
+            f"pending:{job['id']}:1",
+        )
         record = append.call_args.args[0]
         self.assertEqual(record["kind"], "production")
         self.assertEqual(record["result"], "rendered.png")
@@ -3008,6 +3066,29 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("added = true", add_outputs)
         self.assertIn("if (!added) return false", add_outputs)
         self.assertIn("renderOutputs();", add_outputs)
+
+    def test_render_queue_uses_noninteractive_placeholder_thumbnails_and_local_eta(self):
+        root = Path(app.__file__).parent
+        js = (root / "client" / "client.js").read_text(encoding="utf-8")
+        css = (root / "client" / "client.css").read_text(encoding="utf-8")
+        self.assertIn("function syncJobPlaceholders(job)", js)
+        self.assertIn("job.pending_frames || []", js)
+        self.assertIn("output.pending && output.key === item.pending_key", js)
+        self.assertIn("data-pending-deadline", js)
+        self.assertIn("function refreshPendingCountdowns()", js)
+        self.assertIn("setInterval(refreshPendingCountdowns, 1000)", js)
+        self.assertIn("Estimating…", js)
+        self.assertIn("if (!item || item.pending) return", js)
+        self.assertIn("if (card.classList.contains('pending-output')) return", js)
+        pending_card = js.split("if (item.pending) {", 1)[1].split(
+            "const visual = state.privacyCovered", 1
+        )[0]
+        self.assertNotIn("/api/thumbnails/", pending_card)
+        self.assertNotIn("download=", pending_card)
+        self.assertNotIn("data-action=\"delete-output\"", pending_card)
+        self.assertIn(".output-card.pending-output", css)
+        self.assertIn("@keyframes pending-spin", css)
+        self.assertIn("prefers-reduced-motion: reduce", css)
 
     def test_privacy_cover_is_persistent_high_priority_and_releases_image_sources(self):
         root = Path(app.__file__).parent

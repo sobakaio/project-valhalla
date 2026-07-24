@@ -5561,6 +5561,7 @@ class WebState:
         self.jobs: dict[str, dict[str, Any]] = {}
         self.previews: dict[str, dict[str, Any]] = {}
         self._job_worker_running = False
+        self._render_timings: dict[tuple[bool, str], list[float]] = {}
 
     def trim(self, mapping: dict[str, Any], maximum: int) -> None:
         while len(mapping) > maximum:
@@ -6855,6 +6856,8 @@ class WebState:
             "total": len(shot_numbers),
             "shot_numbers": shot_numbers,
             "kind": "shot" if len(shot_numbers) == 1 else "storyboard",
+            "render_kind": "preview" if fast else "production",
+            "storyboard_mode": record["args"].mode,
             "current_shot": None,
             "progress": 0,
             "elapsed_seconds": 0,
@@ -6872,6 +6875,7 @@ class WebState:
             "_shots": selected_shots,
             "_workflow_template": live_workflow,
             "_workflow_mapping": live_mapping,
+            "_frame_durations": [],
         }
         start_worker = False
         with self.lock:
@@ -6890,7 +6894,7 @@ class WebState:
             if not self._job_worker_running:
                 self._job_worker_running = True
                 start_worker = True
-            payload = self.job_payload(job)
+            payload = self.job_payload(job, self.queue_wait_seconds(job))
             payload["queue_position"] = sum(
                 1 for item in self.jobs.values()
                 if item["status"] == "queued"
@@ -7070,14 +7074,103 @@ class WebState:
                     time.monotonic() - preview["_started_monotonic"], 1
                 )
 
-    def job_payload(self, job: dict[str, Any]) -> dict[str, Any]:
+    def job_frame_seconds(self, job: dict[str, Any]) -> float | None:
+        durations = [
+            float(value) for value in job.get("_frame_durations", [])[-7:]
+            if isinstance(value, (int, float)) and value > 0
+        ]
+        if not durations and "fast" in job and job.get("workflow_profile"):
+            durations = list(self._render_timings.get(
+                (bool(job["fast"]), job["workflow_profile"]), []
+            )[-7:])
+        if not durations:
+            return None
+        ordered = sorted(durations)
+        middle = len(ordered) // 2
+        median = (
+            ordered[middle] if len(ordered) % 2
+            else (ordered[middle - 1] + ordered[middle]) / 2
+        )
+        return round(median, 1)
+
+    def queue_wait_seconds(self, target: dict[str, Any]) -> float | None:
+        wait = 0.0
+        for job in self.jobs.values():
+            if job["id"] == target["id"]:
+                return round(wait, 1)
+            if job["status"] not in {"queued", "running"}:
+                continue
+            estimate = self.job_frame_seconds(job)
+            if estimate is None:
+                return None
+            remaining = max(0, job["total"] - job["completed"])
+            job_wait = estimate * remaining
+            if (
+                job["status"] == "running"
+                and job.get("_shot_started_monotonic") is not None
+            ):
+                job_wait = max(
+                    0.0,
+                    job_wait - (time.monotonic() - job["_shot_started_monotonic"]),
+                )
+            wait += job_wait
+        return 0.0
+
+    def pending_frames_payload(
+        self, job: dict[str, Any], queue_wait: float | None
+    ) -> list[dict[str, Any]]:
+        if (
+            job["status"] not in {"queued", "running"}
+            or not all(key in job for key in ("total", "completed", "shot_numbers"))
+        ):
+            return []
+        estimate = self.job_frame_seconds(job)
+        observed_at = _iso_now()
+        current_remaining = estimate
+        if (
+            estimate is not None and job["status"] == "running"
+            and job.get("_shot_started_monotonic") is not None
+        ):
+            current_remaining = max(
+                0.0, estimate - (time.monotonic() - job["_shot_started_monotonic"])
+            )
+        frames = []
+        for position in range(job["completed"] + 1, job["total"] + 1):
+            eta = None
+            if estimate is not None and queue_wait is not None:
+                if job["status"] == "running":
+                    eta = current_remaining + estimate * (position - job["completed"] - 1)
+                else:
+                    eta = queue_wait + estimate * (position - job["completed"])
+            frames.append({
+                "key": f"pending:{job['id']}:{position}",
+                "job_id": job["id"],
+                "position": position,
+                "shot": job["shot_numbers"][position - 1],
+                "render_kind": job["render_kind"],
+                "status": (
+                    "rendering"
+                    if job["status"] == "running" and position == job["completed"] + 1
+                    else "queued"
+                ),
+                "eta_seconds": round(eta, 1) if eta is not None else None,
+                "observed_at": observed_at,
+            })
+        return frames
+
+    def job_payload(
+        self, job: dict[str, Any], queue_wait: float | None = None
+    ) -> dict[str, Any]:
         payload = {key: value for key, value in job.items() if not key.startswith("_")}
+        estimate = self.job_frame_seconds(job)
+        payload["observed_at"] = _iso_now()
+        payload["estimated_frame_seconds"] = estimate
+        payload["pending_frames"] = self.pending_frames_payload(job, queue_wait)
         if job["status"] == "running" and job.get("_started_monotonic") is not None:
             elapsed = time.monotonic() - job["_started_monotonic"]
             payload["elapsed_seconds"] = round(elapsed, 1)
-            if job["completed"]:
-                remaining = job["total"] - job["completed"]
-                payload["eta_seconds"] = round(elapsed / job["completed"] * remaining, 1)
+        if payload["pending_frames"]:
+            payload["eta_seconds"] = payload["pending_frames"][-1]["eta_seconds"]
         return payload
 
     def get_job(self, job_id: str) -> dict[str, Any]:
@@ -7085,7 +7178,7 @@ class WebState:
             job = self.jobs.get(job_id)
             if job is None:
                 raise AppError("Render job not found or expired")
-            payload = self.job_payload(job)
+            payload = self.job_payload(job, self.queue_wait_seconds(job))
             pipeline = [
                 item for item in self.jobs.values()
                 if item["status"] in {"queued", "running"}
@@ -7101,7 +7194,10 @@ class WebState:
 
     def jobs_payload(self) -> dict[str, Any]:
         with self.lock:
-            jobs = [self.job_payload(job) for job in self.jobs.values()]
+            jobs = [
+                self.job_payload(job, self.queue_wait_seconds(job))
+                for job in self.jobs.values()
+            ]
             visible_previews = [
                 preview for preview in self.previews.values()
                 if not preview.get("logger_hidden", False)
@@ -7233,6 +7329,7 @@ class WebState:
                         })
                         break
                     job["current_shot"] = shot["number"]
+                    job["_shot_started_monotonic"] = shot_started
                 positive, negative, _ = compile_scene(db, shot["scene"])
                 debug_positive, _, _ = compile_scene(
                     db, shot["scene"], include_age=False
@@ -7278,6 +7375,11 @@ class WebState:
                 completed = completed_index
                 remaining = len(selected_shots) - completed
                 with self.lock:
+                    frame_duration = round(time.monotonic() - shot_started, 1)
+                    job["_frame_durations"].append(frame_duration)
+                    timing_key = (bool(job["fast"]), job["workflow_profile"])
+                    self._render_timings.setdefault(timing_key, []).append(frame_duration)
+                    self._render_timings[timing_key] = self._render_timings[timing_key][-20:]
                     job["completed"] = completed
                     job["progress"] = round(completed * 100 / len(selected_shots), 1)
                     job["elapsed_seconds"] = round(elapsed, 1)
@@ -7286,13 +7388,15 @@ class WebState:
                     for path in paths:
                         published = output_payload(path)
                         published.update(prompt_id=prompt_id, shot=shot["number"])
+                        if not shot_outputs:
+                            published["pending_key"] = f"pending:{job_id}:{completed}"
                         job["outputs"].append(published)
                         shot_outputs.append(published)
                     shot_log.update({
                         "type": "shot_completed",
                         "position": completed,
                         "elapsed_seconds": round(elapsed, 1),
-                        "duration_seconds": round(time.monotonic() - shot_started, 1),
+                        "duration_seconds": frame_duration,
                         "image_url": shot_outputs[0]["url"] if shot_outputs else None,
                     })
                     if job.get("current_prompt") is not None:
@@ -7317,6 +7421,7 @@ class WebState:
                 job["elapsed_seconds"] = round(time.monotonic() - started, 1)
                 job["finished_at"] = _iso_now()
                 job["current_shot"] = None
+                job.pop("_shot_started_monotonic", None)
 
 
 WEB_STATE = WebState()
