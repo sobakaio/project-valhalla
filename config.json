@@ -23,7 +23,11 @@
     "proofs_dir": [],
     "output_format": "png",
     "jpeg_quality": 95,
-    "strip_exif": true
+    "strip_exif": true,
+    "prompt_debug_log": {
+      "enabled": false,
+      "path": "./outputs/prompt-debug.jsonl"
+    }
   },
   "gallery": {
     "thumbnail_cache_mb": 512,

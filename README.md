@@ -143,10 +143,17 @@ Runtime settings live in `config.json`. Relative paths are resolved from the pro
 |---|---|
 | `server` | listen host and port; keep loopback unless trusted-LAN access is required |
 | `comfy` | ComfyUI URL, workflow source, profiles directory, Production/Preview selections, timeouts, Preview size |
-| `storage` | output directory, additional proof directories, PNG/JPEG output, JPEG quality, EXIF stripping |
+| `storage` | output directory, additional proof directories, PNG/JPEG output, JPEG quality, EXIF stripping, optional age-free prompt/result JSONL debug log |
 | `gallery` | thumbnail size and bounded in-memory thumbnail cache |
 | `interface` | privacy auto-cover intervals |
 | `limits` | scene retries and retained in-memory storyboards, jobs, and previews |
+
+Set `storage.prompt_debug_log.enabled` to `true` to append one compact JSONL
+record after every successful Production image, saved Preview image, or in-memory
+Shot Preview. Each record maps the output filename (or `preview:<id>`) to its seed,
+workflow, positive prompt, and auxiliary conditioning. The logged positive prompt
+uses `adult woman` in place of the configured exact age; rendering still receives
+the original age prompt. Relative log paths are resolved from `config.json`.
 
 Restart the server after editing `config.json`. The application has no authentication, so do not bind it to an untrusted network.
 

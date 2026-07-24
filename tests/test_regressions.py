@@ -1900,6 +1900,88 @@ class DirectorRegressionTests(unittest.TestCase):
         self.assertEqual(normal_prompts, legacy_prompts)
 
 
+class PromptDebugLogTests(unittest.TestCase):
+    def setUp(self):
+        self.profile_registry = patch.object(
+            app, "load_workflow_profile_registry",
+            return_value={"production": "test-model", "preview": "test-model"},
+        )
+        self.profile_registry.start()
+        self.addCleanup(self.profile_registry.stop)
+
+    def test_age_free_debug_prompt_preserves_the_scene_without_age(self):
+        state = app.WebState()
+        board = state.create_storyboard({
+            "count": 1, "prompt_seed": 313, "inference_seed": 414,
+        })
+        scene = state.get_storyboard(board["id"])["shots"][0]["scene"]
+        rendered, negative, selected = app.compile_scene(
+            state.get_storyboard(board["id"])["db"], scene
+        )
+        debug, debug_negative, debug_selected = app.compile_scene(
+            state.get_storyboard(board["id"])["db"], scene, include_age=False
+        )
+        self.assertIn(scene["human"]["age"]["prompt"], rendered)
+        self.assertNotIn(scene["human"]["age"]["prompt"], debug)
+        self.assertNotRegex(debug, r"\b(?:21|22|23)-year-old\b")
+        self.assertIn("adult woman", debug)
+        self.assertEqual(debug_negative, negative)
+        self.assertEqual(debug_selected, selected)
+
+    def test_prompt_debug_writer_is_disabled_by_default_and_concurrency_safe(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config, _ = app.load_config()
+            path = root / "config.json"
+            log_path = root / "nested" / "prompts.jsonl"
+            config["storage"]["prompt_debug_log"] = {
+                "enabled": False, "path": str(log_path),
+            }
+            path.write_text(app.json.dumps(config), encoding="utf-8")
+            with patch.object(app, "config_path", return_value=path):
+                app.append_prompt_debug_record({"result": "disabled.png"})
+                self.assertFalse(log_path.exists())
+                config["storage"]["prompt_debug_log"]["enabled"] = True
+                path.write_text(app.json.dumps(config), encoding="utf-8")
+                with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
+                    list(pool.map(
+                        lambda index: app.append_prompt_debug_record({
+                            "result": f"image-{index}.png", "positive": "prompt",
+                        }),
+                        range(40),
+                    ))
+            records = [app.json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines()]
+            self.assertEqual(len(records), 40)
+            self.assertEqual(
+                {record["result"] for record in records},
+                {f"image-{index}.png" for index in range(40)},
+            )
+
+    def test_production_result_emits_filename_and_age_free_prompt(self):
+        state = app.WebState()
+        board = state.create_storyboard({
+            "count": 1, "prompt_seed": 515, "inference_seed": 616,
+        })
+        with patch.object(app.threading, "Thread"):
+            job = state.create_job(board["id"], False)
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "rendered.png"
+            output.write_bytes(b"image")
+            with (
+                patch.object(app, "load_workflow_runtime", return_value=({}, {})),
+                patch.object(app, "generate_one", return_value=("prompt-id", [output])),
+                patch.object(app, "output_payload", return_value={"url": "/rendered.png"}),
+                patch.object(app, "append_prompt_debug_record") as append,
+            ):
+                state._run_job(job["id"])
+        self.assertEqual(state.jobs[job["id"]]["status"], "completed")
+        record = append.call_args.args[0]
+        self.assertEqual(record["kind"], "production")
+        self.assertEqual(record["result"], "rendered.png")
+        self.assertNotRegex(record["positive"], r"\b(?:21|22|23)-year-old\b")
+        self.assertIn("adult woman", record["positive"])
+
+
 class PreviewRegressionTests(unittest.TestCase):
     def setUp(self):
         self.profile_registry = patch.object(
@@ -1935,6 +2017,31 @@ class PreviewRegressionTests(unittest.TestCase):
         )
         self.assertEqual(state.delete_preview(preview["id"]), {"deleted": True})
         self.assertNotIn(preview["id"], state.previews)
+
+    def test_preview_result_emits_stable_identifier_and_age_free_prompt(self):
+        state = app.WebState()
+        board = state.create_storyboard(
+            {"count": 1, "prompt_seed": 17, "inference_seed": 28}
+        )
+        with (
+            patch.object(app, "load_workflow_runtime", return_value=({}, {})),
+            patch.object(
+                app, "generate_preview_image",
+                return_value=("preview-prompt", b"preview-bytes", "image/png"),
+            ),
+            patch.object(app, "append_prompt_debug_record") as append,
+        ):
+            preview = state.create_preview(board["id"], 1, True)
+            for _ in range(100):
+                preview = state.get_preview(preview["id"])
+                if preview["status"] not in {"queued", "running"}:
+                    break
+                time.sleep(0.01)
+        self.assertEqual(preview["status"], "completed")
+        record = append.call_args.args[0]
+        self.assertEqual(record["kind"], "shot_preview")
+        self.assertEqual(record["result"], f"preview:{preview['id']}")
+        self.assertNotRegex(record["positive"], r"\b(?:21|22|23)-year-old\b")
 
     def test_completed_preview_images_have_independent_memory_entries(self):
         state = app.WebState()
@@ -3476,7 +3583,13 @@ class WorkflowProfileTests(unittest.TestCase):
         self.assertEqual(set(config["server"]), {"host", "port"})
         self.assertEqual(
             set(config["storage"]),
-            {"output_dir", "proofs_dir", "output_format", "jpeg_quality", "strip_exif"},
+            {
+                "output_dir", "proofs_dir", "output_format", "jpeg_quality",
+                "strip_exif", "prompt_debug_log",
+            },
+        )
+        self.assertEqual(
+            set(config["storage"]["prompt_debug_log"]), {"enabled", "path"}
         )
         self.assertEqual(
             set(config["gallery"]), {"thumbnail_cache_mb", "thumbnail_max_edge"}

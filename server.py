@@ -137,6 +137,21 @@ def load_config() -> tuple[dict[str, Any], Path]:
         raise AppError("config.storage.jpeg_quality must be an integer from 1 to 100")
     if not isinstance(storage.get("strip_exif"), bool):
         raise AppError("config.storage.strip_exif must be true or false")
+    prompt_debug_log = storage.get("prompt_debug_log", {})
+    if not isinstance(prompt_debug_log, dict):
+        raise AppError("config.storage.prompt_debug_log must be an object")
+    if prompt_debug_log:
+        if set(prompt_debug_log) != {"enabled", "path"}:
+            raise AppError(
+                "config.storage.prompt_debug_log must contain only enabled and path"
+            )
+        if not isinstance(prompt_debug_log.get("enabled"), bool):
+            raise AppError("config.storage.prompt_debug_log.enabled must be true or false")
+        if (
+            not isinstance(prompt_debug_log.get("path"), str)
+            or not prompt_debug_log["path"]
+        ):
+            raise AppError("config.storage.prompt_debug_log.path must be a non-empty string")
     proofs_dir = storage.get("proofs_dir")
     if isinstance(proofs_dir, str):
         if not proofs_dir:
@@ -2575,7 +2590,9 @@ def human_fragments(
     return [fragment for fragment in fragments if fragment]
 
 
-def compile_scene(db: dict[str, Any], scene: dict[str, Any]) -> tuple[str, str, list[str]]:
+def compile_scene(
+    db: dict[str, Any], scene: dict[str, Any], include_age: bool = True
+) -> tuple[str, str, list[str]]:
     defaults = db["prompt_defaults"]
     custom = scene.get("custom_values", {})
     stage = scene["stage"]
@@ -2589,7 +2606,11 @@ def compile_scene(db: dict[str, Any], scene: dict[str, Any]) -> tuple[str, str, 
     if plateau_kind == "provocative_rear":
         visibility -= {"breasts", "nipples"}
     xxx_prompt = defaults.get("xxx_plateau_prompts", {}).get(plateau_kind, "")
-    age_prompt = custom.get("human.age") or scene["human"]["age"]["prompt"]
+    age_prompt = (
+        custom.get("human.age") or scene["human"]["age"]["prompt"]
+        if include_age else
+        "adult woman"
+    )
     positive_prefix = defaults.get("positive_prefix", "").replace("{age}", age_prompt)
     fragments = [positive_prefix]
     human = scene["human"]
@@ -4680,10 +4701,29 @@ THUMBNAIL_CACHE: OrderedDict[tuple[str, str, int, int], bytes] = OrderedDict()
 THUMBNAIL_CACHE_BYTES = 0
 THUMBNAIL_CACHE_LOCK = threading.Lock()
 THUMBNAIL_IN_FLIGHT: dict[tuple[str, str, int, int], Future[bytes]] = {}
+PROMPT_DEBUG_LOG_LOCK = threading.Lock()
 
 
 def _iso_now() -> str:
     return datetime.now().astimezone().isoformat(timespec="seconds")
+
+
+def append_prompt_debug_record(record: dict[str, Any]) -> None:
+    """Append one complete result/prompt mapping when opt-in logging is enabled."""
+    config, config_file = load_config()
+    settings = config["storage"].get("prompt_debug_log", {})
+    if not settings.get("enabled", False):
+        return
+    path = resolve_path(config_file.parent, settings["path"])
+    line = json.dumps(record, ensure_ascii=False, separators=(",", ":")) + "\n"
+    with PROMPT_DEBUG_LOG_LOCK:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            with path.open("a", encoding="utf-8") as handle:
+                handle.write(line)
+                handle.flush()
+        except OSError as exc:
+            raise AppError(f"Could not append prompt debug log {path}: {exc}") from exc
 
 
 def _safe_int(
@@ -6399,6 +6439,9 @@ class WebState:
             raise AppError("Shot number is out of range")
         shot = record["shots"][number - 1]
         positive, negative, _ = compile_scene(record["db"], shot["scene"])
+        debug_positive, _, _ = compile_scene(
+            record["db"], shot["scene"], include_age=False
+        )
         preview_id = uuid.uuid4().hex
         preview = {
             "id": preview_id,
@@ -6416,6 +6459,7 @@ class WebState:
             "db": record["db"],
             "positive": positive,
             "negative": negative,
+            "_debug_positive": debug_positive,
             "seed": shot["inference_seed"],
             "workflow_profile": workflow_profile,
             "workflow_source": source,
@@ -6511,6 +6555,20 @@ class WebState:
                 workflow,
                 mapping,
             )
+            append_prompt_debug_record({
+                "time": _iso_now(),
+                "kind": "shot_preview",
+                "result": f"preview:{preview_id}",
+                "preview_id": preview_id,
+                "storyboard_id": preview["storyboard_id"],
+                "shot": preview["shot"],
+                "seed": preview["seed"],
+                "prompt_id": prompt_id,
+                "workflow_profile": preview["workflow_profile"],
+                "workflow_source": preview["workflow_source"],
+                "positive": preview["_debug_positive"],
+                "auxiliary_negative": preview["negative"],
+            })
             with self.lock:
                 preview["prompt_id"] = prompt_id
                 preview["image_bytes"] = image_bytes
@@ -6691,6 +6749,9 @@ class WebState:
                         break
                     job["current_shot"] = shot["number"]
                 positive, negative, _ = compile_scene(db, shot["scene"])
+                debug_positive, _, _ = compile_scene(
+                    db, shot["scene"], include_age=False
+                )
                 with self.lock:
                     job["current_prompt"] = {
                         "shot": shot["number"], "position": completed_index,
@@ -6710,6 +6771,21 @@ class WebState:
                     job["_mode"], shot["shot_index"], shot["photoshoot_index"],
                     run_id, job["fast"], workflow, mapping,
                 )
+                for path in paths:
+                    append_prompt_debug_record({
+                        "time": _iso_now(),
+                        "kind": "preview_render" if job["fast"] else "production",
+                        "result": path.name,
+                        "job_id": job_id,
+                        "storyboard_id": job["storyboard_id"],
+                        "shot": shot["number"],
+                        "seed": shot["inference_seed"],
+                        "prompt_id": prompt_id,
+                        "workflow_profile": job["workflow_profile"],
+                        "workflow_source": job["workflow_source"],
+                        "positive": debug_positive,
+                        "auxiliary_negative": negative,
+                    })
                 elapsed = time.monotonic() - started
                 completed = completed_index
                 remaining = len(selected_shots) - completed
