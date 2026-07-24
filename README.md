@@ -179,6 +179,8 @@ Proofs as neutral placeholder thumbnails. The server sends one compact range per
 job instead of thousands of frame records, and gallery virtualization materializes
 only the visible placeholder window. Queued cards show only their render kind and
 shot number; the currently rendering frame alone receives an opportunistic local ETA.
+The grouped Photoshoots view shows a separate ETA for completion of the whole active
+Production or Preview job, while later FIFO jobs remain honestly labeled `Queued`.
 Completed outputs replace their pending positions in place. Pending cards never enter
 filesystem proof listings, request thumbnail bytes, expose prompt metadata, or enable
 fullscreen/download/delete.

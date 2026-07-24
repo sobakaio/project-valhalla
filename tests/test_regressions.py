@@ -1328,6 +1328,7 @@ class DirectorRegressionTests(unittest.TestCase):
         self.assertEqual(job["pending_plan"]["total"], 3)
         self.assertEqual(job["pending_plan"]["status"], "queued")
         self.assertIsNone(job["pending_plan"]["active_eta_seconds"])
+        self.assertIsNone(job["pending_plan"]["completion_eta_seconds"])
         self.assertNotIn("pending_frames", job)
 
         timing_key = (False, job["workflow_profile"])
@@ -1335,6 +1336,7 @@ class DirectorRegressionTests(unittest.TestCase):
         estimated = state.get_job(job["id"])
         self.assertEqual(estimated["estimated_frame_seconds"], 10.0)
         self.assertIsNone(estimated["pending_plan"]["active_eta_seconds"])
+        self.assertIsNone(estimated["pending_plan"]["completion_eta_seconds"])
         self.assertTrue(estimated["pending_plan"]["observed_at"])
 
         record = state.jobs[job["id"]]
@@ -1375,6 +1377,8 @@ class DirectorRegressionTests(unittest.TestCase):
         self.assertEqual(payload["pending_plan"]["status"], "running")
         self.assertEqual(payload["pending_plan"]["start_position"], 2)
         self.assertEqual(payload["pending_plan"]["active_eta_seconds"], 0.0)
+        self.assertEqual(payload["pending_plan"]["completion_eta_seconds"], 10.0)
+        self.assertEqual(payload["eta_seconds"], 10.0)
 
     def test_queued_job_can_be_cancelled_before_it_starts(self):
         state, storyboard_id = self.make_storyboard()
@@ -3140,8 +3144,12 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("function refreshPendingCountdowns()", js)
         self.assertIn("setInterval(refreshPendingCountdowns, 1000)", js)
         self.assertIn("ETA estimating", js)
-        self.assertIn("Rendering ${kind} ${displayShot}", js)
-        self.assertIn("Queued ${kind} ${displayShot}", js)
+        self.assertIn("`Shot ${displayShot} (${kind})`", js)
+        self.assertIn("rendering ? (deadline ? `ETA ${formatDuration(item.eta_seconds)}`", js)
+        self.assertIn(": 'Queued'", js)
+        self.assertIn("plan.completion_eta_seconds", js)
+        self.assertIn("`${representative.render_kind === 'preview' ? 'Preview' : 'Photoshoot'} ${group.displayNumber}`", js)
+        self.assertIn("completionDeadline", js)
         self.assertIn("if (!item || item.pending) return", js)
         self.assertIn("if (card.classList.contains('pending-output')) return", js)
         pending_card = js.split("if (item.pending) {", 1)[1].split(

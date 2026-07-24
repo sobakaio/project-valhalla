@@ -7102,6 +7102,7 @@ class WebState:
         estimate = self.job_frame_seconds(job)
         observed_at = _iso_now()
         active_eta = None
+        completion_eta = None
         if (
             estimate is not None and job["status"] == "running"
             and job.get("_shot_started_monotonic") is not None
@@ -7109,6 +7110,8 @@ class WebState:
             active_eta = max(
                 0.0, estimate - (time.monotonic() - job["_shot_started_monotonic"])
             )
+            remaining_after_active = max(0, job["total"] - job["completed"] - 1)
+            completion_eta = active_eta + estimate * remaining_after_active
         return {
             "job_id": job["id"],
             "start_position": job["completed"] + 1,
@@ -7116,6 +7119,9 @@ class WebState:
             "render_kind": job["render_kind"],
             "status": job["status"],
             "active_eta_seconds": round(active_eta, 1) if active_eta is not None else None,
+            "completion_eta_seconds": (
+                round(completion_eta, 1) if completion_eta is not None else None
+            ),
             "observed_at": observed_at,
         }
 
@@ -7129,7 +7135,7 @@ class WebState:
             elapsed = time.monotonic() - job["_started_monotonic"]
             payload["elapsed_seconds"] = round(elapsed, 1)
         if payload["pending_plan"]:
-            payload["eta_seconds"] = payload["pending_plan"]["active_eta_seconds"]
+            payload["eta_seconds"] = payload["pending_plan"]["completion_eta_seconds"]
         return payload
 
     def get_job(self, job_id: str) -> dict[str, Any]:

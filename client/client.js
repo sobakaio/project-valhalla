@@ -358,6 +358,11 @@ function photoshootGroups() {
     if (group.identity?.kind === 'photoshoot') group.displayNumber = ++photoshootNumber;
     if (group.identity?.kind === 'preview') group.displayNumber = ++previewNumber;
     if (group.identity?.kind === 'random') group.displayNumber = ++randomNumber;
+    if (group.identity?.kind === 'pending') {
+      group.displayNumber = group.pendingPlan.render_kind === 'preview'
+        ? ++previewNumber
+        : ++photoshootNumber;
+    }
   });
   return ordered;
 }
@@ -1386,6 +1391,7 @@ function pendingPlanSignature(plan) {
   return [
     plan.job_id, plan.start_position, plan.total, plan.render_kind,
     plan.status, plan.active_eta_seconds == null ? 'estimating' : 'estimated',
+    plan.completion_eta_seconds == null ? 'completion-estimating' : 'completion-estimated',
   ].join(':');
 }
 
@@ -1731,13 +1737,13 @@ function outputCardHtml(item, index, layout, position, group = null) {
   if (item.pending) {
     const rendering = item.status === 'rendering';
     const kind = item.render_kind === 'preview' ? 'preview' : 'production';
-    const status = rendering ? `Rendering ${kind} ${displayShot}` : `Queued ${kind} ${displayShot}`;
+    const status = `Shot ${displayShot} (${kind})`;
     const deadline = item.eta_seconds != null && Number.isFinite(Number(item.eta_seconds))
       ? new Date(item.observed_at).getTime() + Number(item.eta_seconds) * 1000
       : '';
     return `<article class="output-card pending-output" data-pending-key="${escapeHtml(item.key)}"
       aria-label="${escapeHtml(shotLabel)} ${escapeHtml(status)}">
-      <div class="render-placeholder" aria-hidden="true"><span>${escapeHtml(status)}</span>${rendering ? `<em data-pending-deadline="${deadline}">${deadline ? `ETA ${formatDuration(item.eta_seconds)}` : 'ETA estimating'}</em>` : ''}</div>
+      <div class="render-placeholder" aria-hidden="true"><span>${escapeHtml(status)}</span><em${rendering ? ` data-pending-deadline="${deadline}"` : ''}>${rendering ? (deadline ? `ETA ${formatDuration(item.eta_seconds)}` : 'ETA estimating') : 'Queued'}</em></div>
     </article>`;
   }
   const visual = state.privacyCovered
@@ -1768,7 +1774,7 @@ function photoshootCardHtml(group, index) {
   const representative = group.items[0]?.item
     || pendingOutput(group.pendingPlan, group.pendingPlan.start_position);
   const title = group.identity?.kind === 'pending'
-    ? (representative.render_kind === 'preview' ? 'Preview rendering' : 'Production rendering')
+    ? `${representative.render_kind === 'preview' ? 'Preview' : 'Photoshoot'} ${group.displayNumber}`
     : group.identity?.kind === 'photoshoot'
     ? `Photoshoot ${group.displayNumber}`
     : (group.identity?.kind === 'preview'
@@ -1778,15 +1784,28 @@ function photoshootCardHtml(group, index) {
       : (group.identity?.kind === 'legacy' ? 'Render run' : 'Ungrouped')));
   const run = group.identity ? formatOutputRun(group.identity.run) : 'Files without photoshoot naming';
   const runTitle = group.identity ? `Render ID: ${group.identity.run}` : '';
+  const plan = group.pendingPlan;
+  const completionDeadline = plan?.completion_eta_seconds != null
+    ? new Date(plan.observed_at).getTime() + Number(plan.completion_eta_seconds) * 1000
+    : '';
+  const pendingStatus = plan?.status === 'running'
+    ? (completionDeadline ? `ETA ${formatDuration(plan.completion_eta_seconds)}` : 'ETA estimating')
+    : 'Queued';
+  const pendingDeadlineAttribute = plan?.status === 'running'
+    ? ` data-pending-deadline="${completionDeadline}"`
+    : '';
   const visual = representative.pending
-    ? `<div class="render-placeholder"><span>${escapeHtml(title)}</span><em>${groupEntryCount(group)} frames</em></div>`
+    ? `<div class="render-placeholder"><span>${escapeHtml(title)}</span><em${pendingDeadlineAttribute}>${escapeHtml(pendingStatus)}</em></div>`
     : state.privacyCovered
     ? '<div class="privacy-placeholder" aria-label="Image hidden by privacy cover"></div>'
     : `<img src="${encodeURI(representative.thumbnail_url || representative.url)}" alt="${escapeHtml(title)} representative frame" loading="lazy" decoding="async">`;
+  const footer = representative.pending
+    ? `<footer><span>${groupEntryCount(group)} frames</span></footer>`
+    : `<footer><span title="${escapeHtml(runTitle)}"><strong>${escapeHtml(title)}</strong><br>${plan ? `<span${pendingDeadlineAttribute}>${escapeHtml(pendingStatus)}</span>` : escapeHtml(run)}</span><span class="photoshoot-count">${groupEntryCount(group)}</span></footer>`;
   return `<article class="output-card photoshoot-card" data-group-key="${escapeHtml(group.key)}" data-group-index="${index}" tabindex="0" role="button"
     aria-label="Open ${escapeHtml(title)}, ${groupEntryCount(group)} images">
     ${visual}
-    <footer><span title="${escapeHtml(runTitle)}"><strong>${escapeHtml(title)}</strong><br>${escapeHtml(run)}</span><span class="photoshoot-count">${groupEntryCount(group)}</span></footer>
+    ${footer}
   </article>`;
 }
 
