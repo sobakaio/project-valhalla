@@ -120,6 +120,12 @@ are always ignored, while unmatched shots preserve the captured profile strength
 The supplied anatomy LoRA rule lowers model strength while genitals are covered
 and leaves the captured strength unchanged when they are exposed.
 
+Hosiery garments declare a structural `support_mode`: `waist_continuous`,
+`self_supporting`, or `garter_required`. The compiler emits a distinct physical
+construction contract for each mode. Garter-supported stockings can only be
+composed with the dedicated visible support belt; ordinary pantyhose and stay-up
+stockings cannot acquire that belt through Composer or Director edits.
+
 If `comfy.workflow_source` is set to `live`, Valhalla reads the latest compatible ComfyUI workflow instead of the selected saved profiles. Saved profiles are recommended for reproducible production.
 
 ## Production workflow

@@ -715,6 +715,21 @@ def validate_database(db: dict[str, Any]) -> None:
     garment_ids = {
         item["id"] for values in db["garments"].values() for item in values
     }
+    hosiery_modes = {"waist_continuous", "self_supporting", "garter_required"}
+    for item in db["garments"].get("legwear", []):
+        wording = f"{item['id']} {item.get('prompt', '')}".casefold()
+        is_hosiery = bool(tags(item) & {"pantyhose", "stockings"}) or any(
+            term in wording for term in ("pantyhose", "tights", "stockings")
+        )
+        mode = item.get("support_mode")
+        if is_hosiery and mode not in hosiery_modes:
+            raise AppError(
+                f"Legwear {item['id']} must declare a supported support_mode"
+            )
+        if not is_hosiery and mode is not None:
+            raise AppError(
+                f"Non-hosiery legwear {item['id']} cannot declare support_mode"
+            )
     reveal_outer_slots = panties_reveal.get("outer_slots")
     reveal_outer_ids = panties_reveal.get("compatible_outer_ids")
     if (
@@ -1200,6 +1215,20 @@ def garment_matches_template_slot(
     """Apply the same structural slot contract in Composer and Director."""
     rule = template["slots"][slot]
     garment_tags = tags(garment)
+    template_requires_support_belt = any(
+        "hosiery_support_belt" in candidate.get("required_tags", [])
+        for candidate in template["slots"].values()
+    )
+    support_mode = garment.get("support_mode")
+    if support_mode == "garter_required" and not template_requires_support_belt:
+        return False
+    if support_mode and support_mode != "garter_required" and template_requires_support_belt:
+        return False
+    if (
+        "hosiery_support_belt" in garment_tags
+        and not template_requires_support_belt
+    ):
+        return False
     visible_in_sfw = any(
         is_sfw_stage(stage) and slot in stage.get("visible_slots", [])
         for stage in effective_photoshoot_stages(template)
@@ -1248,6 +1277,11 @@ def legwear_extends_above_ankle(item: dict[str, Any] | None) -> bool:
             "over-the-knee", "thigh-high", "thigh stockings",
         )
     )
+
+
+def hosiery_support_belt(outfit: dict[str, Any]) -> dict[str, Any] | None:
+    accessory = outfit.get("garments", {}).get("accessories")
+    return accessory if accessory and "hosiery_support_belt" in tags(accessory) else None
 
 
 def validate_outfit_layers(db: dict[str, Any], outfit: dict[str, Any]) -> None:
@@ -1306,6 +1340,16 @@ def validate_outfit_layers(db: dict[str, Any], outfit: dict[str, Any]) -> None:
         raise AppError(
             f"Garment layers {legwear['id']} with {lowerwear['id']} are incompatible: "
             "long legwear cannot be composed over leg-covering trousers"
+        )
+    support_mode = (legwear or {}).get("support_mode")
+    support_belt = hosiery_support_belt(outfit)
+    if support_mode == "garter_required" and not support_belt:
+        raise AppError(
+            f"Hosiery {legwear['id']} requires a compatible garter support belt"
+        )
+    if support_belt and support_mode != "garter_required":
+        raise AppError(
+            f"Garter support belt {support_belt['id']} requires garter-supported stockings"
         )
     for rule in db["settings"].get("garment_layer_rules", []):
         if template_id not in rule["template_ids"]:
@@ -3031,6 +3075,23 @@ def compile_scene(
             "the panties are worn underneath the hosiery garment, hosiery forms the "
             "continuous outer layer over the panties"
         )
+    if legwear:
+        support_contracts = {
+            "waist_continuous": (
+                "one continuous waist-supported hosiery garment, with uninterrupted "
+                "fabric running from its fitted waistband down both legs"
+            ),
+            "self_supporting": (
+                "two separate thigh-high stockings, each held in place solely by its "
+                "own fitted integrated stay-up band"
+            ),
+            "garter_required": (
+                "two separate stockings physically fastened to the visible waist garter "
+                "belt by four straight aligned support straps"
+            ),
+        }
+        if legwear.get("support_mode") in support_contracts:
+            fragments.append(support_contracts[legwear["support_mode"]])
     if lowerwear_covers_legs(lowerwear) and legwear:
         fragments.append(
             "trouser fabric forms the continuous outer layer from waist to ankle hems, "
@@ -6251,15 +6312,9 @@ class WebState:
                     outfit.get("textures", {}).pop(slot, None)
                 else:
                     garment = index.get(value)
-                    required_tags = set(rule.get("required_tags", []))
-                    required_any = set(rule.get("required_any_tags", []))
-                    excluded_tags = set(rule.get("excludes_tags", []))
-                    if (
-                        garment not in db["garments"][rule["catalog"]]
-                        or not category_allows(outfit["template"], garment)
-                        or not required_tags.issubset(tags(garment))
-                        or (required_any and not required_any & tags(garment))
-                        or excluded_tags & tags(garment)
+                    if not garment or not garment_matches_template_slot(
+                        db, outfit["template"], slot, garment,
+                        record["args"].content_mode,
                     ):
                         raise AppError("Garment is incompatible with this outfit slot")
                     outfit["garments"][slot] = garment

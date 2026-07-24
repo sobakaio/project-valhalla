@@ -11282,6 +11282,7 @@
     "legwear": [
       {
         "id": "legwear_sheer_pantyhose",
+        "support_mode": "waist_continuous",
         "catalog_category": "normal",
         "prompt": "sheer pantyhose",
         "tags": [
@@ -11297,6 +11298,7 @@
       },
       {
         "id": "legwear_opaque_tights",
+        "support_mode": "waist_continuous",
         "catalog_category": "normal",
         "prompt": "opaque tights",
         "tags": [
@@ -11311,6 +11313,7 @@
       },
       {
         "id": "legwear_ballet_tights",
+        "support_mode": "waist_continuous",
         "catalog_category": "luxury",
         "prompt": "smooth opaque ballet tights",
         "tags": [
@@ -11327,6 +11330,7 @@
       },
       {
         "id": "legwear_lace_stockings",
+        "support_mode": "self_supporting",
         "catalog_category": "normal",
         "prompt": "lace-top thigh-high stockings",
         "tags": [
@@ -11345,6 +11349,7 @@
       },
       {
         "id": "legwear_silk_stockings",
+        "support_mode": "self_supporting",
         "catalog_category": "normal",
         "prompt": "silky thigh-high stockings",
         "tags": [
@@ -11363,6 +11368,7 @@
       },
       {
         "id": "legwear_fishnet",
+        "support_mode": "self_supporting",
         "catalog_category": "normal",
         "prompt": "fine fishnet stockings",
         "tags": [
@@ -11376,6 +11382,7 @@
       },
       {
         "id": "legwear_garter_stockings",
+        "support_mode": "garter_required",
         "catalog_category": "normal",
         "prompt": "stockings attached to a garter belt",
         "tags": [
@@ -11391,6 +11398,7 @@
       },
       {
         "id": "legwear_ultrasheer_pantyhose",
+        "support_mode": "waist_continuous",
         "catalog_category": "normal",
         "prompt": "ultra-sheer glossy pantyhose",
         "tags": [
@@ -11407,6 +11415,7 @@
       },
       {
         "id": "legwear_backseam_pantyhose",
+        "support_mode": "waist_continuous",
         "catalog_category": "normal",
         "prompt": "sheer back-seam pantyhose",
         "tags": [
@@ -11422,6 +11431,7 @@
       },
       {
         "id": "legwear_highwaist_pantyhose",
+        "support_mode": "waist_continuous",
         "catalog_category": "normal",
         "prompt": "silky high-waisted pantyhose",
         "tags": [
@@ -11437,6 +11447,7 @@
       },
       {
         "id": "legwear_open_pantyhose",
+        "support_mode": "waist_continuous",
         "catalog_category": "normal",
         "prompt": "open-crotch sheer pantyhose",
         "tags": [
@@ -11453,6 +11464,7 @@
       },
       {
         "id": "legwear_fishnet_pantyhose",
+        "support_mode": "waist_continuous",
         "catalog_category": "normal",
         "prompt": "classic fine fishnet pantyhose",
         "tags": [
@@ -11468,6 +11480,7 @@
       },
       {
         "id": "legwear_large_fishnet",
+        "support_mode": "waist_continuous",
         "catalog_category": "normal",
         "prompt": "bold wide-mesh fishnet tights",
         "tags": [
@@ -11483,6 +11496,7 @@
       },
       {
         "id": "legwear_rhinestone_fishnet",
+        "support_mode": "waist_continuous",
         "catalog_category": "luxury",
         "prompt": "rhinestone-studded fishnet tights",
         "tags": [
@@ -11499,6 +11513,7 @@
       },
       {
         "id": "legwear_floral_lace_tights",
+        "support_mode": "waist_continuous",
         "catalog_category": "normal",
         "prompt": "intricate floral lace tights",
         "tags": [
@@ -11515,6 +11530,7 @@
       },
       {
         "id": "legwear_dot_tights",
+        "support_mode": "waist_continuous",
         "catalog_category": "normal",
         "prompt": "sheer polka-dot tights",
         "tags": [
@@ -11529,6 +11545,7 @@
       },
       {
         "id": "legwear_bow_tights",
+        "support_mode": "waist_continuous",
         "catalog_category": "normal",
         "prompt": "sheer tights with satin bows at the back",
         "tags": [
@@ -11544,6 +11561,7 @@
       },
       {
         "id": "legwear_sheer_thighhigh",
+        "support_mode": "self_supporting",
         "catalog_category": "normal",
         "prompt": "minimal sheer thigh-high stockings",
         "tags": [
@@ -11560,6 +11578,7 @@
       },
       {
         "id": "legwear_satinband_thighhigh",
+        "support_mode": "self_supporting",
         "catalog_category": "normal",
         "prompt": "thigh-high stockings with wide satin bands",
         "tags": [
@@ -11577,6 +11596,7 @@
       },
       {
         "id": "legwear_bow_thighhigh",
+        "support_mode": "self_supporting",
         "catalog_category": "normal",
         "prompt": "thigh-high stockings finished with small bows",
         "tags": [
@@ -11594,6 +11614,7 @@
       },
       {
         "id": "legwear_fishnet_thighhigh",
+        "support_mode": "self_supporting",
         "catalog_category": "normal",
         "prompt": "fishnet thigh-high stockings",
         "tags": [
@@ -11610,6 +11631,7 @@
       },
       {
         "id": "legwear_wide_lace_thighhigh",
+        "support_mode": "self_supporting",
         "catalog_category": "normal",
         "prompt": "thigh-high stockings with broad floral lace tops",
         "tags": [
@@ -11630,6 +11652,7 @@
       },
       {
         "id": "legwear_backseam_stockings",
+        "support_mode": "garter_required",
         "catalog_category": "normal",
         "prompt": "vintage back-seam garter stockings",
         "tags": [
@@ -11646,6 +11669,7 @@
       },
       {
         "id": "legwear_glossy_stockings",
+        "support_mode": "self_supporting",
         "catalog_category": "normal",
         "prompt": "glossy high-shine thigh stockings",
         "tags": [
@@ -11758,6 +11782,7 @@
       },
       {
         "id": "legwear_leather_thighs",
+        "support_mode": "self_supporting",
         "catalog_category": "normal",
         "prompt": "fitted leather thigh-high stockings",
         "tags": [
@@ -11774,6 +11799,7 @@
       },
       {
         "id": "legwear_vinyl_thighs",
+        "support_mode": "self_supporting",
         "catalog_category": "normal",
         "prompt": "glossy vinyl thigh-high stockings",
         "tags": [
@@ -11823,6 +11849,7 @@
       },
       {
         "id": "legwear_simple_03",
+        "support_mode": "waist_continuous",
         "catalog_category": "normal",
         "prompt": "simple opaque tights",
         "tags": [
@@ -11840,6 +11867,7 @@
       },
       {
         "id": "legwear_simple_04",
+        "support_mode": "waist_continuous",
         "catalog_category": "normal",
         "prompt": "plain sheer pantyhose",
         "tags": [
@@ -11857,6 +11885,7 @@
       },
       {
         "id": "legwear_simple_05",
+        "support_mode": "self_supporting",
         "catalog_category": "normal",
         "prompt": "basic thigh-high stockings",
         "tags": [
@@ -11908,6 +11937,7 @@
       },
       {
         "id": "legwear_simple_08",
+        "support_mode": "self_supporting",
         "catalog_category": "normal",
         "prompt": "minimal sheer stockings",
         "tags": [
@@ -12759,6 +12789,7 @@
         "prompt": "lace garter belt",
         "tags": [
           "garter",
+          "hosiery_support_belt",
           "lace",
           "lingerie"
         ],
@@ -14308,7 +14339,8 @@
           "catalog": "legwear",
           "required": true,
           "required_tags": [
-            "stockings"
+            "stockings",
+            "garter"
           ],
           "color_group": "lingerie"
         },
@@ -14322,10 +14354,9 @@
         },
         "accessories": {
           "catalog": "accessories",
-          "required": false,
-          "chance": 0.6,
+          "required": true,
           "required_tags": [
-            "erotic"
+            "hosiery_support_belt"
           ]
         }
       },
@@ -14399,7 +14430,8 @@
           "catalog": "legwear",
           "required": true,
           "required_tags": [
-            "stockings"
+            "stockings",
+            "garter"
           ],
           "color_group": "lingerie"
         },
@@ -14414,7 +14446,7 @@
           "catalog": "accessories",
           "required": true,
           "required_tags": [
-            "garter"
+            "hosiery_support_belt"
           ],
           "color_group": "lingerie"
         }

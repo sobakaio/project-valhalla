@@ -3661,6 +3661,87 @@ class VisualCompatibilityRegressionTests(unittest.TestCase):
                 break
         self.assertGreaterEqual(checked, 10)
 
+    def test_hosiery_support_modes_are_explicit_and_structurally_paired(self):
+        database, _ = app.load_database()
+        hosiery = [
+            item for item in database["garments"]["legwear"]
+            if item.get("support_mode")
+        ]
+        self.assertEqual(
+            {item["support_mode"] for item in hosiery},
+            {"waist_continuous", "self_supporting", "garter_required"},
+        )
+        garter_stocking = next(
+            item for item in hosiery if item["support_mode"] == "garter_required"
+        )
+        pantyhose = next(
+            item for item in hosiery if item["support_mode"] == "waist_continuous"
+        )
+        belt = next(
+            item for item in database["garments"]["accessories"]
+            if "hosiery_support_belt" in app.tags(item)
+        )
+        template = next(
+            item for item in database["outfit_templates"]
+            if item["id"] == "template_stockings_garter"
+        )
+        with self.assertRaisesRegex(app.AppError, "requires a compatible garter"):
+            app.validate_outfit_layers(database, {
+                "template": template, "garments": {"legwear": garter_stocking},
+            })
+        with self.assertRaisesRegex(app.AppError, "requires garter-supported"):
+            app.validate_outfit_layers(database, {
+                "template": template,
+                "garments": {"legwear": pantyhose, "accessories": belt},
+            })
+        app.validate_outfit_layers(database, {
+            "template": template,
+            "garments": {"legwear": garter_stocking, "accessories": belt},
+        })
+
+    def test_each_hosiery_support_mode_compiles_its_physical_contract(self):
+        database, _ = app.load_database()
+        composer = app.Composer(database, app.random.Random(828282))
+        expected = {
+            "waist_continuous": "one continuous waist-supported hosiery garment",
+            "self_supporting": "integrated stay-up band",
+            "garter_required": "four straight aligned support straps",
+        }
+        observed = set()
+        for _ in range(4000):
+            fixed = composer.fixed_context()
+            legwear = fixed["outfit"]["garments"].get("legwear")
+            mode = (legwear or {}).get("support_mode")
+            if mode not in expected:
+                continue
+            stage = next((
+                item for item in app.effective_photoshoot_stages(
+                    fixed["outfit"]["template"]
+                ) if "legwear" in item.get("visible_slots", [])
+            ), None)
+            if not stage:
+                continue
+            positive, _, _ = app.compile_scene(
+                database, composer.resolve_scene(fixed, stage)
+            )
+            self.assertIn(expected[mode], positive)
+            observed.add(mode)
+            if observed == set(expected):
+                break
+        self.assertEqual(observed, set(expected))
+
+    def test_hosiery_support_mode_schema_rejects_missing_or_unknown_values(self):
+        database, _ = app.load_database()
+        for value in (None, "magic_suspension"):
+            broken = copy.deepcopy(database)
+            item = broken["garments"]["legwear"][0]
+            if value is None:
+                item.pop("support_mode")
+            else:
+                item["support_mode"] = value
+            with self.assertRaisesRegex(app.AppError, "support_mode"):
+                app.validate_database(broken)
+
 
 class WorkflowProfileTests(unittest.TestCase):
     def test_lora_nodes_are_detected_by_configurable_filename(self):
