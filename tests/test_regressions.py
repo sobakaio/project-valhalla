@@ -329,6 +329,17 @@ class CatalogQualityTests(unittest.TestCase):
         self.assertEqual(outfit["garments"]["full_body"]["id"], "dress_ballet_tutu")
         self.assertEqual(outfit["garments"]["legwear"]["id"], "legwear_ballet_tights")
         self.assertEqual(outfit["garments"]["footwear"]["id"], "shoes_ballet_pointe")
+        ballet_color_family = app.color_family(
+            database, outfit["colors"]["full_body"]["id"]
+        )
+        self.assertEqual(
+            ballet_color_family,
+            app.color_family(database, outfit["colors"]["bra"]["id"]),
+        )
+        self.assertEqual(
+            ballet_color_family,
+            app.color_family(database, outfit["colors"]["panties"]["id"]),
+        )
         self.assertEqual(
             [stage["id"] for stage in template["stages"]],
             ["ballet_dressed", "ballet_lingerie", "ballet_topless"],

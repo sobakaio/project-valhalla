@@ -14046,7 +14046,7 @@
           "required_tags": [
             "elegant"
           ],
-          "color_group": "lingerie",
+          "color_group": "main",
           "match_group": "lingerie"
         },
         "panties": {
@@ -14055,7 +14055,7 @@
           "required_tags": [
             "elegant"
           ],
-          "color_group": "lingerie",
+          "color_group": "main",
           "match_group": "lingerie"
         },
         "legwear": {
