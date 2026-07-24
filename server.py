@@ -1074,8 +1074,7 @@ def garment_compatible_with_template_stages(
         return True
     anatomy = {"breasts", "nipples"} if slot == "bra" else {"pubic_area", "genitals"}
     requires_opaque = any(
-        stage.get("level") == "lingerie"
-        and slot in stage.get("visible_slots", [])
+        slot in stage.get("visible_slots", [])
         and not (anatomy & set(stage.get("body_visibility", [])))
         for stage in template.get("stages", [])
     )
@@ -1144,20 +1143,37 @@ def validate_outfit_layers(db: dict[str, Any], outfit: dict[str, Any]) -> None:
     garments = outfit["garments"]
     optional_relations = db["settings"]["wardrobe_compatibility"]["optional_inner_layers"]
     for relation in optional_relations:
-        slot = relation["inner_slot"]
-        slot_rule = outfit["template"]["slots"].get(slot, {})
-        if not slot_rule.get("required", False) or slot in garments:
-            continue
-        present_outers = [
-            outer_slot for outer_slot in relation["outer_slots"]
-            if outer_slot in garments
-        ]
-        if not present_outers:
-            continue
-        permitted = any(
+        inner_slot = relation["inner_slot"]
+        forced_absent = float(relation["chance"]) == 1
+        matching_outer = any(
             outer_slot in garments
             and tags(garments[outer_slot]) & set(relation["outer_tags_any"])
-            for outer_slot in present_outers
+            for outer_slot in relation["outer_slots"]
+        )
+        if forced_absent and matching_outer and inner_slot in garments:
+            raise AppError(
+                f"Garment slot {inner_slot} is incompatible with the selected "
+                "outer garment construction"
+            )
+    for slot, slot_rule in outfit["template"]["slots"].items():
+        relations = [
+            relation for relation in optional_relations
+            if relation["inner_slot"] == slot
+        ]
+        if not slot_rule.get("required", False) or slot in garments:
+            continue
+        if not relations or not any(
+            outer_slot in garments
+            for relation in relations for outer_slot in relation["outer_slots"]
+        ):
+            continue
+        permitted = any(
+            any(
+                outer_slot in garments
+                and tags(garments[outer_slot]) & set(relation["outer_tags_any"])
+                for outer_slot in relation["outer_slots"]
+            )
+            for relation in relations
         )
         if not permitted:
             raise AppError(

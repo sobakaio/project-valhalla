@@ -205,6 +205,27 @@
       ],
       "optional_inner_layers": [
         {
+          "id": "braless_required_by_outer_construction",
+          "inner_slot": "bra",
+          "chance": 1.0,
+          "outer_slots": [
+            "upperwear",
+            "full_body"
+          ],
+          "outer_tags_any": [
+            "braless_required"
+          ],
+          "drop_uncovered_stage_levels": [
+            "lingerie"
+          ],
+          "coverage_slots": [
+            "upperwear",
+            "full_body",
+            "outerwear",
+            "bra"
+          ]
+        },
+        {
           "id": "braless_self_supporting_upperwear",
           "inner_slot": "bra",
           "chance": 0.3,
@@ -5857,7 +5878,8 @@
         "tags": [
           "boudoir",
           "silk",
-          "elegant"
+          "elegant",
+          "braless_required"
         ],
         "allowed_colors": [
           "color_black",
@@ -5905,7 +5927,8 @@
         "tags": [
           "home",
           "casual",
-          "erotic"
+          "erotic",
+          "braless_required"
         ],
         "allowed_colors": [
           "color_ivory",
@@ -5998,7 +6021,8 @@
         "tags": [
           "elegant",
           "silk",
-          "erotic"
+          "erotic",
+          "braless_required"
         ],
         "allowed_colors": [
           "color_black",
@@ -6053,7 +6077,8 @@
           "boudoir",
           "erotic",
           "elegant",
-          "bra_optional"
+          "bra_optional",
+          "braless_required"
         ],
         "mix_tags": [
           "corset"
@@ -6074,7 +6099,8 @@
           "silk",
           "erotic",
           "elegant",
-          "bra_optional"
+          "bra_optional",
+          "braless_required"
         ],
         "mix_tags": [
           "elegant_lingerie"
@@ -6093,7 +6119,8 @@
         "tags": [
           "leather",
           "erotic",
-          "fetish"
+          "fetish",
+          "braless_required"
         ],
         "allowed_colors": [
           "color_black",
@@ -6107,7 +6134,8 @@
         "prompt": "extreme plunge-neck fitted top",
         "tags": [
           "erotic",
-          "elegant"
+          "elegant",
+          "braless_required"
         ],
         "allowed_colors": [
           "color_black",
@@ -6124,7 +6152,8 @@
           "sporty",
           "casual",
           "home",
-          "bra_optional"
+          "bra_optional",
+          "braless_required"
         ],
         "allowed_colors": [
           "color_black",
@@ -6156,7 +6185,8 @@
         "tags": [
           "party",
           "elegant",
-          "erotic"
+          "erotic",
+          "braless_required"
         ],
         "allowed_colors": [
           "color_black",
@@ -6184,7 +6214,8 @@
           "normal_clothes",
           "casual",
           "everyday",
-          "sporty"
+          "sporty",
+          "braless_required"
         ]
       },
       {
@@ -6195,7 +6226,8 @@
           "normal_clothes",
           "casual",
           "everyday",
-          "home"
+          "home",
+          "braless_required"
         ]
       },
       {
@@ -6268,7 +6300,8 @@
           "normal_clothes",
           "casual",
           "everyday",
-          "home"
+          "home",
+          "braless_required"
         ]
       },
       {
@@ -6401,7 +6434,8 @@
           "casual",
           "everyday",
           "home",
-          "sexy_casual"
+          "sexy_casual",
+          "braless_required"
         ]
       },
       {
@@ -6412,7 +6446,8 @@
           "normal_clothes",
           "casual",
           "everyday",
-          "sexy_casual"
+          "sexy_casual",
+          "braless_required"
         ]
       },
       {
@@ -6423,7 +6458,8 @@
           "normal_clothes",
           "casual",
           "everyday",
-          "sexy_casual"
+          "sexy_casual",
+          "braless_required"
         ]
       },
       {
@@ -6457,7 +6493,8 @@
           "casual",
           "everyday",
           "sexy_casual",
-          "bra_optional"
+          "bra_optional",
+          "braless_required"
         ]
       },
       {
@@ -6469,7 +6506,8 @@
           "casual",
           "everyday",
           "sexy_casual",
-          "bra_optional"
+          "bra_optional",
+          "braless_required"
         ]
       },
       {
@@ -6480,7 +6518,8 @@
           "normal_clothes",
           "casual",
           "everyday",
-          "sexy_casual"
+          "sexy_casual",
+          "braless_required"
         ]
       },
       {
@@ -6808,7 +6847,8 @@
         "tags": [
           "casual",
           "everyday",
-          "normal_clothes"
+          "normal_clothes",
+          "braless_required"
         ],
         "allowed_colors": [
           "color_white",
@@ -8211,7 +8251,8 @@
         "tags": [
           "home",
           "casual",
-          "erotic"
+          "erotic",
+          "braless_required"
         ],
         "occupies_slots": [
           "upperwear",
@@ -8231,7 +8272,8 @@
         "tags": [
           "outdoor",
           "everyday",
-          "elegant"
+          "elegant",
+          "braless_required"
         ],
         "occupies_slots": [
           "upperwear",
@@ -8316,7 +8358,8 @@
         "tags": [
           "party",
           "elegant",
-          "erotic"
+          "erotic",
+          "braless_required"
         ],
         "occupies_slots": [
           "upperwear",
@@ -8336,7 +8379,8 @@
         "tags": [
           "elegant",
           "formal",
-          "erotic"
+          "erotic",
+          "braless_required"
         ],
         "occupies_slots": [
           "upperwear",
@@ -8356,7 +8400,8 @@
         "tags": [
           "silk",
           "elegant",
-          "erotic"
+          "erotic",
+          "braless_required"
         ],
         "occupies_slots": [
           "upperwear",
@@ -8499,7 +8544,8 @@
           "lace",
           "lingerie",
           "boudoir",
-          "erotic"
+          "erotic",
+          "braless_required"
         ],
         "mix_tags": [
           "lace",
@@ -8523,7 +8569,8 @@
         "tags": [
           "sheer",
           "lingerie",
-          "explicit"
+          "explicit",
+          "braless_required"
         ],
         "mix_tags": [
           "sheer",
@@ -8546,7 +8593,8 @@
         "tags": [
           "lingerie",
           "fetish",
-          "erotic"
+          "erotic",
+          "braless_required"
         ],
         "mix_tags": [
           "strappy"
@@ -8569,7 +8617,8 @@
           "leather",
           "fetish",
           "erotic",
-          "opaque_body"
+          "opaque_body",
+          "braless_required"
         ],
         "occupies_slots": [
           "upperwear",
@@ -8587,7 +8636,8 @@
         "tags": [
           "swimwear",
           "outdoor",
-          "elegant"
+          "elegant",
+          "braless_required"
         ],
         "occupies_slots": [
           "upperwear",
@@ -8607,7 +8657,8 @@
         "tags": [
           "swimwear",
           "outdoor",
-          "erotic"
+          "erotic",
+          "braless_required"
         ],
         "occupies_slots": [
           "upperwear",
@@ -8627,7 +8678,8 @@
         "tags": [
           "swimwear",
           "outdoor",
-          "erotic"
+          "erotic",
+          "braless_required"
         ],
         "occupies_slots": [
           "upperwear",
@@ -8647,7 +8699,8 @@
         "tags": [
           "swimwear",
           "outdoor",
-          "explicit"
+          "explicit",
+          "braless_required"
         ],
         "occupies_slots": [
           "upperwear",
@@ -8729,7 +8782,8 @@
           "everyday",
           "home",
           "sexy_casual",
-          "bra_optional"
+          "bra_optional",
+          "braless_required"
         ],
         "occupies_slots": [
           "upperwear",
@@ -8823,7 +8877,8 @@
           "casual",
           "everyday",
           "home",
-          "sexy_casual"
+          "sexy_casual",
+          "braless_required"
         ],
         "occupies_slots": [
           "upperwear",
@@ -8853,7 +8908,8 @@
           "normal_clothes",
           "casual",
           "everyday",
-          "sexy_casual"
+          "sexy_casual",
+          "braless_required"
         ],
         "occupies_slots": [
           "upperwear",
@@ -8958,7 +9014,8 @@
           "casual",
           "everyday",
           "home",
-          "sexy_casual"
+          "sexy_casual",
+          "braless_required"
         ],
         "occupies_slots": [
           "upperwear",
@@ -9002,7 +9059,8 @@
           "normal_clothes",
           "casual",
           "everyday",
-          "sexy_casual"
+          "sexy_casual",
+          "braless_required"
         ],
         "occupies_slots": [
           "upperwear",
@@ -9217,7 +9275,8 @@
         "tags": [
           "dress",
           "casual",
-          "normal_clothes"
+          "normal_clothes",
+          "braless_required"
         ],
         "allowed_colors": [
           "color_white",
@@ -13672,10 +13731,6 @@
           "required": true,
           "required_tags": [
             "luxury"
-          ],
-          "excludes_tags": [
-            "explicit",
-            "sheer"
           ]
         },
         "outerwear": {
@@ -13719,7 +13774,9 @@
           ],
           "body_visibility": [
             "breasts",
-            "nipples"
+            "nipples",
+            "pubic_area",
+            "genitals"
           ]
         },
         {
@@ -13733,7 +13790,9 @@
           ],
           "body_visibility": [
             "breasts",
-            "nipples"
+            "nipples",
+            "pubic_area",
+            "genitals"
           ]
         },
         {
@@ -13746,7 +13805,9 @@
           ],
           "body_visibility": [
             "breasts",
-            "nipples"
+            "nipples",
+            "pubic_area",
+            "genitals"
           ]
         }
       ]

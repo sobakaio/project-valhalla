@@ -1465,14 +1465,17 @@ class DirectorRegressionTests(unittest.TestCase):
     def test_optional_bra_relation_is_data_driven_and_drops_invalid_stages(self):
         database, _ = app.load_database()
         configured = copy.deepcopy(database)
-        relation = configured["settings"]["wardrobe_compatibility"]["optional_inner_layers"][0]
+        relation = next(
+            item for item in configured["settings"]["wardrobe_compatibility"]["optional_inner_layers"]
+            if item["id"] == "braless_self_supporting_upperwear"
+        )
         relation["chance"] = 1
         template = next(
             item for item in configured["outfit_templates"]
-            if item["id"] == "template_progressive_undressing"
+            if item["id"] == "template_everyday_casual"
         )
         for item in configured["garments"]["upperwear"]:
-            item["disabled"] = item["id"] != "top_corset"
+            item["disabled"] = item["id"] != "top_fitted_oxford_shirt"
         composer = app.Composer(configured, app.random.Random(818181))
         outfit = composer.choose_outfit(template)
         self.assertNotIn("bra", outfit["garments"])
@@ -1501,13 +1504,17 @@ class DirectorRegressionTests(unittest.TestCase):
     def test_optional_bra_probability_zero_preserves_required_bra(self):
         database, _ = app.load_database()
         configured = copy.deepcopy(database)
-        configured["settings"]["wardrobe_compatibility"]["optional_inner_layers"][0]["chance"] = 0
+        relation = next(
+            item for item in configured["settings"]["wardrobe_compatibility"]["optional_inner_layers"]
+            if item["id"] == "braless_self_supporting_upperwear"
+        )
+        relation["chance"] = 0
         template = next(
             item for item in configured["outfit_templates"]
-            if item["id"] == "template_progressive_undressing"
+            if item["id"] == "template_everyday_casual"
         )
         for item in configured["garments"]["upperwear"]:
-            item["disabled"] = item["id"] != "top_corset"
+            item["disabled"] = item["id"] != "top_fitted_oxford_shirt"
         outfit = app.Composer(configured, app.random.Random(919191)).choose_outfit(template)
         self.assertIn("bra", outfit["garments"])
         self.assertTrue(any(
@@ -1515,10 +1522,73 @@ class DirectorRegressionTests(unittest.TestCase):
             for stage in outfit["template"]["stages"]
         ))
 
+    def test_exposed_outer_construction_forces_a_natural_braless_progression(self):
+        database, _ = app.load_database()
+        relation = next(
+            item for item in database["settings"]["wardrobe_compatibility"]["optional_inner_layers"]
+            if item["id"] == "braless_required_by_outer_construction"
+        )
+        self.assertEqual(relation["chance"], 1)
+        template_id = "template_satin_separates"
+
+        def resolve_with_only(upperwear_id):
+            configured = copy.deepcopy(database)
+            template = next(
+                item for item in configured["outfit_templates"]
+                if item["id"] == template_id
+            )
+            for item in configured["garments"]["upperwear"]:
+                item["disabled"] = item["id"] != upperwear_id
+            return app.Composer(
+                configured, app.random.Random(515151)
+            ).choose_outfit(template)
+
+        camisole = resolve_with_only("top_satin_camisole")
+        self.assertNotIn("bra", camisole["garments"])
+        self.assertTrue(all(
+            "bra" not in stage.get("visible_slots", [])
+            for stage in camisole["template"]["stages"]
+        ))
+        self.assertFalse(any(
+            stage["level"] == "lingerie"
+            for stage in camisole["template"]["stages"]
+        ))
+
+        blouse = resolve_with_only("top_silk_blouse")
+        self.assertIn("bra", blouse["garments"])
+        self.assertTrue(any(
+            "bra" in stage.get("visible_slots", [])
+            for stage in blouse["template"]["stages"]
+        ))
+
+        for template_id, full_body_id in (
+            ("template_day_dress", "swimsuit_classic"),
+            ("template_cocktail_dress", "dress_satin_cowl"),
+        ):
+            configured = copy.deepcopy(database)
+            template = next(
+                item for item in configured["outfit_templates"]
+                if item["id"] == template_id
+            )
+            for item in configured["garments"]["full_body"]:
+                item["disabled"] = item["id"] != full_body_id
+            outfit = app.Composer(
+                configured, app.random.Random(616161)
+            ).choose_outfit(template)
+            self.assertNotIn("bra", outfit["garments"])
+            self.assertTrue(all(
+                "bra" not in stage.get("visible_slots", [])
+                for stage in outfit["template"]["stages"]
+            ))
+
     def test_braless_shaping_dress_remains_structurally_sfw(self):
         database, _ = app.load_database()
         configured = copy.deepcopy(database)
-        configured["settings"]["wardrobe_compatibility"]["optional_inner_layers"][0]["chance"] = 1
+        relation = next(
+            item for item in configured["settings"]["wardrobe_compatibility"]["optional_inner_layers"]
+            if item["id"] == "braless_self_supporting_upperwear"
+        )
+        relation["chance"] = 1
         template = next(
             item for item in configured["outfit_templates"]
             if item["id"] == "template_day_dress"
@@ -3136,7 +3206,7 @@ class VisualCompatibilityRegressionTests(unittest.TestCase):
                         if item["id"] == option["id"]
                     )
                     self.assertTrue(app.garment_compatible_with_template_stages(
-                        template, slot, garment
+                        outfit["template"], slot, garment
                     ))
             for key, field in fields.items():
                 if not key.startswith("outfit.garments."):
