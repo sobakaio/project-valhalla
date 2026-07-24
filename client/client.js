@@ -2202,6 +2202,27 @@ function openPhotoshoot(key) {
   restoreProofsPosition({ fallbackToGrid: true });
 }
 
+function closePhotoshoot() {
+  if (!state.galleryGroup) return false;
+  rememberProofsPosition();
+  state.galleryGroup = null;
+  sessionStorage.setItem('valhalla-gallery-group', '');
+  renderOutputs();
+  restoreProofsPosition({ fallbackToGrid: true });
+  return true;
+}
+
+window.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape' || !state.galleryGroup) return;
+  if (!$('#outputs-view').classList.contains('active')) return;
+  if ($('dialog[open]') || !$('#shot-preview-window').classList.contains('hidden')) return;
+  if ($('#image-slideshow-delay').open || $('#studio-files-menu').open || $('[data-render-mode][open]')) return;
+  if ($('#system-card').classList.contains('mobile-open')) return;
+  event.preventDefault();
+  event.stopPropagation();
+  closePhotoshoot();
+}, { capture: true });
+
 outputGrid.addEventListener('click', (event) => {
   const card = event.target.closest('.output-card');
   if (!card) return;
