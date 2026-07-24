@@ -1267,29 +1267,32 @@ class DirectorRegressionTests(unittest.TestCase):
         self.assertEqual(order, [first["id"], second["id"]])
         self.assertFalse(state._job_worker_running)
 
-    def test_render_jobs_expose_stable_pending_frames_and_opportunistic_eta(self):
+    def test_render_jobs_expose_compact_pending_plan_without_queued_eta(self):
         state, storyboard_id = self.make_storyboard()
         with patch.object(app.threading, "Thread"):
             job = state.create_job(storyboard_id, False, [1, 2, 3])
-        self.assertEqual(
-            [item["key"] for item in job["pending_frames"]],
-            [f"pending:{job['id']}:{position}" for position in (1, 2, 3)],
-        )
-        self.assertEqual([item["shot"] for item in job["pending_frames"]], [1, 2, 3])
-        self.assertTrue(all(item["eta_seconds"] is None for item in job["pending_frames"]))
-        self.assertTrue(all(item["status"] == "queued" for item in job["pending_frames"]))
+        self.assertEqual(job["pending_plan"]["job_id"], job["id"])
+        self.assertEqual(job["pending_plan"]["start_position"], 1)
+        self.assertEqual(job["pending_plan"]["total"], 3)
+        self.assertEqual(job["pending_plan"]["status"], "queued")
+        self.assertIsNone(job["pending_plan"]["active_eta_seconds"])
+        self.assertNotIn("pending_frames", job)
 
         timing_key = (False, job["workflow_profile"])
         state._render_timings[timing_key] = [8.0, 10.0, 60.0]
         estimated = state.get_job(job["id"])
         self.assertEqual(estimated["estimated_frame_seconds"], 10.0)
-        self.assertEqual(
-            [item["eta_seconds"] for item in estimated["pending_frames"]],
-            [10.0, 20.0, 30.0],
-        )
-        self.assertTrue(all(item["observed_at"] for item in estimated["pending_frames"]))
+        self.assertIsNone(estimated["pending_plan"]["active_eta_seconds"])
+        self.assertTrue(estimated["pending_plan"]["observed_at"])
 
-    def test_pending_eta_counts_fifo_work_and_ignores_incompatible_history(self):
+        record = state.jobs[job["id"]]
+        record["total"] = 2000
+        record["shot_numbers"] = list(range(1, 2001))
+        large = state.job_payload(record)
+        self.assertLess(len(app.json.dumps(large["pending_plan"])), 500)
+        self.assertEqual(large["pending_plan"]["total"], 2000)
+
+    def test_queued_jobs_do_not_publish_speculative_eta(self):
         state, storyboard_id = self.make_storyboard()
         with patch.object(app.threading, "Thread"):
             first = state.create_job(storyboard_id, False, [1, 2])
@@ -1298,13 +1301,13 @@ class DirectorRegressionTests(unittest.TestCase):
         state._render_timings[(False, first["workflow_profile"])] = [12.0]
         session = state.jobs_payload()
         queued = {job["id"]: job for job in session["queued_jobs"]}
-        self.assertEqual(queued[first["id"]]["pending_frames"][-1]["eta_seconds"], 24.0)
-        self.assertEqual(queued[second["id"]]["pending_frames"][0]["eta_seconds"], 36.0)
+        self.assertIsNone(queued[first["id"]]["pending_plan"]["active_eta_seconds"])
+        self.assertIsNone(queued[second["id"]]["pending_plan"]["active_eta_seconds"])
         self.assertIsNone(queued[preview["id"]]["estimated_frame_seconds"])
-        self.assertIsNone(queued[preview["id"]]["pending_frames"][0]["eta_seconds"])
+        self.assertIsNone(queued[preview["id"]]["pending_plan"]["active_eta_seconds"])
 
         cancelled = state.cancel_job(second["id"])
-        self.assertEqual(cancelled["pending_frames"], [])
+        self.assertIsNone(cancelled["pending_plan"])
 
     def test_running_pending_frame_is_rendering_and_countdown_never_negative(self):
         state, storyboard_id = self.make_storyboard()
@@ -1317,9 +1320,9 @@ class DirectorRegressionTests(unittest.TestCase):
         record["_started_monotonic"] = app.time.monotonic() - 15
         record["_shot_started_monotonic"] = app.time.monotonic() - 20
         payload = state.get_job(job["id"])
-        self.assertEqual(payload["pending_frames"][0]["status"], "rendering")
-        self.assertEqual(payload["pending_frames"][0]["eta_seconds"], 0.0)
-        self.assertEqual(payload["pending_frames"][1]["eta_seconds"], 10.0)
+        self.assertEqual(payload["pending_plan"]["status"], "running")
+        self.assertEqual(payload["pending_plan"]["start_position"], 2)
+        self.assertEqual(payload["pending_plan"]["active_eta_seconds"], 0.0)
 
     def test_queued_job_can_be_cancelled_before_it_starts(self):
         state, storyboard_id = self.make_storyboard()
@@ -3072,17 +3075,21 @@ class FrontendContractTests(unittest.TestCase):
         root = Path(app.__file__).parent
         js = (root / "client" / "client.js").read_text(encoding="utf-8")
         css = (root / "client" / "client.css").read_text(encoding="utf-8")
-        self.assertIn("function syncJobPlaceholders(job)", js)
-        self.assertIn("job.pending_frames || []", js)
-        self.assertIn("output.pending && output.key === item.pending_key", js)
-        self.assertIn("pending_job_id: placeholder.job_id", js)
+        self.assertIn("function syncJobPlaceholderPlan(job", js)
+        self.assertIn("job.pending_plan", js)
+        self.assertIn("function pendingPlanCount(plan)", js)
+        self.assertIn("function pendingPlanSignature(plan)", js)
+        self.assertIn("function groupEntryAt(group, index)", js)
+        self.assertIn("function flatEntryAt(index)", js)
+        self.assertIn("pendingOutput(group.pendingPlan, position)", js)
         self.assertIn("item.pending || item.pending_job_id", js)
         self.assertIn("item.pending_job_id === job.id", js)
-        self.assertIn("releasedCompleted", js)
         self.assertIn("data-pending-deadline", js)
         self.assertIn("function refreshPendingCountdowns()", js)
         self.assertIn("setInterval(refreshPendingCountdowns, 1000)", js)
-        self.assertIn("Estimating…", js)
+        self.assertIn("ETA estimating", js)
+        self.assertIn("Rendering ${kind} ${displayShot}", js)
+        self.assertIn("Queued ${kind} ${displayShot}", js)
         self.assertIn("if (!item || item.pending) return", js)
         self.assertIn("if (card.classList.contains('pending-output')) return", js)
         pending_card = js.split("if (item.pending) {", 1)[1].split(

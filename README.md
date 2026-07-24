@@ -175,11 +175,13 @@ Storyboard export stores the selected catalog IDs, workflow profile, prompts, an
 Production jobs are immutable snapshots placed in a FIFO queue. Cancellation takes effect between images. Generated images are written to `storage.output_dir`; temporary shot previews remain in memory and are discarded when closed.
 
 Queued and rendering Production/persistent Preview frames appear immediately in
-Proofs as neutral placeholder thumbnails. Each card shows its shot, queue/render
-state, and an approximate locally ticking ETA when the server has compatible timing
-evidence; otherwise it honestly shows `Estimating…`. Completed outputs replace their
-stable pending card in place. Pending cards never enter filesystem proof listings,
-request thumbnail bytes, expose prompt metadata, or enable fullscreen/download/delete.
+Proofs as neutral placeholder thumbnails. The server sends one compact range per
+job instead of thousands of frame records, and gallery virtualization materializes
+only the visible placeholder window. Queued cards show only their render kind and
+shot number; the currently rendering frame alone receives an opportunistic local ETA.
+Completed outputs replace their pending positions in place. Pending cards never enter
+filesystem proof listings, request thumbnail bytes, expose prompt metadata, or enable
+fullscreen/download/delete.
 
 Output deletion is permanent and requires confirmation. Deletion is disabled while a render job is active. Restarting Valhalla clears in-memory planning and job history but never removes generated files.
 

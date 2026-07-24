@@ -6894,7 +6894,7 @@ class WebState:
             if not self._job_worker_running:
                 self._job_worker_running = True
                 start_worker = True
-            payload = self.job_payload(job, self.queue_wait_seconds(job))
+            payload = self.job_payload(job)
             payload["queue_position"] = sum(
                 1 for item in self.jobs.values()
                 if item["status"] == "queued"
@@ -7093,84 +7093,43 @@ class WebState:
         )
         return round(median, 1)
 
-    def queue_wait_seconds(self, target: dict[str, Any]) -> float | None:
-        wait = 0.0
-        for job in self.jobs.values():
-            if job["id"] == target["id"]:
-                return round(wait, 1)
-            if job["status"] not in {"queued", "running"}:
-                continue
-            estimate = self.job_frame_seconds(job)
-            if estimate is None:
-                return None
-            remaining = max(0, job["total"] - job["completed"])
-            job_wait = estimate * remaining
-            if (
-                job["status"] == "running"
-                and job.get("_shot_started_monotonic") is not None
-            ):
-                job_wait = max(
-                    0.0,
-                    job_wait - (time.monotonic() - job["_shot_started_monotonic"]),
-                )
-            wait += job_wait
-        return 0.0
-
-    def pending_frames_payload(
-        self, job: dict[str, Any], queue_wait: float | None
-    ) -> list[dict[str, Any]]:
+    def pending_plan_payload(self, job: dict[str, Any]) -> dict[str, Any] | None:
         if (
             job["status"] not in {"queued", "running"}
             or not all(key in job for key in ("total", "completed", "shot_numbers"))
         ):
-            return []
+            return None
         estimate = self.job_frame_seconds(job)
         observed_at = _iso_now()
-        current_remaining = estimate
+        active_eta = None
         if (
             estimate is not None and job["status"] == "running"
             and job.get("_shot_started_monotonic") is not None
         ):
-            current_remaining = max(
+            active_eta = max(
                 0.0, estimate - (time.monotonic() - job["_shot_started_monotonic"])
             )
-        frames = []
-        for position in range(job["completed"] + 1, job["total"] + 1):
-            eta = None
-            if estimate is not None and queue_wait is not None:
-                if job["status"] == "running":
-                    eta = current_remaining + estimate * (position - job["completed"] - 1)
-                else:
-                    eta = queue_wait + estimate * (position - job["completed"])
-            frames.append({
-                "key": f"pending:{job['id']}:{position}",
-                "job_id": job["id"],
-                "position": position,
-                "shot": job["shot_numbers"][position - 1],
-                "render_kind": job["render_kind"],
-                "status": (
-                    "rendering"
-                    if job["status"] == "running" and position == job["completed"] + 1
-                    else "queued"
-                ),
-                "eta_seconds": round(eta, 1) if eta is not None else None,
-                "observed_at": observed_at,
-            })
-        return frames
+        return {
+            "job_id": job["id"],
+            "start_position": job["completed"] + 1,
+            "total": job["total"],
+            "render_kind": job["render_kind"],
+            "status": job["status"],
+            "active_eta_seconds": round(active_eta, 1) if active_eta is not None else None,
+            "observed_at": observed_at,
+        }
 
-    def job_payload(
-        self, job: dict[str, Any], queue_wait: float | None = None
-    ) -> dict[str, Any]:
+    def job_payload(self, job: dict[str, Any]) -> dict[str, Any]:
         payload = {key: value for key, value in job.items() if not key.startswith("_")}
         estimate = self.job_frame_seconds(job)
         payload["observed_at"] = _iso_now()
         payload["estimated_frame_seconds"] = estimate
-        payload["pending_frames"] = self.pending_frames_payload(job, queue_wait)
+        payload["pending_plan"] = self.pending_plan_payload(job)
         if job["status"] == "running" and job.get("_started_monotonic") is not None:
             elapsed = time.monotonic() - job["_started_monotonic"]
             payload["elapsed_seconds"] = round(elapsed, 1)
-        if payload["pending_frames"]:
-            payload["eta_seconds"] = payload["pending_frames"][-1]["eta_seconds"]
+        if payload["pending_plan"]:
+            payload["eta_seconds"] = payload["pending_plan"]["active_eta_seconds"]
         return payload
 
     def get_job(self, job_id: str) -> dict[str, Any]:
@@ -7178,7 +7137,7 @@ class WebState:
             job = self.jobs.get(job_id)
             if job is None:
                 raise AppError("Render job not found or expired")
-            payload = self.job_payload(job, self.queue_wait_seconds(job))
+            payload = self.job_payload(job)
             pipeline = [
                 item for item in self.jobs.values()
                 if item["status"] in {"queued", "running"}
@@ -7195,7 +7154,7 @@ class WebState:
     def jobs_payload(self) -> dict[str, Any]:
         with self.lock:
             jobs = [
-                self.job_payload(job, self.queue_wait_seconds(job))
+                self.job_payload(job)
                 for job in self.jobs.values()
             ]
             visible_previews = [
