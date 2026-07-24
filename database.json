@@ -15691,6 +15691,24 @@
       "weight": 1.2
     },
     {
+      "id": "recipe_insertion_play",
+      "prompt": "hands-only insertion play with the subject's full pose clearly visible",
+      "menu_label": "Insertion play",
+      "plateau_kind": "masturbation",
+      "pose_tags": [
+        "masturbation_pose",
+        "open_legs"
+      ],
+      "action_tags": [
+        "insertion_action"
+      ],
+      "shot_size": "shot_three_quarter",
+      "camera_angle": "angle_high",
+      "focus_target": "focus_intimate",
+      "intensity": "explicit",
+      "weight": 1.0
+    },
+    {
       "id": "recipe_climax",
       "prompt": "peak climax composition",
       "menu_label": "Climax",
@@ -18706,6 +18724,7 @@
       "tags": [
         "explicit_action",
         "masturbation_action",
+        "insertion_action",
         "explicit"
       ],
       "requires_tags": [
@@ -18728,6 +18747,7 @@
       "tags": [
         "explicit_action",
         "masturbation_action",
+        "insertion_action",
         "explicit"
       ],
       "requires_tags": [
@@ -18750,6 +18770,7 @@
       "tags": [
         "explicit_action",
         "masturbation_action",
+        "insertion_action",
         "explicit"
       ],
       "requires_tags": [

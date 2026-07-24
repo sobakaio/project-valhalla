@@ -221,12 +221,39 @@ class CatalogQualityTests(unittest.TestCase):
             self.assertTrue(item["prompt"].strip())
             self.assertTrue(item["menu_label"].strip())
             self.assertTrue(
-                {"explicit_action", "masturbation_action", "explicit"}.issubset(
+                {"explicit_action", "masturbation_action", "insertion_action", "explicit"}.issubset(
                     app.tags(item)
                 )
             )
             self.assertEqual(set(item["requires_tags"]), {"genitals", "open_legs"})
             self.assertEqual(item["hands_required"], hands)
+
+        recipe = next(
+            item for item in database["explicit_recipes"]
+            if item["id"] == "recipe_insertion_play"
+        )
+        self.assertEqual(recipe["action_tags"], ["insertion_action"])
+        self.assertEqual(recipe["shot_size"], "shot_three_quarter")
+
+        for seed in range(25):
+            args = app.parse_run_config({
+                "mode": "photoshoot", "count": 12, "photoshoots": 1,
+                "prompt_seed": seed, "content_mode": "xxx",
+            }, database)
+            rng = app.random.Random(seed)
+            storyboard = app.build_storyboard(
+                args, database, app.Composer(database, rng), rng, 100, 100
+            )
+            insertion_shots = [
+                shot for shot in storyboard
+                if (shot["scene"].get("explicit_recipe") or {}).get("id")
+                == "recipe_insertion_play"
+            ]
+            self.assertTrue(insertion_shots)
+            self.assertTrue(all(
+                "insertion_action" in app.tags(shot["scene"]["action"])
+                for shot in insertion_shots
+            ))
             self.assertEqual(item["allowed_levels"], ["explicit"])
 
     def test_database_rejects_duplicate_json_keys(self):
