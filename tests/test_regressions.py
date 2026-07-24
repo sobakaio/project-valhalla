@@ -622,6 +622,58 @@ class CatalogQualityTests(unittest.TestCase):
         self.assertEqual(app.hands_required(both_hands_pose), 2)
         self.assertGreater(app.hands_required(both_hands_pose) + app.hands_required(finger), 2)
 
+    def test_expanded_adult_action_set_has_structural_clothing_and_hand_rules(self):
+        database, _ = app.load_database()
+        actions = {item["id"]: item for item in database["actions"]}
+        expected_hands = {
+            "action_waistband_tease": 1,
+            "action_panties_side_pull": 1,
+            "action_cover_bare_breasts": 2,
+            "action_squeeze_one_breast": 1,
+            "action_pinch_one_nipple": 1,
+            "action_pull_bra_cup_aside": 1,
+            "action_hold_unbuttoned_shirt_open": 2,
+            "action_hand_between_thighs": 1,
+            "action_cup_over_panties": 1,
+            "action_rub_over_panties": 1,
+            "action_touch_clitoris": 1,
+            "action_trace_vulva": 1,
+            "action_insert_two_fingers": 1,
+            "action_spread_and_clitoral_touch": 2,
+            "action_breast_and_intimate_touch": 2,
+            "action_spread_buttocks": 2,
+            "action_pull_panties_between_cheeks": 1,
+            "action_taste_fingertips": 1,
+            "action_inviting_finger": 1,
+            "action_blow_kiss_bare_breast": 1,
+        }
+        self.assertTrue(set(expected_hands).issubset(actions))
+        for action_id, required in expected_hands.items():
+            item = actions[action_id]
+            self.assertEqual(app.hands_required(item), required, action_id)
+            self.assertTrue(item.get("menu_label", "").strip(), action_id)
+            self.assertTrue(item["prompt"].strip(), action_id)
+
+        for action_id in ("action_waistband_tease", "action_cup_over_panties", "action_rub_over_panties"):
+            self.assertIn("panties", actions[action_id]["requires_tags"])
+            self.assertIn("genitals", actions[action_id]["excludes_tags"])
+        self.assertTrue(
+            {"bra", "breasts", "nipples"}.issubset(
+                actions["action_pull_bra_cup_aside"]["requires_tags"]
+            )
+        )
+        self.assertIn(
+            "braless_required",
+            actions["action_hold_unbuttoned_shirt_open"]["excludes_tags"],
+        )
+        self.assertIn(
+            "provocative_rear",
+            actions["action_pull_panties_between_cheeks"]["requires_tags"],
+        )
+        self.assertIn(
+            "insertion_action", app.tags(actions["action_insert_two_fingers"])
+        )
+
     def test_hand_budget_fallback_understands_legacy_pose_action_and_prop_text(self):
         self.assertEqual(app.hands_required({"prompt": "resting both hands at her waist"}), 2)
         self.assertEqual(app.hands_required({"prompt": "tracing one hand along her hip"}), 1)

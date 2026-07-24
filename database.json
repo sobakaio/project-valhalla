@@ -19507,6 +19507,200 @@
       ]
     },
     {
+      "id": "action_waistband_tease",
+      "prompt": "hooking one index finger beneath the waistband of her panties and teasingly pulling it slightly away from her hip",
+      "menu_label": "Tease panties waistband",
+      "tags": ["erotic_action", "undressing_action"],
+      "requires_tags": ["panties"],
+      "excludes_tags": ["genitals"],
+      "hands_required": 1,
+      "allowed_levels": ["lingerie", "topless"]
+    },
+    {
+      "id": "action_panties_side_pull",
+      "prompt": "pulling the crotch of her panties clearly to one side with one hand to expose her vulva",
+      "menu_label": "Pull panties aside",
+      "tags": ["explicit_action", "panties_aside_action", "explicit"],
+      "requires_tags": ["panties", "genitals", "open_legs"],
+      "requires_expression_tags": ["aroused_expression"],
+      "hands_required": 1,
+      "allowed_levels": ["explicit"]
+    },
+    {
+      "id": "action_cover_bare_breasts",
+      "prompt": "covering both bare breasts with her hands while leaving the rest of her torso visible",
+      "menu_label": "Cover bare breasts",
+      "tags": ["erotic_action", "closeup_action"],
+      "requires_tags": ["breasts", "nipples"],
+      "hands_required": 2,
+      "allowed_levels": ["topless", "nude"]
+    },
+    {
+      "id": "action_squeeze_one_breast",
+      "prompt": "firmly squeezing one exposed breast with one hand",
+      "menu_label": "Squeeze one breast",
+      "tags": ["erotic_action", "explicit_action", "closeup_action", "explicit"],
+      "requires_tags": ["breasts", "nipples"],
+      "requires_expression_tags": ["pleasure_expression"],
+      "hands_required": 1,
+      "allowed_levels": ["topless", "nude", "explicit"]
+    },
+    {
+      "id": "action_pinch_one_nipple",
+      "prompt": "gently pinching one exposed nipple between her thumb and index finger",
+      "menu_label": "Pinch one nipple",
+      "tags": ["erotic_action", "explicit_action", "closeup_action", "explicit"],
+      "requires_tags": ["breasts", "nipples"],
+      "requires_expression_tags": ["pleasure_expression"],
+      "hands_required": 1,
+      "allowed_levels": ["topless", "nude", "explicit"]
+    },
+    {
+      "id": "action_pull_bra_cup_aside",
+      "prompt": "pulling one bra cup aside with one hand to reveal one bare breast and nipple",
+      "menu_label": "Pull bra cup aside",
+      "tags": ["undressing_action", "erotic_action", "closeup_action"],
+      "requires_tags": ["bra", "breasts", "nipples"],
+      "hands_required": 1,
+      "allowed_levels": ["lingerie"]
+    },
+    {
+      "id": "action_hold_unbuttoned_shirt_open",
+      "prompt": "holding both sides of her already-unbuttoned shirt open to reveal the lingerie underneath",
+      "menu_label": "Hold shirt open",
+      "tags": ["undressing_action", "erotic_action"],
+      "requires_tags": ["upperwear"],
+      "excludes_tags": ["braless_required"],
+      "hands_required": 2,
+      "allowed_levels": ["covered"]
+    },
+    {
+      "id": "action_hand_between_thighs",
+      "prompt": "pressing one hand teasingly between her closed upper thighs",
+      "menu_label": "Hand between thighs",
+      "tags": ["erotic_action"],
+      "hands_required": 1,
+      "allowed_levels": ["lingerie", "topless", "nude"]
+    },
+    {
+      "id": "action_cup_over_panties",
+      "prompt": "cupping her covered intimate area with one hand over her panties",
+      "menu_label": "Cup over panties",
+      "tags": ["erotic_action"],
+      "requires_tags": ["panties"],
+      "excludes_tags": ["genitals"],
+      "requires_expression_tags": ["aroused_expression"],
+      "hands_required": 1,
+      "allowed_levels": ["lingerie", "topless"]
+    },
+    {
+      "id": "action_rub_over_panties",
+      "prompt": "rubbing two fingers slowly over the crotch of her still-worn panties",
+      "menu_label": "Rub over panties",
+      "tags": ["erotic_action"],
+      "requires_tags": ["panties"],
+      "excludes_tags": ["genitals"],
+      "requires_expression_tags": ["pleasure_expression"],
+      "hands_required": 1,
+      "allowed_levels": ["lingerie", "topless"]
+    },
+    {
+      "id": "action_touch_clitoris",
+      "prompt": "touching and slowly rubbing her exposed clitoris with one fingertip",
+      "menu_label": "Touch clitoris",
+      "tags": ["explicit_action", "masturbation_action", "explicit"],
+      "requires_tags": ["genitals", "open_legs"],
+      "requires_expression_tags": ["pleasure_expression"],
+      "hands_required": 1,
+      "allowed_levels": ["explicit"]
+    },
+    {
+      "id": "action_trace_vulva",
+      "prompt": "slowly tracing one fingertip along the outer lips of her exposed vulva",
+      "menu_label": "Trace outer vulva",
+      "tags": ["explicit_action", "closeup_action", "explicit"],
+      "requires_tags": ["genitals", "open_legs"],
+      "requires_expression_tags": ["aroused_expression"],
+      "hands_required": 1,
+      "allowed_levels": ["explicit"]
+    },
+    {
+      "id": "action_insert_two_fingers",
+      "prompt": "inserting her index and middle fingers into her vagina while keeping her thighs spread",
+      "menu_label": "Insert two fingers",
+      "tags": ["explicit_action", "masturbation_action", "insertion_action", "explicit"],
+      "requires_tags": ["genitals", "open_legs"],
+      "requires_expression_tags": ["pleasure_expression"],
+      "hands_required": 1,
+      "allowed_levels": ["explicit"]
+    },
+    {
+      "id": "action_spread_and_clitoral_touch",
+      "prompt": "spreading her vulva with one hand while visibly touching her clitoris with the other",
+      "menu_label": "Spread and touch clitoris",
+      "tags": ["explicit_action", "masturbation_action", "closeup_action", "explicit"],
+      "requires_tags": ["genitals", "open_legs"],
+      "requires_expression_tags": ["pleasure_expression"],
+      "hands_required": 2,
+      "allowed_levels": ["explicit"]
+    },
+    {
+      "id": "action_breast_and_intimate_touch",
+      "prompt": "squeezing one exposed breast with one hand while touching her vulva with the other",
+      "menu_label": "Touch breast and vulva",
+      "tags": ["explicit_action", "masturbation_action", "explicit"],
+      "requires_tags": ["breasts", "genitals", "open_legs"],
+      "requires_expression_tags": ["pleasure_expression"],
+      "hands_required": 2,
+      "allowed_levels": ["explicit"]
+    },
+    {
+      "id": "action_spread_buttocks",
+      "prompt": "using both hands to spread her buttocks in a direct rear-facing display",
+      "menu_label": "Spread buttocks",
+      "tags": ["explicit_action", "provocative_action", "explicit"],
+      "requires_tags": ["genitals", "provocative_rear"],
+      "requires_expression_tags": ["aroused_expression"],
+      "hands_required": 2,
+      "allowed_levels": ["explicit"]
+    },
+    {
+      "id": "action_pull_panties_between_cheeks",
+      "prompt": "teasingly pulling the back of her panties upward between her buttocks with one hand",
+      "menu_label": "Pull panties between cheeks",
+      "tags": ["erotic_action", "provocative_action"],
+      "requires_tags": ["panties", "provocative_rear"],
+      "excludes_tags": ["genitals"],
+      "hands_required": 1,
+      "allowed_levels": ["lingerie", "topless"]
+    },
+    {
+      "id": "action_taste_fingertips",
+      "prompt": "slowly tasting the tips of her index and middle fingers with parted lips",
+      "menu_label": "Taste fingertips",
+      "tags": ["erotic_action"],
+      "requires_expression_tags": ["aroused_expression"],
+      "hands_required": 1,
+      "allowed_levels": ["lingerie", "topless", "nude"]
+    },
+    {
+      "id": "action_inviting_finger",
+      "prompt": "curling one index finger toward herself in a playful come-closer gesture to the viewer",
+      "menu_label": "Come-closer finger",
+      "tags": ["fashion_action", "erotic_action", "explicit_action", "provocative_action"],
+      "hands_required": 1,
+      "allowed_levels": ["covered", "lingerie", "topless", "nude", "explicit"]
+    },
+    {
+      "id": "action_blow_kiss_bare_breast",
+      "prompt": "blowing a kiss toward the viewer with one hand while one bare breast remains clearly exposed",
+      "menu_label": "Blow kiss while topless",
+      "tags": ["erotic_action", "closeup_action"],
+      "requires_tags": ["breasts", "nipples"],
+      "hands_required": 1,
+      "allowed_levels": ["topless", "nude"]
+    },
+    {
       "id": "action_lift_skirt_hem",
       "prompt": "lifting the front hem with one hand to deliberately show the panties underneath",
       "tags": [
