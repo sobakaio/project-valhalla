@@ -4,6 +4,7 @@ import threading
 import time
 import tempfile
 import unittest
+from collections import Counter
 from pathlib import Path
 from unittest.mock import patch
 
@@ -1416,6 +1417,28 @@ class DirectorRegressionTests(unittest.TestCase):
                 if app.garment_matches_template_slot(database, template, "full_body", item)
             }
             self.assertFalse(blocked & reachable, (template_id, blocked & reachable))
+
+    def test_default_lingerie_distribution_does_not_overselect_satin_or_pearls(self):
+        database, _ = app.load_database()
+        composer = app.Composer(database, app.random.Random(20260724))
+        total = satin = pearl = 0
+        colors: Counter[str] = Counter()
+        for _ in range(1500):
+            outfit = composer.choose_outfit(composer.choose_template())
+            for slot in ("bra", "panties"):
+                garment = outfit["garments"].get(slot)
+                if not garment:
+                    continue
+                total += 1
+                wording = f"{garment['id']} {garment['prompt']}".casefold()
+                satin += int("satin" in wording or "silk" in app.tags(garment))
+                pearl += int("pearl" in wording)
+                colors[outfit["colors"][slot]["id"]] += 1
+        self.assertGreater(total, 2000)
+        self.assertLess(satin / total, 0.2)
+        self.assertLess(pearl / total, 0.15)
+        self.assertLess(colors["color_black"] / total, 0.45)
+        self.assertGreaterEqual(len(colors), 15)
 
     def test_opaque_boudoir_outer_layer_hides_bra_and_chest_visibility(self):
         database, _ = app.load_database()

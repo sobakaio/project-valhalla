@@ -375,7 +375,8 @@
           "catsuit_fishnet"
         ],
         "allowed_inner_ids": [
-          "bra_pearl_detail"
+          "bra_pearl_detail",
+          "bra_embroidered"
         ]
       }
     ],
@@ -9727,12 +9728,13 @@
       },
       {
         "id": "bra_lace_bralette",
-        "catalog_category": "normal",
+        "catalog_category": "luxury",
         "prompt": "delicate lace bralette",
         "tags": [
           "lace",
           "lingerie",
-          "elegant"
+          "elegant",
+          "luxury"
         ],
         "mix_tags": [
           "lace",
@@ -9748,13 +9750,14 @@
       },
       {
         "id": "bra_pushup_lace",
-        "catalog_category": "normal",
+        "catalog_category": "luxury",
         "prompt": "structured lace push-up bra",
         "tags": [
           "lace",
           "lingerie",
           "elegant",
-          "erotic"
+          "erotic",
+          "luxury"
         ],
         "mix_tags": [
           "lace",
@@ -9827,12 +9830,13 @@
       },
       {
         "id": "bra_embroidered",
-        "catalog_category": "normal",
+        "catalog_category": "luxury",
         "prompt": "embroidered tulle underwire bra",
         "tags": [
           "sheer",
           "lingerie",
-          "elegant"
+          "elegant",
+          "luxury"
         ],
         "mix_tags": [
           "sheer",
@@ -9980,13 +9984,14 @@
       },
       {
         "id": "bra_longline_lace",
-        "catalog_category": "normal",
+        "catalog_category": "luxury",
         "prompt": "boned longline lace bra",
         "tags": [
           "lace",
           "corset",
           "lingerie",
-          "elegant"
+          "elegant",
+          "luxury"
         ],
         "mix_tags": [
           "lace",
@@ -10003,6 +10008,7 @@
         "id": "bra_pearl_detail",
         "catalog_category": "luxury",
         "prompt": "sheer bra decorated with delicate pearl straps",
+        "weight": 0.4,
         "tags": [
           "sheer",
           "lingerie",
@@ -10016,13 +10022,17 @@
         "allowed_colors": [
           "color_black",
           "color_ivory",
-          "color_champagne"
+          "color_champagne",
+          "color_burgundy",
+          "color_emerald",
+          "color_navy"
         ]
       },
       {
         "id": "bra_satin_full_cup_luxury",
         "catalog_category": "luxury",
         "prompt": "fully opaque silk-satin full-cup bra with refined pearl-edged seams",
+        "weight": 0.55,
         "tags": [
           "silk",
           "lingerie",
@@ -10037,7 +10047,14 @@
         "allowed_colors": [
           "color_black",
           "color_ivory",
-          "color_champagne"
+          "color_champagne",
+          "color_red",
+          "color_burgundy",
+          "color_navy",
+          "color_emerald",
+          "color_pink",
+          "color_purple",
+          "color_teal"
         ]
       },
       {
@@ -10370,12 +10387,13 @@
       },
       {
         "id": "panties_high_waist",
-        "catalog_category": "normal",
+        "catalog_category": "luxury",
         "prompt": "high-waisted shaping panties",
         "reveals_cameltoe": true,
         "tags": [
           "elegant",
-          "lingerie"
+          "lingerie",
+          "luxury"
         ],
         "mix_tags": [
           "elegant_lingerie"
@@ -10389,12 +10407,13 @@
       },
       {
         "id": "panties_french_lace",
-        "catalog_category": "normal",
+        "catalog_category": "luxury",
         "prompt": "high-waisted French lace panties",
         "tags": [
           "lace",
           "lingerie",
-          "elegant"
+          "elegant",
+          "luxury"
         ],
         "mix_tags": [
           "lace",
@@ -10686,6 +10705,7 @@
         "id": "panties_pearl_string",
         "catalog_category": "luxury",
         "prompt": "delicate pearl-string thong",
+        "weight": 0.4,
         "tags": [
           "luxury",
           "lingerie",
@@ -10699,13 +10719,17 @@
         "allowed_colors": [
           "color_ivory",
           "color_champagne",
-          "color_black"
+          "color_black",
+          "color_burgundy",
+          "color_emerald",
+          "color_navy"
         ]
       },
       {
         "id": "panties_satin_full_brief_luxury",
         "catalog_category": "luxury",
         "prompt": "fully opaque silk-satin full briefs with refined pearl-edged seams",
+        "weight": 0.55,
         "tags": [
           "silk",
           "lingerie",
@@ -10720,7 +10744,14 @@
         "allowed_colors": [
           "color_ivory",
           "color_champagne",
-          "color_black"
+          "color_black",
+          "color_red",
+          "color_burgundy",
+          "color_navy",
+          "color_emerald",
+          "color_pink",
+          "color_purple",
+          "color_teal"
         ]
       },
       {
@@ -10863,13 +10894,14 @@
       },
       {
         "id": "panties_lace_embroidered",
-        "catalog_category": "normal",
+        "catalog_category": "luxury",
         "prompt": "embroidered lace mesh panties",
         "tags": [
           "lace",
           "sheer",
           "lingerie",
-          "elegant"
+          "elegant",
+          "luxury"
         ],
         "mix_tags": [
           "lace",
