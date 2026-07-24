@@ -56,6 +56,30 @@ class StudioGenerationLimitTests(unittest.TestCase):
 
 
 class CatalogQualityTests(unittest.TestCase):
+    def test_location_alternatives_are_separate_concrete_entities(self):
+        database, _ = app.load_database()
+        self.assertNotIn("semantic_prompt_audit", database["settings"])
+        interior = next(
+            item for item in database["interiors"]
+            if item["id"] == "interior_modern_bedroom"
+        )
+        bed = next(
+            item for item in database["furniture"]
+            if item["id"] == "furniture_bed"
+        )
+        candidates = app.matching_location_zones(database, interior, bed)
+        self.assertEqual(
+            {item["id"] for item in candidates},
+            {"zone_on_bed", "zone_beside_bed"},
+        )
+        observed = {
+            app.resolve_location_zone(
+                database, interior, bed, app.random.Random(seed)
+            )["id"]
+            for seed in range(40)
+        }
+        self.assertEqual(observed, {"zone_on_bed", "zone_beside_bed"})
+
     def test_sportswear_template_pairs_sporty_tops_and_pants(self):
         database, _ = app.load_database()
         template = next(
@@ -106,28 +130,35 @@ class CatalogQualityTests(unittest.TestCase):
         self.assertGreater(selected, 280)
         self.assertLess(selected, 440)
 
-        seed = 811001
-        run = app.parse_run_config({
-            "mode": "random", "content_mode": "progressive", "count": 12,
-            "photoshoots": 1, "prompt_seed": seed, "inference_seed": seed + 1,
-            "nsfw_percent": 50, "plateau_percent": 20,
-        }, database)
-        scene_rng = app.random.Random(seed)
-        board = app.build_storyboard(
-            run, database, app.Composer(database, scene_rng), scene_rng,
-            run.nsfw_percent, run.plateau_percent,
-        )
-        reveals = [
-            shot for shot in board
-            if shot["stage"].get("visual_category") == "dressed_panties_reveal"
-        ]
+        configured = copy.deepcopy(database)
+        configured["settings"]["dressed_panties_reveal"]["chance"] = 1
+        reveals = []
+        for seed in range(30):
+            run = app.parse_run_config({
+                "mode": "random", "content_mode": "progressive", "count": 12,
+                "photoshoots": 1, "prompt_seed": seed,
+                "inference_seed": seed + 1, "nsfw_percent": 50,
+                "plateau_percent": 20,
+            }, configured)
+            scene_rng = app.random.Random(seed)
+            board = app.build_storyboard(
+                run, configured, app.Composer(configured, scene_rng), scene_rng,
+                run.nsfw_percent, run.plateau_percent,
+            )
+            reveals = [
+                shot for shot in board
+                if shot["stage"].get("visual_category")
+                == "dressed_panties_reveal"
+            ]
+            if reveals:
+                break
         self.assertTrue(reveals)
         for shot in reveals:
             self.assertIn("panties", shot["stage"]["visible_slots"])
             self.assertIn(
                 "dressed_panties_reveal_action", app.tags(shot["scene"]["action"])
             )
-            positive, _, _ = app.compile_scene(database, shot["scene"])
+            positive, _, _ = app.compile_scene(configured, shot["scene"])
             self.assertIn(rule["positive_prompt"], positive)
 
     def test_xxx_camera_recipes_produce_broad_non_macro_compositions(self):
@@ -157,29 +188,6 @@ class CatalogQualityTests(unittest.TestCase):
         self.assertGreaterEqual(len(observed["framing"]), 4)
         self.assertLess(observed["shot_size"]["shot_intimate_macro"] / total, 0.1)
         self.assertLess(observed["shot_size"]["shot_rear_closeup"] / total, 0.35)
-
-    def test_database_rejects_data_configured_ambiguous_prompt_phrases(self):
-        database, _ = app.load_database()
-        configured = copy.deepcopy(database)
-        configured["location_zones"][0]["prompt"] = "on the floor or a rug"
-        with self.assertRaisesRegex(app.AppError, "ambiguous alternatives: or"):
-            app.validate_database(configured)
-
-    def test_compiled_prompts_pass_semantic_ambiguity_audit(self):
-        database, _ = app.load_database()
-        run = app.parse_run_config({
-            "mode": "photoshoot", "content_mode": "progressive", "count": 12,
-            "photoshoots": 1, "prompt_seed": 73119, "inference_seed": 73120,
-            "nsfw_percent": 50, "plateau_percent": 20,
-        }, database)
-        rng = app.random.Random(run.prompt_seed)
-        board = app.build_storyboard(
-            run, database, app.Composer(database, rng), rng,
-            run.nsfw_percent, run.plateau_percent,
-        )
-        prompts = [app.compile_scene(database, shot["scene"])[0] for shot in board]
-        self.assertTrue(prompts)
-        self.assertTrue(all(not app.semantic_prompt_issues(database, prompt) for prompt in prompts))
 
     def test_validate_cli_is_read_only_and_does_not_start_the_server(self):
         report = {

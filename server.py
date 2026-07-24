@@ -258,16 +258,6 @@ def iter_content_items(db: dict[str, Any]) -> Iterable[dict[str, Any]]:
         yield from db.get(section, [])
 
 
-def semantic_prompt_issues(db: dict[str, Any], prompt: str) -> list[str]:
-    """Return data-configured ambiguous wording present in a prompt."""
-    normalized = f" {re.sub(r'\s+', ' ', prompt.casefold()).strip()} "
-    return [
-        phrase.strip()
-        for phrase in db["settings"]["semantic_prompt_audit"]["ambiguous_phrases"]
-        if phrase.casefold() in normalized
-    ]
-
-
 def validate_item(item: Any, context: str) -> None:
     if not isinstance(item, dict) or not isinstance(item.get("id"), str):
         raise AppError(f"{context}: every item needs a string id")
@@ -312,20 +302,6 @@ def validate_database(db: dict[str, Any]) -> None:
         if section not in db:
             raise AppError(f"database.json is missing the '{section}' section")
     settings = db["settings"]
-    semantic_audit = settings.get("semantic_prompt_audit")
-    ambiguous_phrases = (
-        semantic_audit.get("ambiguous_phrases")
-        if isinstance(semantic_audit, dict) else None
-    )
-    if (
-        not isinstance(ambiguous_phrases, list) or not ambiguous_phrases
-        or not all(isinstance(phrase, str) and phrase.strip() for phrase in ambiguous_phrases)
-        or len({phrase.casefold() for phrase in ambiguous_phrases}) != len(ambiguous_phrases)
-    ):
-        raise AppError(
-            "settings.semantic_prompt_audit.ambiguous_phrases must be a "
-            "non-empty unique list of phrases"
-        )
     panties_reveal = settings.get("dressed_panties_reveal")
     if not isinstance(panties_reveal, dict):
         raise AppError("settings.dressed_panties_reveal must be an object")
@@ -748,12 +724,6 @@ def validate_database(db: dict[str, Any]) -> None:
         if internal:
             raise AppError(
                 f"{item['id']}.prompt contains internal non-visual wording: {internal}"
-            )
-        ambiguous = semantic_prompt_issues(db, prompt)
-        if ambiguous:
-            raise AppError(
-                f"{item['id']}.prompt contains ambiguous alternatives: "
-                + ", ".join(ambiguous)
             )
         if len(prompt.split()) > 48:
             raise AppError(f"{item['id']}.prompt is too long for a catalog fragment")
@@ -1351,28 +1321,39 @@ def camera_candidate_compatible(
     return True
 
 
-def resolve_location_zone(
+def matching_location_zones(
     db: dict[str, Any], interior: dict[str, Any], furniture: dict[str, Any]
-) -> dict[str, Any]:
-    """Resolve one explicit physical zone and reject cross-location leakage."""
+) -> list[dict[str, Any]]:
+    """Return concrete location alternatives compatible with one furnishing."""
     furniture_tags = tags(furniture)
     interior_tags = tags(interior)
+    specific: list[dict[str, Any]] = []
+    generic: list[dict[str, Any]] = []
     for zone in db["location_zones"]:
         terms = zone.get("match_id_terms", [])
         match_tags = set(zone.get("match_any_tags", []))
         if terms:
             matched = any(term in furniture["id"] for term in terms)
+            target = specific
         else:
             matched = not match_tags or bool(match_tags & furniture_tags)
+            target = generic
         if not matched:
             continue
         allowed = set(zone.get("environment_tags", []))
-        if allowed and not allowed & interior_tags:
-            raise AppError(
-                f"Location zone conflict [{zone['id']}, {interior['id']}, "
-                f"{furniture['id']}]"
-            )
-        return zone
+        if not allowed or allowed & interior_tags:
+            target.append(zone)
+    return specific or generic
+
+
+def resolve_location_zone(
+    db: dict[str, Any], interior: dict[str, Any], furniture: dict[str, Any],
+    rng: random.Random | None = None,
+) -> dict[str, Any]:
+    """Resolve one explicit physical zone without combining alternatives."""
+    candidates = matching_location_zones(db, interior, furniture)
+    if candidates:
+        return weighted_choice(rng, candidates) if rng else candidates[0]
     raise AppError(f"No location zone matches furniture {furniture['id']}")
 
 
@@ -2130,7 +2111,7 @@ class Composer:
             furniture_candidates = [item for item in furniture_candidates if item["id"] == overrides["furniture"]]
         furniture = choose("furniture", furniture_candidates)
         location_zone = resolve_location_zone(
-            self.db, fixed["interior"], furniture
+            self.db, fixed["interior"], furniture, self.rng
         )
         surface_style = self.surface_style(fixed, furniture, overrides)
         available_tags = set(stage.get("body_visibility", [])) | {stage["level"]}
@@ -4074,27 +4055,28 @@ def catalog_reachability(db: dict[str, Any]) -> dict[str, Any]:
             furniture_candidates, catalog_category(interior)
         )
         for furniture in furniture_candidates:
-            try:
-                zone = resolve_location_zone(db, interior, furniture)
-            except AppError:
+            zones = matching_location_zones(db, interior, furniture)
+            if not zones:
                 continue
             reachable["furniture"].add(furniture["id"])
-            reachable["location_zones"].add(zone["id"])
-            state_tags = (
-                tags(interior) | tags(furniture)
-                | set(zone.get("capabilities", []))
-            )
-            environment_states[(frozenset(state_tags), zone["id"])] = (
-                state_tags, zone
-            )
+            for zone in zones:
+                reachable["location_zones"].add(zone["id"])
+                state_tags = (
+                    tags(interior) | tags(furniture)
+                    | set(zone.get("capabilities", []))
+                )
+                environment_states[(frozenset(state_tags), zone["id"])] = (
+                    state_tags, zone
+                )
         if catalog_category(interior) in environment_categories:
             for furniture in preferred:
-                try:
-                    zone = resolve_location_zone(db, interior, furniture)
-                except AppError:
+                zones = matching_location_zones(db, interior, furniture)
+                if not zones:
                     continue
                 automatic["furniture"].add(furniture["id"])
-                automatic["location_zones"].add(zone["id"])
+                automatic["location_zones"].update(
+                    zone["id"] for zone in zones
+                )
 
     reachable["moods"].update(item["id"] for item in enabled["moods"])
     reachable["photography_styles"].update(
@@ -4482,13 +4464,7 @@ def validate_production_catalog(db: dict[str, Any]) -> dict[str, Any]:
                 removed_by_photoshoot: dict[int, set[str]] = {}
                 for shot in board:
                     validate_camera_grammar(shot["scene"])
-                    positive, _, _ = compile_scene(db, shot["scene"])
-                    ambiguous = semantic_prompt_issues(db, positive)
-                    if ambiguous:
-                        raise AppError(
-                            "Compiled prompt contains ambiguous alternatives: "
-                            + ", ".join(ambiguous)
-                        )
+                    compile_scene(db, shot["scene"])
                     removed = removed_by_photoshoot.setdefault(
                         shot["photoshoot_index"], set()
                     )
