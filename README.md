@@ -110,6 +110,16 @@ Negative conditioning is optional. If a workflow has no connected negative text 
 
 Production and Preview may use the same profile or different profiles. Preview reduces the detected latent dimensions to `comfy.preview_max_edge` while keeping orientation and approximate aspect ratio. It prunes downstream refiners/detailers but deliberately retains upstream LoRA nodes because they are part of the visual design.
 
+`database.json` may define reusable `settings.workflow_lora_rules`. A rule targets
+the exact configurable `lora_name`, matches resolved shot semantics such as stage,
+body visibility, visible garment slots, or garment tags, and overrides scalar
+`strength_model` and/or `strength_clip` on the per-shot workflow copy. The
+matching rules are applied FIFO in their database declaration order; later rules
+may refine values written by earlier ones. Missing LoRAs, nodes, or scalar inputs
+are always ignored, while unmatched shots preserve the captured profile strength.
+The supplied anatomy LoRA rule lowers model strength while genitals are covered
+and leaves the captured strength unchanged when they are exposed.
+
 If `comfy.workflow_source` is set to `live`, Valhalla reads the latest compatible ComfyUI workflow instead of the selected saved profiles. Saved profiles are recommended for reproducible production.
 
 ## Production workflow

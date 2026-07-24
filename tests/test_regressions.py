@@ -2065,6 +2065,7 @@ class PromptDebugLogTests(unittest.TestCase):
         self.assertEqual(record["result"], "rendered.png")
         self.assertNotRegex(record["positive"], r"\b(?:21|22|23)-year-old\b")
         self.assertIn("adult woman", record["positive"])
+        self.assertEqual(record["lora_rules"], [])
 
 
 class PreviewRegressionTests(unittest.TestCase):
@@ -2127,6 +2128,7 @@ class PreviewRegressionTests(unittest.TestCase):
         self.assertEqual(record["kind"], "shot_preview")
         self.assertEqual(record["result"], f"preview:{preview['id']}")
         self.assertNotRegex(record["positive"], r"\b(?:21|22|23)-year-old\b")
+        self.assertEqual(record["lora_rules"], [])
 
     def test_completed_preview_images_have_independent_memory_entries(self):
         state = app.WebState()
@@ -3661,6 +3663,131 @@ class VisualCompatibilityRegressionTests(unittest.TestCase):
 
 
 class WorkflowProfileTests(unittest.TestCase):
+    def test_lora_nodes_are_detected_by_configurable_filename(self):
+        workflow = {
+            "positive": {"class_type": "CLIPTextEncode", "inputs": {"text": ""}},
+            "sampler": {
+                "class_type": "KSampler",
+                "inputs": {"positive": ["positive", 0], "seed": 1},
+            },
+            "innie": {
+                "class_type": "LoraLoader",
+                "inputs": {
+                    "lora_name": "renamed-anatomy.safetensors",
+                    "strength_model": 0.5,
+                    "strength_clip": 1.0,
+                },
+            },
+        }
+        mapping = app.detect_node_mapping(workflow)
+        self.assertEqual(mapping["loras"], [{
+            "node": "innie",
+            "lora_name": "renamed-anatomy.safetensors",
+            "strength_inputs": ["strength_model", "strength_clip"],
+        }])
+
+    def test_per_shot_lora_rules_apply_only_to_matching_semantics(self):
+        database, _ = app.load_database()
+        state = app.WebState()
+        board = state.create_storyboard({
+            "mode": "photoshoot", "content_mode": "progressive", "count": 12,
+            "photoshoots": 1, "prompt_seed": 9292, "inference_seed": 9393,
+        })
+        shots = state.get_storyboard(board["id"])["shots"]
+        covered = next(
+            shot["scene"] for shot in shots
+            if "genitals" not in shot["stage"].get("body_visibility", [])
+        )
+        exposed = next(
+            shot["scene"] for shot in shots
+            if "genitals" in shot["stage"].get("body_visibility", [])
+        )
+        name = database["settings"]["workflow_lora_rules"][0]["lora_name"]
+        base_workflow = {"innie": {"inputs": {
+            "lora_name": name, "strength_model": 0.5, "strength_clip": 1.0,
+        }}}
+        mapping = {"loras": [{
+            "node": "innie", "lora_name": name,
+            "strength_inputs": ["strength_model", "strength_clip"],
+        }]}
+
+        covered_workflow = copy.deepcopy(base_workflow)
+        applied = app.apply_workflow_lora_rules(
+            covered_workflow, mapping, database, covered
+        )
+        self.assertEqual(covered_workflow["innie"]["inputs"]["strength_model"], 0.1)
+        self.assertEqual(covered_workflow["innie"]["inputs"]["strength_clip"], 1.0)
+        self.assertEqual([item["rule_id"] for item in applied], ["innie_when_genitals_covered"])
+
+        exposed_workflow = copy.deepcopy(base_workflow)
+        self.assertEqual(
+            app.apply_workflow_lora_rules(
+                exposed_workflow, mapping, database, exposed
+            ),
+            [],
+        )
+        self.assertEqual(exposed_workflow, base_workflow)
+
+        renamed = copy.deepcopy(database)
+        renamed["settings"]["workflow_lora_rules"][0]["lora_name"] = "renamed.safetensors"
+        renamed_workflow = copy.deepcopy(base_workflow)
+        self.assertEqual(
+            app.apply_workflow_lora_rules(
+                renamed_workflow, mapping, renamed, covered
+            ),
+            [],
+        )
+        self.assertEqual(renamed_workflow, base_workflow)
+
+    def test_lora_rules_apply_fifo_and_ignore_runtime_misses(self):
+        database, _ = app.load_database()
+        state = app.WebState()
+        board = state.create_storyboard({
+            "content_mode": "sfw", "count": 1,
+            "prompt_seed": 101, "inference_seed": 202,
+        })
+        scene = state.get_storyboard(board["id"])["shots"][0]["scene"]
+        name = database["settings"]["workflow_lora_rules"][0]["lora_name"]
+        configured = copy.deepcopy(database)
+        configured["settings"]["workflow_lora_rules"].extend([
+            {
+                "id": "first", "lora_name": name,
+                "when": {"body_visibility_none": ["genitals"]},
+                "strength_model": 0.2,
+            },
+            {
+                "id": "second", "lora_name": name,
+                "when": {"body_visibility_none": ["genitals"]},
+                "strength_model": 0.3,
+            },
+        ])
+        app.validate_database(configured)
+        workflow = {"node": {"inputs": {"strength_model": 0.5}}}
+        mapping = {"loras": [{
+            "node": "node", "lora_name": name,
+            "strength_inputs": ["strength_model"],
+        }]}
+        applied = app.apply_workflow_lora_rules(workflow, mapping, configured, scene)
+        self.assertEqual(workflow["node"]["inputs"]["strength_model"], 0.3)
+        self.assertEqual(
+            [item["rule_id"] for item in applied],
+            ["innie_when_genitals_covered", "first", "second"],
+        )
+
+        self.assertEqual(
+            app.apply_workflow_lora_rules({}, {"loras": []}, configured, scene),
+            [],
+        )
+
+    def test_lora_rule_schema_rejects_unknown_matchers(self):
+        database, _ = app.load_database()
+        broken = copy.deepcopy(database)
+        broken["settings"]["workflow_lora_rules"][0]["when"] = {
+            "unknown_stage_property": ["covered"],
+        }
+        with self.assertRaisesRegex(app.AppError, "supported match fields"):
+            app.validate_database(broken)
+
     def test_latest_comfy_workflow_ignores_valhalla_preview_history(self):
         external_workflow = {"external": {"class_type": "KSampler", "inputs": {}}}
         preview_workflow = {"preview": {"class_type": "PreviewImage", "inputs": {}}}

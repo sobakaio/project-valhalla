@@ -373,6 +373,67 @@ def validate_database(db: dict[str, Any]) -> None:
         value = garment_modifiers.get(field, 0)
         if not isinstance(value, (int, float)) or not 0 <= value <= 1:
             raise AppError(f"settings.garment_modifiers.{field} must be between 0 and 1")
+    lora_rules = settings.get("workflow_lora_rules", [])
+    if not isinstance(lora_rules, list):
+        raise AppError("settings.workflow_lora_rules must be an array")
+    lora_rule_ids: set[str] = set()
+    matcher_fields = {
+        "stage_levels", "visual_categories",
+        "visible_slots_any", "visible_slots_all", "visible_slots_none",
+        "body_visibility_any", "body_visibility_all", "body_visibility_none",
+        "visible_garment_tags_any", "visible_garment_tags_all",
+        "visible_garment_tags_none",
+    }
+    for rule in lora_rules:
+        if not isinstance(rule, dict):
+            raise AppError("Every workflow LoRA rule must be an object")
+        allowed_rule_fields = {
+            "id", "lora_name", "when",
+            "strength_model", "strength_clip",
+        }
+        if not set(rule) <= allowed_rule_fields:
+            raise AppError("Workflow LoRA rules contain unsupported fields")
+        rule_id = rule.get("id")
+        lora_name = rule.get("lora_name")
+        when = rule.get("when")
+        if not isinstance(rule_id, str) or not rule_id or rule_id in lora_rule_ids:
+            raise AppError("Workflow LoRA rule IDs must be unique non-empty strings")
+        lora_rule_ids.add(rule_id)
+        if not isinstance(lora_name, str) or not lora_name:
+            raise AppError(f"Workflow LoRA rule {rule_id} lora_name must be text")
+        if not isinstance(when, dict) or not when or not set(when) <= matcher_fields:
+            raise AppError(
+                f"Workflow LoRA rule {rule_id} when must use supported match fields"
+            )
+        for field, values in when.items():
+            if (
+                not isinstance(values, list) or not values
+                or not all(isinstance(value, str) and value for value in values)
+                or len(values) != len(set(values))
+            ):
+                raise AppError(
+                    f"Workflow LoRA rule {rule_id} when.{field} must be a unique "
+                    "non-empty string array"
+                )
+        for base in ("visible_slots", "body_visibility", "visible_garment_tags"):
+            required = set(when.get(f"{base}_all", []))
+            forbidden = set(when.get(f"{base}_none", []))
+            if required & forbidden:
+                raise AppError(
+                    f"Workflow LoRA rule {rule_id} has contradictory {base} predicates"
+                )
+        strengths = [field for field in ("strength_model", "strength_clip") if field in rule]
+        if not strengths:
+            raise AppError(f"Workflow LoRA rule {rule_id} must set at least one strength")
+        for field in strengths:
+            value = rule[field]
+            if (
+                not isinstance(value, (int, float)) or isinstance(value, bool)
+                or not -10 <= value <= 10
+            ):
+                raise AppError(
+                    f"Workflow LoRA rule {rule_id} {field} must be a number from -10 to 10"
+                )
     surface_modifiers = settings.get("surface_modifiers", {})
     if not isinstance(surface_modifiers, dict):
         raise AppError("settings.surface_modifiers must be an object")
@@ -1023,6 +1084,25 @@ def detect_node_mapping(
                 seed_targets.append({"node": node_id, "input": input_name})
     if not seed_targets:
         raise AppError("Could not find a scalar seed input in sampler/detailer nodes")
+    lora_targets = []
+    for node_id, node in workflow.items():
+        inputs = node.get("inputs", {})
+        lora_name = inputs.get("lora_name")
+        if (
+            "lora" not in str(node.get("class_type", "")).casefold()
+            or not isinstance(lora_name, str) or not lora_name
+        ):
+            continue
+        strength_inputs = [
+            field for field in ("strength_model", "strength_clip")
+            if isinstance(inputs.get(field), (int, float))
+            and not isinstance(inputs.get(field), bool)
+        ]
+        lora_targets.append({
+            "node": node_id,
+            "lora_name": lora_name,
+            "strength_inputs": strength_inputs,
+        })
     mapping = {
         "positive_prompt": {"node": next(iter(positive_ids)), "input": "text"},
         "negative_prompt": (
@@ -1030,6 +1110,7 @@ def detect_node_mapping(
             if negative_ids else None
         ),
         "inference_seed": seed_targets,
+        "loras": lora_targets,
     }
     if include_fast:
         mapping["fast_mode"] = detect_fast_mode_mapping(workflow)
@@ -3536,6 +3617,83 @@ def patch_workflow(workflow: dict[str, Any], mapping: dict[str, Any], positive: 
             raise AppError(f"Workflow no longer matches inference seed mapping: missing {exc}") from exc
 
 
+def lora_rule_matches(scene: dict[str, Any], when: dict[str, list[str]]) -> bool:
+    stage = scene["stage"]
+    visible_slots = set(stage.get("visible_slots", []))
+    body_visibility = set(stage.get("body_visibility", []))
+    visible_garment_tags = set().union(*(
+        tags(item) for slot, item in scene["outfit"]["garments"].items()
+        if slot in visible_slots
+    ), set())
+    scalar_sets = {
+        "stage_levels": {stage["level"]},
+        "visual_categories": {stage.get("visual_category", "")},
+        "visible_slots": visible_slots,
+        "body_visibility": body_visibility,
+        "visible_garment_tags": visible_garment_tags,
+    }
+    for field, required_values in when.items():
+        suffix = next(
+            (candidate for candidate in ("_any", "_all", "_none") if field.endswith(candidate)),
+            None,
+        )
+        base = field.removesuffix(suffix) if suffix else field
+        available = scalar_sets[base]
+        required = set(required_values)
+        if suffix == "_all" and not required <= available:
+            return False
+        if suffix == "_none" and required & available:
+            return False
+        if suffix in {"_any", None} and not required & available:
+            return False
+    return True
+
+
+def apply_workflow_lora_rules(
+    workflow: dict[str, Any], mapping: dict[str, Any], db: dict[str, Any],
+    scene: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Apply matching database rules in declaration order, ignoring runtime misses."""
+    targets_by_name: dict[str, list[dict[str, Any]]] = {}
+    for target in mapping.get("loras", []):
+        targets_by_name.setdefault(target["lora_name"], []).append(target)
+    applied: list[dict[str, Any]] = []
+    for rule in db["settings"].get("workflow_lora_rules", []):
+        name = rule["lora_name"]
+        if not lora_rule_matches(scene, rule["when"]):
+            continue
+        targets = targets_by_name.get(name, [])
+        if not targets:
+            continue
+        nodes = []
+        for target in targets:
+            try:
+                node_inputs = workflow[target["node"]]["inputs"]
+                updates = {
+                    field: rule[field]
+                    for field in ("strength_model", "strength_clip")
+                    if field in rule and field in target["strength_inputs"]
+                }
+                if not updates:
+                    continue
+                node_inputs.update(updates)
+                nodes.append(target["node"])
+            except (KeyError, TypeError):
+                continue
+        if not nodes:
+            continue
+        applied.append({
+            "rule_id": rule["id"],
+            "lora_name": name,
+            "nodes": nodes,
+            **{
+                field: rule[field] for field in ("strength_model", "strength_clip")
+                if field in rule
+            },
+        })
+    return applied
+
+
 def preview_dimensions(width: int, height: int, max_edge: int) -> tuple[int, int]:
     """Scale down without changing orientation, using latent-safe multiples of 64."""
     scale = min(1.0, max_edge / max(width, height))
@@ -3703,9 +3861,15 @@ def generate_one(
     fast: bool,
     workflow_template: dict[str, Any],
     mapping: dict[str, Any],
+    scene: dict[str, Any] | None = None,
+    lora_report: list[dict[str, Any]] | None = None,
 ) -> tuple[str, list[Path]]:
     workflow = copy.deepcopy(workflow_template)
     patch_workflow(workflow, mapping, positive, negative, seed)
+    if scene is not None:
+        applied = apply_workflow_lora_rules(workflow, mapping, db, scene)
+        if lora_report is not None:
+            lora_report.extend(applied)
     if fast:
         workflow = prepare_fast_workflow(workflow, mapping)
     session, url, timeout = comfy_session(db)
@@ -3761,10 +3925,16 @@ def generate_preview_image(
     seed: int,
     workflow_template: dict[str, Any],
     mapping: dict[str, Any],
+    scene: dict[str, Any] | None = None,
+    lora_report: list[dict[str, Any]] | None = None,
 ) -> tuple[str, bytes, str]:
     """Render one fast preview and keep its bytes out of the output directory."""
     workflow = copy.deepcopy(workflow_template)
     patch_workflow(workflow, mapping, positive, negative, seed)
+    if scene is not None:
+        applied = apply_workflow_lora_rules(workflow, mapping, db, scene)
+        if lora_report is not None:
+            lora_report.extend(applied)
     workflow = prepare_fast_workflow(workflow, mapping)
     for node in workflow.values():
         if node.get("class_type") == "SaveImage":
@@ -6609,6 +6779,7 @@ class WebState:
             "positive": positive,
             "negative": negative,
             "_debug_positive": debug_positive,
+            "_scene": shot["scene"],
             "seed": shot["inference_seed"],
             "workflow_profile": workflow_profile,
             "workflow_source": source,
@@ -6696,6 +6867,7 @@ class WebState:
             workflow, mapping = preview.get("_workflow_template"), preview.get("_workflow_mapping")
             if workflow is None or mapping is None:
                 workflow, mapping = load_workflow_runtime(db, db_path, True, preview["workflow_profile"])
+            applied_lora_rules: list[dict[str, Any]] = []
             prompt_id, image_bytes, mime_type = generate_preview_image(
                 db,
                 preview["positive"],
@@ -6703,6 +6875,8 @@ class WebState:
                 preview["seed"],
                 workflow,
                 mapping,
+                preview["_scene"],
+                applied_lora_rules,
             )
             append_prompt_debug_record({
                 "time": _iso_now(),
@@ -6717,6 +6891,7 @@ class WebState:
                 "workflow_source": preview["workflow_source"],
                 "positive": preview["_debug_positive"],
                 "auxiliary_negative": preview["negative"],
+                "lora_rules": applied_lora_rules,
             })
             with self.lock:
                 preview["prompt_id"] = prompt_id
@@ -6915,10 +7090,12 @@ class WebState:
                         "positive": positive, "negative": negative,
                     }
                     job["logs"].append(shot_log)
+                applied_lora_rules: list[dict[str, Any]] = []
                 prompt_id, paths = generate_one(
                     db, db_path, positive, negative, shot["inference_seed"],
                     job["_mode"], shot["shot_index"], shot["photoshoot_index"],
                     run_id, job["fast"], workflow, mapping,
+                    shot["scene"], applied_lora_rules,
                 )
                 for path in paths:
                     append_prompt_debug_record({
@@ -6934,6 +7111,7 @@ class WebState:
                         "workflow_source": job["workflow_source"],
                         "positive": debug_positive,
                         "auxiliary_negative": negative,
+                        "lora_rules": applied_lora_rules,
                     })
                 elapsed = time.monotonic() - started
                 completed = completed_index

@@ -114,6 +114,17 @@
       "pattern_chance": 0.22,
       "texture_chance": 0.28
     },
+    "workflow_lora_rules": [
+      {
+        "id": "innie_when_genitals_covered",
+        "lora_name": "m99_labiaplasty_pussy_3_zimageturbo.safetensors",
+        "when": {
+          "body_visibility_none": ["genitals"]
+        },
+        "strength_model": 0.1,
+        "strength_clip": 1.0
+      }
+    ],
     "dressed_panties_reveal": {
       "chance": 0.18,
       "outer_slots": ["lowerwear", "full_body"],
