@@ -140,15 +140,27 @@ class CatalogQualityTests(unittest.TestCase):
         self.assertEqual(
             set(pools["hair_color"]),
             {
-                "hair_black", "hair_brown", "hair_blonde", "hair_auburn",
+                "hair_brown", "hair_blonde", "hair_auburn",
                 "hair_platinum", "hair_dark_brown", "hair_chestnut",
                 "hair_copper", "hair_strawberry_blonde", "hair_ash_blonde",
                 "hair_blue_black",
             },
         )
+        self.assertEqual(pools["makeup"], ["makeup_no_makeup"])
+        self.assertEqual(
+            set(pools["hair_length"]),
+            {"hair_length_shoulder", "hair_length_long", "hair_length_very_long"},
+        )
+        self.assertNotIn("hair_style_side_swept", pools["hair_style"])
+        self.assertFalse({"hair_style_pixie", "hair_style_bob", "hair_style_lob"} & set(pools["hair_style"]))
+        self.assertEqual(
+            set(pools["body_frame"]),
+            {"body_slender", "body_average", "body_athletic", "body_petite", "body_fitness", "body_lithe"},
+        )
         constrained = {
             "ethnic_appearance", "hair_color", "manicure", "breast_size",
-            "pubic_hair", "body_state",
+            "pubic_hair", "body_state", "makeup", "hair_length", "hair_style",
+            "body_frame",
         }
         self.assertTrue(all(not values for key, values in pools.items() if key not in constrained))
 
@@ -171,8 +183,10 @@ class CatalogQualityTests(unittest.TestCase):
             for seed in range(250)
         ]
         observed_lengths = {human["hair_length"]["id"] for human in humans}
-        self.assertIn("hair_length_short", observed_lengths)
-        self.assertIn("hair_length_chin", observed_lengths)
+        self.assertEqual(
+            observed_lengths,
+            {"hair_length_shoulder", "hair_length_long", "hair_length_very_long"},
+        )
         self.assertEqual(
             {human["body_state"]["id"] for human in humans},
             {"body_state_none"},
@@ -2077,6 +2091,8 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("function setFallbackFullscreen(active)", js)
         self.assertIn("target.classList.contains('fallback-fullscreen')", js)
         self.assertIn("setFallbackFullscreen(true)", js)
+        self.assertIn("event.code === 'Space' && !event.repeat && !isEditing", js)
+        self.assertIn("toggleSlideshow();", js)
 
     def test_lightbox_supports_touch_pinch_zoom(self):
         root = Path(app.__file__).parent

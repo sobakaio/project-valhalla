@@ -2146,6 +2146,14 @@ $('.image-stage').addEventListener('click', (event) => {
   if (event.target.classList.contains('image-stage')) imageDialog.close();
 });
 imageDialog.addEventListener('keydown', (event) => {
+  const target = event.target;
+  const isEditing = target instanceof HTMLElement && (
+    target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(target.tagName)
+  );
+  if (event.code === 'Space' && !event.repeat && !isEditing) {
+    event.preventDefault();
+    toggleSlideshow();
+  }
   if (['ArrowLeft', 'ArrowUp'].includes(event.key)) { event.preventDefault(); movePreview(-1); }
   if (['ArrowRight', 'ArrowDown'].includes(event.key)) { event.preventDefault(); movePreview(1); }
   if (['Delete', 'Backspace'].includes(event.key) && !event.repeat) {
