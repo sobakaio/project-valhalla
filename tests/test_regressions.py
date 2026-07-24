@@ -1296,15 +1296,18 @@ class DirectorRegressionTests(unittest.TestCase):
         self.assertNotIn("retrying", job)
         self.assertNotIn("last_error", job)
 
-    def test_random_storyboards_publish_a_distinct_render_subtype(self):
+    def test_jobs_publish_orthogonal_generation_mode_and_render_tier(self):
         state, storyboard_id = self.make_storyboard(mode="random")
         with patch.object(app.threading, "Thread"):
             random_job = state.create_job(storyboard_id, False, [1, 2])
             preview_job = state.create_job(storyboard_id, True, [1])
-        self.assertEqual(random_job["storyboard_mode"], "random")
-        self.assertEqual(random_job["render_kind"], "random")
-        self.assertEqual(random_job["pending_plan"]["render_kind"], "random")
-        self.assertEqual(preview_job["render_kind"], "preview")
+        self.assertEqual(random_job["generation_mode"], "random")
+        self.assertEqual(random_job["render_tier"], "production")
+        self.assertEqual(random_job["pending_groups"][0]["generation_mode"], "random")
+        self.assertEqual(random_job["pending_groups"][0]["render_tier"], "production")
+        self.assertEqual(preview_job["generation_mode"], "random")
+        self.assertEqual(preview_job["render_tier"], "preview")
+        self.assertNotIn("render_kind", random_job)
 
     def test_render_jobs_queue_in_fifo_order_and_snapshot_the_storyboard(self):
         state, storyboard_id = self.make_storyboard()
@@ -1329,32 +1332,38 @@ class DirectorRegressionTests(unittest.TestCase):
         self.assertEqual(order, [first["id"], second["id"]])
         self.assertFalse(state._job_worker_running)
 
-    def test_render_jobs_expose_compact_pending_plan_without_queued_eta(self):
+    def test_render_jobs_expose_logical_pending_groups_without_queued_eta(self):
         state, storyboard_id = self.make_storyboard()
         with patch.object(app.threading, "Thread"):
             job = state.create_job(storyboard_id, False, [1, 2, 3])
-        self.assertEqual(job["pending_plan"]["job_id"], job["id"])
-        self.assertEqual(job["pending_plan"]["start_position"], 1)
-        self.assertEqual(job["pending_plan"]["total"], 3)
-        self.assertEqual(job["pending_plan"]["status"], "queued")
-        self.assertIsNone(job["pending_plan"]["active_eta_seconds"])
-        self.assertIsNone(job["pending_plan"]["completion_eta_seconds"])
+        group = job["pending_groups"][0]
+        self.assertEqual(group["job_id"], job["id"])
+        self.assertEqual(group["positions"], [1, 2, 3])
+        self.assertEqual(group["shot_numbers"], [1, 2, 3])
+        self.assertEqual(group["status"], "queued")
+        self.assertIsNone(group["frame_eta_seconds"])
+        self.assertIsNone(group["group_eta_seconds"])
         self.assertNotIn("pending_frames", job)
 
         timing_key = (False, job["workflow_profile"])
         state._render_timings[timing_key] = [8.0, 10.0, 60.0]
         estimated = state.get_job(job["id"])
         self.assertEqual(estimated["estimated_frame_seconds"], 10.0)
-        self.assertIsNone(estimated["pending_plan"]["active_eta_seconds"])
-        self.assertIsNone(estimated["pending_plan"]["completion_eta_seconds"])
-        self.assertTrue(estimated["pending_plan"]["observed_at"])
+        self.assertIsNone(estimated["pending_groups"][0]["frame_eta_seconds"])
+        self.assertIsNone(estimated["pending_groups"][0]["group_eta_seconds"])
+        self.assertTrue(estimated["pending_groups"][0]["observed_at"])
 
         record = state.jobs[job["id"]]
         record["total"] = 2000
         record["shot_numbers"] = list(range(1, 2001))
+        record["render_groups"] = [{
+            "group_index": 1,
+            "positions": list(range(1, 2001)),
+            "shot_numbers": list(range(1, 2001)),
+        }]
         large = state.job_payload(record)
-        self.assertLess(len(app.json.dumps(large["pending_plan"])), 500)
-        self.assertEqual(large["pending_plan"]["total"], 2000)
+        self.assertEqual(len(large["pending_groups"]), 1)
+        self.assertEqual(len(large["pending_groups"][0]["positions"]), 2000)
 
     def test_queued_jobs_do_not_publish_speculative_eta(self):
         state, storyboard_id = self.make_storyboard()
@@ -1365,13 +1374,13 @@ class DirectorRegressionTests(unittest.TestCase):
         state._render_timings[(False, first["workflow_profile"])] = [12.0]
         session = state.jobs_payload()
         queued = {job["id"]: job for job in session["queued_jobs"]}
-        self.assertIsNone(queued[first["id"]]["pending_plan"]["active_eta_seconds"])
-        self.assertIsNone(queued[second["id"]]["pending_plan"]["active_eta_seconds"])
+        self.assertIsNone(queued[first["id"]]["pending_groups"][0]["frame_eta_seconds"])
+        self.assertIsNone(queued[second["id"]]["pending_groups"][0]["frame_eta_seconds"])
         self.assertIsNone(queued[preview["id"]]["estimated_frame_seconds"])
-        self.assertIsNone(queued[preview["id"]]["pending_plan"]["active_eta_seconds"])
+        self.assertIsNone(queued[preview["id"]]["pending_groups"][0]["frame_eta_seconds"])
 
         cancelled = state.cancel_job(second["id"])
-        self.assertIsNone(cancelled["pending_plan"])
+        self.assertEqual(cancelled["pending_groups"], [])
 
     def test_running_pending_frame_is_rendering_and_countdown_never_negative(self):
         state, storyboard_id = self.make_storyboard()
@@ -1384,10 +1393,10 @@ class DirectorRegressionTests(unittest.TestCase):
         record["_started_monotonic"] = app.time.monotonic() - 15
         record["_shot_started_monotonic"] = app.time.monotonic() - 20
         payload = state.get_job(job["id"])
-        self.assertEqual(payload["pending_plan"]["status"], "running")
-        self.assertEqual(payload["pending_plan"]["start_position"], 2)
-        self.assertEqual(payload["pending_plan"]["active_eta_seconds"], 0.0)
-        self.assertEqual(payload["pending_plan"]["completion_eta_seconds"], 10.0)
+        self.assertEqual(payload["pending_groups"][0]["status"], "rendering")
+        self.assertEqual(payload["pending_groups"][0]["positions"][0], 2)
+        self.assertEqual(payload["pending_groups"][0]["frame_eta_seconds"], 0.0)
+        self.assertEqual(payload["pending_groups"][0]["group_eta_seconds"], 10.0)
         self.assertEqual(payload["eta_seconds"], 10.0)
 
     def test_queued_job_can_be_cancelled_before_it_starts(self):
@@ -2355,12 +2364,15 @@ class PromptDebugLogTests(unittest.TestCase):
             ):
                 state._run_job(job["id"])
         self.assertEqual(state.jobs[job["id"]]["status"], "completed")
-        self.assertEqual(
-            state.jobs[job["id"]]["outputs"][0]["pending_key"],
-            f"pending:{job['id']}:1",
-        )
+        published = state.jobs[job["id"]]["outputs"][0]
+        self.assertEqual(published["generation_mode"], "photoshoot")
+        self.assertEqual(published["render_tier"], "production")
+        self.assertEqual(published["group_index"], 1)
         record = append.call_args.args[0]
-        self.assertEqual(record["kind"], "production")
+        self.assertEqual(record["kind"], "render")
+        self.assertEqual(record["generation_mode"], "photoshoot")
+        self.assertEqual(record["render_tier"], "production")
+        self.assertEqual(record["group_index"], 1)
         self.assertEqual(record["result"], "rendered.png")
         self.assertNotRegex(record["positive"], r"\b(?:21|22|23)-year-old\b")
         self.assertIn("adult woman", record["positive"])
@@ -3141,27 +3153,25 @@ class FrontendContractTests(unittest.TestCase):
         root = Path(app.__file__).parent
         js = (root / "client" / "client.js").read_text(encoding="utf-8")
         css = (root / "client" / "client.css").read_text(encoding="utf-8")
-        self.assertIn("function syncJobPlaceholderPlan(job", js)
-        self.assertIn("job.pending_plan", js)
-        self.assertIn("function pendingPlanCount(plan)", js)
-        self.assertIn("function pendingPlanSignature(plan)", js)
+        self.assertIn("function syncJobPendingGroups(job", js)
+        self.assertIn("job.pending_groups", js)
+        self.assertIn("function pendingGroupCount(group)", js)
+        self.assertIn("function pendingGroupSignature(group)", js)
         self.assertIn("function groupEntryAt(group, index)", js)
         self.assertIn("function flatEntryAt(index)", js)
-        self.assertIn("pendingOutput(group.pendingPlan, position)", js)
-        self.assertIn("item.pending || item.pending_job_id", js)
-        self.assertIn("item.pending_job_id === job.id", js)
+        self.assertIn("pendingOutput(group.pendingGroup", js)
+        self.assertIn("if (item.queue_group_key)", js)
+        self.assertIn("item.queue_job_id === job.id", js)
         self.assertIn("data-pending-deadline", js)
         self.assertIn("function refreshPendingCountdowns()", js)
         self.assertIn("setInterval(refreshPendingCountdowns, 1000)", js)
         self.assertIn("ETA estimating", js)
-        self.assertIn("`Shot ${displayShot} (${kind})`", js)
+        self.assertIn("`Shot ${displayShot} (${tier.toLowerCase()})`", js)
         self.assertIn("rendering ? (deadline ? `ETA ${formatDuration(item.eta_seconds)}`", js)
         self.assertIn(": 'Queued'", js)
-        self.assertIn("plan.completion_eta_seconds", js)
-        self.assertIn("function renderKindName(kind)", js)
-        self.assertIn("kind === 'random' ? 'random'", js)
-        self.assertIn("function pendingGroupKind(kind)", js)
-        self.assertIn("`${renderKindTitle(pendingGroupKind(representative.render_kind))} ${group.displayNumber}`", js)
+        self.assertIn("pendingGroup.group_eta_seconds", js)
+        self.assertIn("function modeTitle(mode)", js)
+        self.assertIn("function tierTitle(tier)", js)
         self.assertIn("completionDeadline", js)
         self.assertIn("if (!item || item.pending) return", js)
         self.assertIn("if (card.classList.contains('pending-output')) return", js)
@@ -3266,22 +3276,16 @@ class FrontendContractTests(unittest.TestCase):
 
         self.assertIn('data-gallery-view="flat"', html)
         self.assertIn('data-gallery-view="photoshoots"', html)
-        self.assertIn("const PHOTOSHOOT_FILENAME", js)
-        self.assertIn("const PREVIEW_FILENAME", js)
-        self.assertIn("const RANDOM_FILENAME", js)
-        self.assertIn("const LEGACY_RUN_FILENAME", js)
-        self.assertIn("`${photoshoot[1]}:photoshoot_${photoshoot[2]}`", js)
-        self.assertIn("`${random[1]}:random`", js)
-        self.assertIn("kind: 'random'", js)
-        self.assertIn("kind: 'preview'", js)
-        self.assertIn("kind: 'legacy'", js)
+        self.assertIn("const OUTPUT_FILENAME", js)
+        self.assertIn("(photoshoot|random)", js)
+        self.assertIn("(production|preview)", js)
+        self.assertIn("kind: match[2]", js)
+        self.assertIn("tier: match[4]", js)
         self.assertIn("group.displayNumber = ++randomNumber", js)
         self.assertIn("group.displayNumber = ++photoshootNumber", js)
-        self.assertIn("group.displayNumber = ++previewNumber", js)
         self.assertIn("`Random ${group.displayNumber}`", js)
         self.assertIn("`Photoshoot ${group.displayNumber}`", js)
-        self.assertIn("`Preview ${group.displayNumber}`", js)
-        self.assertIn("'Render run'", js)
+        self.assertNotIn("const LEGACY_RUN_FILENAME", js)
         self.assertIn("sessionStorage.getItem('valhalla-gallery-view') === 'flat' ? 'flat' : 'photoshoots'", js)
         self.assertIn("function formatOutputRun(run)", js)
         self.assertIn("Render ID: ${group.identity.run}", js)
@@ -3300,7 +3304,7 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("state.flatScrollY = window.scrollY", js)
         self.assertIn("activePhotoshootGroup()?.items", js)
         self.assertIn("function outputDisplayShot(item, group = null)", js)
-        self.assertIn("['photoshoot', 'preview'].includes(group?.identity?.kind)", js)
+        self.assertIn("['photoshoot', 'random'].includes(group?.identity?.kind)", js)
         self.assertIn("const localShot = outputShotSequence(item)", js)
         self.assertIn("outputCardHtml(entry.item, entry.outputIndex, layout, index, group)", js)
         self.assertIn("aria-posinset=\"${position + 1}\"", js)
@@ -3308,20 +3312,18 @@ class FrontendContractTests(unittest.TestCase):
     def test_bulk_delete_is_scoped_to_the_opened_photoshoot(self):
         js = (Path(app.__file__).parent / "client" / "client.js").read_text(encoding="utf-8")
         self.assertIn("const photoshootList = state.galleryView === 'photoshoots' && !group", js)
-        self.assertIn("group?.identity?.kind === 'preview' ? 'preview' : 'photoshoot'", js)
+        self.assertIn("group?.identity?.kind === 'random' ? 'random group' : 'photoshoot'", js)
         self.assertIn("group ? `Delete ${groupLabel}` : 'Delete all'", js)
         self.assertIn("group.items.map(({ item }) => item)", js)
         self.assertIn("targets.map((item) => api(item.url, { method: 'DELETE' }))", js)
         self.assertIn("Only the opened ${groupLabel} will be permanently deleted", js)
         self.assertIn("api('/api/outputs', { method: 'DELETE' })", js)
 
-    def test_fast_storyboard_outputs_use_preview_filenames(self):
+    def test_outputs_use_orthogonal_mode_and_tier_filenames(self):
         server = (Path(app.__file__).parent / "server.py").read_text(encoding="utf-8")
-        self.assertIn(
-            'label = f"preview_{photoshoot_index + 1:03d}_shot_{shot_index + 1:03d}"',
-            server,
-        )
-        self.assertNotIn('label = f"fast_{label}"', server)
+        self.assertIn('f"{mode}_{group_index:03d}_{render_tier}_"', server)
+        self.assertIn('f"shot_{shot_index + 1:03d}"', server)
+        self.assertNotIn('label = f"preview_', server)
 
     def test_virtual_output_navigation_uses_stable_absolute_indexes(self):
         js = (Path(app.__file__).parent / "client" / "client.js").read_text(encoding="utf-8")

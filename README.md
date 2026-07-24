@@ -174,14 +174,20 @@ Storyboard export stores the selected catalog IDs, workflow profile, prompts, an
 
 Production jobs are immutable snapshots placed in a FIFO queue. Cancellation takes effect between images. Generated images are written to `storage.output_dir`; temporary shot previews remain in memory and are discarded when closed.
 
-Queued and rendering Production/persistent Preview frames appear immediately in
-Proofs as neutral placeholder thumbnails. The server sends one compact range per
-job instead of thousands of frame records, and gallery virtualization materializes
-only the visible placeholder window. Queued cards show only their render kind and
-shot number; the currently rendering frame alone receives an opportunistic local ETA.
-The grouped Photoshoots view treats Production photoshoots, independent Random runs,
-and Previews as distinct named subtypes. Each shows a separate ETA for completion of
-the whole active job, while later FIFO jobs remain honestly labeled `Queued`.
+Rendering has two independent dimensions: generation mode (`Photoshoot` or `Random`)
+and render tier (`Production` or `Preview`). Both tiers use the same grouping,
+labels, queue behavior, and logs. Output names encode both dimensions, for example
+`..._photoshoot_001_production_shot_001_...` and
+`..._random_001_preview_shot_001_...`; older naming schemes are not parsed.
+
+Queued and rendering frames appear immediately in Proofs as neutral placeholder
+thumbnails. The server sends logical group ranges and gallery virtualization
+materializes only the visible placeholder window, so large queues do not create
+thousands of DOM cards. Inside a group cards read `Shot N` with `Production` or
+`Preview`, followed by the active frame ETA or `Queued`. At gallery root they read
+`Photoshoot N` or `Random N`, with the tier and the active logical-group ETA. The
+job dock estimates the whole active job; later FIFO jobs remain honestly labeled
+`Queued`.
 Completed outputs replace their pending positions in place. Pending cards never enter
 filesystem proof listings, request thumbnail bytes, expose prompt metadata, or enable
 fullscreen/download/delete.
@@ -202,7 +208,7 @@ Runtime settings live in `config.json`. Relative paths are resolved from the pro
 | `limits` | scene retries and retained in-memory storyboards, jobs, and previews |
 
 Set `storage.prompt_debug_log.enabled` to `true` to append one compact JSONL
-record after every successful Production image, saved Preview image, or in-memory
+record after every successful render, saved shot preview, or in-memory
 Shot Preview. Each record maps the output filename (or `preview:<id>`) to its seed,
 workflow, positive prompt, and auxiliary conditioning. The logged positive prompt
 uses `adult woman` in place of the configured exact age; rendering still receives

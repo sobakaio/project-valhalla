@@ -3990,6 +3990,7 @@ def generate_one(
     shot_index: int,
     photoshoot_index: int,
     run_id: str,
+    render_tier: str,
     fast: bool,
     workflow_template: dict[str, Any],
     mapping: dict[str, Any],
@@ -4027,12 +4028,11 @@ def generate_one(
     for node_output in outputs.values():
         for image in node_output.get("images", []):
             image_number += 1
-            if fast:
-                label = f"preview_{photoshoot_index + 1:03d}_shot_{shot_index + 1:03d}"
-            elif mode == "photoshoot":
-                label = f"photoshoot_{photoshoot_index + 1:03d}_shot_{shot_index + 1:03d}"
-            else:
-                label = f"random_shot_{shot_index + 1:03d}"
+            group_index = photoshoot_index + 1 if mode == "photoshoot" else 1
+            label = (
+                f"{mode}_{group_index:03d}_{render_tier}_"
+                f"shot_{shot_index + 1:03d}"
+            )
             response = session.get(
                 f"{url}/view",
                 params={"filename": image["filename"], "subfolder": image.get("subfolder", ""), "type": image.get("type", "output")},
@@ -6840,6 +6840,25 @@ class WebState:
         selected_shots = copy.deepcopy([
             record["shots"][number - 1] for number in shot_numbers
         ])
+        generation_mode = record["args"].mode
+        render_tier = "preview" if fast else "production"
+        render_groups: list[dict[str, Any]] = []
+        groups_by_index: dict[int, dict[str, Any]] = {}
+        for position, shot in enumerate(selected_shots, 1):
+            group_index = (
+                shot["photoshoot_index"] + 1 if generation_mode == "photoshoot" else 1
+            )
+            group = groups_by_index.get(group_index)
+            if group is None:
+                group = {
+                    "group_index": group_index,
+                    "positions": [],
+                    "shot_numbers": [],
+                }
+                groups_by_index[group_index] = group
+                render_groups.append(group)
+            group["positions"].append(position)
+            group["shot_numbers"].append(shot["number"])
         job_id = uuid.uuid4().hex
         job = {
             "id": job_id,
@@ -6856,11 +6875,9 @@ class WebState:
             "total": len(shot_numbers),
             "shot_numbers": shot_numbers,
             "kind": "shot" if len(shot_numbers) == 1 else "storyboard",
-            "render_kind": (
-                "preview" if fast
-                else ("random" if record["args"].mode == "random" else "production")
-            ),
-            "storyboard_mode": record["args"].mode,
+            "generation_mode": generation_mode,
+            "render_tier": render_tier,
+            "render_groups": render_groups,
             "current_shot": None,
             "progress": 0,
             "elapsed_seconds": 0,
@@ -7096,16 +7113,15 @@ class WebState:
         )
         return round(median, 1)
 
-    def pending_plan_payload(self, job: dict[str, Any]) -> dict[str, Any] | None:
+    def pending_groups_payload(self, job: dict[str, Any]) -> list[dict[str, Any]]:
         if (
             job["status"] not in {"queued", "running"}
             or not all(key in job for key in ("total", "completed", "shot_numbers"))
         ):
-            return None
+            return []
         estimate = self.job_frame_seconds(job)
         observed_at = _iso_now()
         active_eta = None
-        completion_eta = None
         if (
             estimate is not None and job["status"] == "running"
             and job.get("_shot_started_monotonic") is not None
@@ -7113,32 +7129,61 @@ class WebState:
             active_eta = max(
                 0.0, estimate - (time.monotonic() - job["_shot_started_monotonic"])
             )
-            remaining_after_active = max(0, job["total"] - job["completed"] - 1)
-            completion_eta = active_eta + estimate * remaining_after_active
-        return {
-            "job_id": job["id"],
-            "start_position": job["completed"] + 1,
-            "total": job["total"],
-            "render_kind": job["render_kind"],
-            "status": job["status"],
-            "active_eta_seconds": round(active_eta, 1) if active_eta is not None else None,
-            "completion_eta_seconds": (
-                round(completion_eta, 1) if completion_eta is not None else None
-            ),
-            "observed_at": observed_at,
-        }
+        groups = []
+        for group in job["render_groups"]:
+            remaining = [
+                (position, shot)
+                for position, shot in zip(group["positions"], group["shot_numbers"])
+                if position > job["completed"]
+            ]
+            if not remaining:
+                continue
+            is_active = (
+                job["status"] == "running"
+                and remaining[0][0] == job["completed"] + 1
+            )
+            group_eta = None
+            if is_active and estimate is not None and active_eta is not None:
+                group_eta = active_eta + estimate * (len(remaining) - 1)
+            groups.append({
+                "group_key": (
+                    f"job:{job['id']}:{job['generation_mode']}:"
+                    f"{group['group_index']}:{job['render_tier']}"
+                ),
+                "job_id": job["id"],
+                "generation_mode": job["generation_mode"],
+                "render_tier": job["render_tier"],
+                "group_index": group["group_index"],
+                "positions": [item[0] for item in remaining],
+                "shot_numbers": [item[1] for item in remaining],
+                "status": "rendering" if is_active else "queued",
+                "frame_eta_seconds": (
+                    round(active_eta, 1) if is_active and active_eta is not None else None
+                ),
+                "group_eta_seconds": round(group_eta, 1) if group_eta is not None else None,
+                "observed_at": observed_at,
+            })
+        return groups
 
     def job_payload(self, job: dict[str, Any]) -> dict[str, Any]:
         payload = {key: value for key, value in job.items() if not key.startswith("_")}
         estimate = self.job_frame_seconds(job)
         payload["observed_at"] = _iso_now()
         payload["estimated_frame_seconds"] = estimate
-        payload["pending_plan"] = self.pending_plan_payload(job)
+        payload["pending_groups"] = self.pending_groups_payload(job)
         if job["status"] == "running" and job.get("_started_monotonic") is not None:
             elapsed = time.monotonic() - job["_started_monotonic"]
             payload["elapsed_seconds"] = round(elapsed, 1)
-        if payload["pending_plan"]:
-            payload["eta_seconds"] = payload["pending_plan"]["completion_eta_seconds"]
+        active_group = next(
+            (group for group in payload["pending_groups"] if group["status"] == "rendering"),
+            None,
+        )
+        estimate = payload["estimated_frame_seconds"]
+        if active_group and estimate is not None:
+            remaining = max(0, job["total"] - job["completed"] - 1)
+            payload["eta_seconds"] = round(
+                (active_group["frame_eta_seconds"] or 0) + estimate * remaining, 1
+            )
         return payload
 
     def get_job(self, job_id: str) -> dict[str, Any]:
@@ -7320,16 +7365,20 @@ class WebState:
                 prompt_id, paths = generate_one(
                     db, db_path, positive, negative, shot["inference_seed"],
                     job["_mode"], shot["shot_index"], shot["photoshoot_index"],
-                    run_id, job["fast"], workflow, mapping,
+                    run_id, job["render_tier"], job["fast"], workflow, mapping,
                     shot["scene"], applied_lora_rules,
                 )
                 for path in paths:
+                    group_index = (
+                        shot["photoshoot_index"] + 1
+                        if job["generation_mode"] == "photoshoot" else 1
+                    )
                     append_prompt_debug_record({
                         "time": _iso_now(),
-                        "kind": (
-                            "preview_render" if job["render_kind"] == "preview"
-                            else job["render_kind"]
-                        ),
+                        "kind": "render",
+                        "generation_mode": job["generation_mode"],
+                        "render_tier": job["render_tier"],
+                        "group_index": group_index,
                         "result": path.name,
                         "job_id": job_id,
                         "storyboard_id": job["storyboard_id"],
@@ -7358,9 +7407,21 @@ class WebState:
                     shot_outputs = []
                     for path in paths:
                         published = output_payload(path)
-                        published.update(prompt_id=prompt_id, shot=shot["number"])
-                        if not shot_outputs:
-                            published["pending_key"] = f"pending:{job_id}:{completed}"
+                        group_index = (
+                            shot["photoshoot_index"] + 1
+                            if job["generation_mode"] == "photoshoot" else 1
+                        )
+                        published.update(
+                            prompt_id=prompt_id,
+                            shot=shot["number"],
+                            group_key=(
+                                f"job:{job_id}:{job['generation_mode']}:"
+                                f"{group_index}:{job['render_tier']}"
+                            ),
+                            generation_mode=job["generation_mode"],
+                            render_tier=job["render_tier"],
+                            group_index=group_index,
+                        )
                         job["outputs"].append(published)
                         shot_outputs.append(published)
                     shot_log.update({
