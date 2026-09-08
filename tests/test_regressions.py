@@ -1475,6 +1475,116 @@ class DirectorRegressionTests(unittest.TestCase):
         )
         self.assertIn("vivid copper hair", updated["summary"]["subject"])
 
+    def test_set_scoped_custom_age_propagates_across_only_the_current_set(self):
+        state, storyboard_id = self.make_storyboard(photoshoots=2, count=3)
+        marker = "custom adult age prompt"
+        state.update_director(
+            storyboard_id,
+            {"shot": 1, "field": "human.age", "custom_value": marker},
+        )
+
+        record = state.get_storyboard(storyboard_id)
+        first_set = [
+            shot for shot in record["shots"] if shot["photoshoot_index"] == 0
+        ]
+        second_set = [
+            shot for shot in record["shots"] if shot["photoshoot_index"] == 1
+        ]
+        self.assertTrue(all(
+            shot["context"]["custom_values"]["human.age"] == marker
+            and shot["scene"]["custom_values"]["human.age"] == marker
+            and marker in app.serialize_shot(record["db"], shot)["positive_prompt"]
+            for shot in first_set
+        ))
+        self.assertTrue(all(
+            "human.age" not in shot["context"].get("custom_values", {})
+            and marker not in app.serialize_shot(record["db"], shot)["positive_prompt"]
+            for shot in second_set
+        ))
+        self.assertEqual(
+            director_fields(state.director_payload(storyboard_id, 2))[
+                "human.age"
+            ]["custom"],
+            marker,
+        )
+        self.assertEqual(
+            director_fields(state.director_payload(storyboard_id, 4))[
+                "human.age"
+            ]["custom"],
+            "",
+        )
+
+    def test_set_scoped_custom_value_can_propagate_to_all_photoshoots(self):
+        state, storyboard_id = self.make_storyboard(photoshoots=2, count=2)
+        marker = "custom identity for every set"
+        state.update_director(
+            storyboard_id,
+            {
+                "shot": 1,
+                "field": "human.age",
+                "custom_value": marker,
+                "custom_scope": "all",
+            },
+        )
+        record = state.get_storyboard(storyboard_id)
+        self.assertTrue(all(
+            shot["context"]["custom_values"]["human.age"] == marker
+            and marker in app.serialize_shot(record["db"], shot)["positive_prompt"]
+            for shot in record["shots"]
+        ))
+
+    def test_random_storyboard_custom_value_can_propagate_to_all_shots(self):
+        state, storyboard_id = self.make_storyboard(mode="random", count=3)
+        marker = "custom identity for every random shot"
+        state.update_director(
+            storyboard_id,
+            {
+                "shot": 1,
+                "field": "human.hair_color",
+                "custom_value": marker,
+                "custom_scope": "all",
+            },
+        )
+        record = state.get_storyboard(storyboard_id)
+        self.assertTrue(all(
+            shot["context"]["custom_values"]["human.hair_color"] == marker
+            and marker in app.serialize_shot(record["db"], shot)["positive_prompt"]
+            for shot in record["shots"]
+        ))
+
+    def test_shot_scoped_custom_value_rejects_all_scope(self):
+        state, storyboard_id = self.make_storyboard()
+        with self.assertRaisesRegex(app.AppError, "Shot-scoped"):
+            state.update_director(
+                storyboard_id,
+                {
+                    "shot": 1,
+                    "field": "shot.pose",
+                    "custom_value": "custom pose",
+                    "custom_scope": "all",
+                },
+            )
+
+    def test_custom_skin_marking_is_used_when_that_identity_detail_is_visible(self):
+        state, storyboard_id = self.make_storyboard(content_mode="xxx")
+        record = state.get_storyboard(storyboard_id)
+        position = next(
+            shot["number"] for shot in record["shots"]
+            if set(shot["stage"].get("body_visibility", []))
+            & {"nipples", "pubic_area", "genitals"}
+        )
+        marker = "custom sun-kissed skin markings"
+        state.update_director(
+            storyboard_id,
+            {
+                "shot": position,
+                "field": "human.skin_marking",
+                "custom_value": marker,
+            },
+        )
+        updated = state.storyboard_payload(state.get_storyboard(storyboard_id))
+        self.assertIn(marker, updated["shots"][position - 1]["positive_prompt"])
+
     def test_set_scoped_subject_change_does_not_cross_photoshoots(self):
         state, storyboard_id = self.make_storyboard(photoshoots=2, count=3)
         record = state.get_storyboard(storyboard_id)
@@ -3453,6 +3563,16 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("if (!normalized && collapseEmpty)", js)
         self.assertIn("state.directorOpenGroup = null", js)
         self.assertIn("filterDirector(event.target.value, { collapseEmpty: true })", js)
+
+    def test_director_custom_value_can_select_propagation_scope(self):
+        root = Path(__file__).resolve().parents[1]
+        html = (root / "client" / "client.html").read_text(encoding="utf-8")
+        js = (root / "client" / "client.js").read_text(encoding="utf-8")
+
+        self.assertIn('id="director-custom-propagation"', html)
+        self.assertIn('value="all"', html)
+        self.assertIn("custom_scope: customScope", js)
+        self.assertIn('isRandom ? "All shots" : "All sets"', js)
 
     def test_director_marks_defaults_only_inside_dropdown(self):
         root = Path(__file__).resolve().parents[1]

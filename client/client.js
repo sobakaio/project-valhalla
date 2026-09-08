@@ -2679,9 +2679,18 @@ function openDirectorCustom(key) {
   if (!field) return;
   state.directorCustomField = key;
   $("#director-custom-title").textContent = field.label;
+  const propagation = $("#director-custom-propagation");
+  const isRandom = state.storyboard?.config?.mode === "random";
+  const canPropagate = field.scope === "set" && (
+    isRandom ? state.storyboard?.total > 1 : Number(state.storyboard?.config?.photoshoots) > 1
+  );
   $("#director-custom-scope").textContent = field.scope === "set"
-    ? "Overrides this field across the entire set."
+    ? (isRandom ? "Overrides this field for this independent shot." : "Overrides this field across the current set.")
     : "Overrides this field only for this shot.";
+  propagation.classList.toggle("hidden", !canPropagate);
+  $("#director-custom-current-label").textContent = isRandom ? "Current shot" : "Current set";
+  $("#director-custom-all-label").textContent = isRandom ? "All shots" : "All sets";
+  $("#director-custom-propagation input[value=\"current\"]").checked = true;
   $("#director-custom-value").value = field.custom || "";
   $("#director-custom-clear").disabled = !field.custom;
   directorCustomDialog.showModal();
@@ -2692,12 +2701,16 @@ async function saveDirectorCustom(clear = false) {
   const field = directorFieldByKey(state.directorCustomField);
   if (!field || !state.storyboard) return;
   const value = clear ? "" : $("#director-custom-value").value.trim();
+  const propagation = $("#director-custom-propagation");
+  const customScope = field.scope === "set" && !propagation.classList.contains("hidden")
+    ? $("#director-custom-propagation input:checked")?.value || "current"
+    : "current";
   const button = clear ? $("#director-custom-clear") : $("#director-custom-apply");
   setBusy(button, true, clear ? "Clearing…" : "Applying…");
   try {
     state.director = await api(`/api/storyboards/${state.storyboard.id}/director`, {
       method: "POST",
-      body: JSON.stringify({ shot: state.directorShot, field: field.key, custom_value: value }),
+      body: JSON.stringify({ shot: state.directorShot, field: field.key, custom_value: value, custom_scope: customScope }),
     });
     state.storyboard = await api(`/api/storyboards/${state.storyboard.id}`);
     directorCustomDialog.close();

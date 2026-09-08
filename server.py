@@ -2873,10 +2873,16 @@ def human_fragments(
         variants = skin_marking.get(f"{field}_by_skin", {})
         return variants.get(skin_class, skin_marking.get(field, ""))
 
-    if "nipples" in visibility and skin_marking.get("bra_line_prompt"):
-        fragments.append(marking_prompt("bra_line_prompt"))
-    if visibility & {"pubic_area", "genitals"} and skin_marking.get("panty_line_prompt"):
-        fragments.append(marking_prompt("panty_line_prompt"))
+    custom_skin_marking = custom.get("human.skin_marking")
+    if custom_skin_marking and visibility & {"nipples", "pubic_area", "genitals"}:
+        # A local Director override replaces the catalog tan-line behavior,
+        # including its skin-aware variants, instead of being silently stored.
+        fragments.append(custom_skin_marking)
+    else:
+        if "nipples" in visibility and skin_marking.get("bra_line_prompt"):
+            fragments.append(marking_prompt("bra_line_prompt"))
+        if visibility & {"pubic_area", "genitals"} and skin_marking.get("panty_line_prompt"):
+            fragments.append(marking_prompt("panty_line_prompt"))
     return [fragment for fragment in fragments if fragment]
 
 
@@ -6288,6 +6294,9 @@ class WebState:
             custom_value = custom_value.strip()
             if len(custom_value) > 600:
                 raise AppError("Custom value cannot exceed 600 characters")
+            custom_scope = payload.get("custom_scope", "current")
+            if custom_scope not in {"current", "all"}:
+                raise AppError("Custom scope must be current or all")
             parts = field.split(".")
             valid = (
                 (len(parts) == 2 and parts[0] == "human" and parts[1] in db["human_model_parts"])
@@ -6309,13 +6318,39 @@ class WebState:
             )
             if not valid:
                 raise AppError("Unknown Director field")
+            if custom_scope == "all" and field.startswith("shot."):
+                raise AppError("Shot-scoped custom values cannot be applied to all sets")
             if not field.startswith("shot."):
-                custom_values = context.setdefault("custom_values", {})
-                if custom_value:
-                    custom_values[field] = custom_value
+                if custom_scope == "all":
+                    if record["args"].mode == "random":
+                        targets = range(len(record["shots"]))
+                    else:
+                        seen_sets = set()
+                        targets = []
+                        for target_position, candidate in enumerate(record["shots"]):
+                            set_index = candidate["photoshoot_index"]
+                            if set_index not in seen_sets:
+                                seen_sets.add(set_index)
+                                targets.append(target_position)
+                    for target_position in targets:
+                        target_context = (
+                            context
+                            if target_position == position
+                            else copy.deepcopy(record["shots"][target_position]["context"])
+                        )
+                        target_custom_values = target_context.setdefault("custom_values", {})
+                        if custom_value:
+                            target_custom_values[field] = custom_value
+                        else:
+                            target_custom_values.pop(field, None)
+                        self._replace_director_context(record, target_position, target_context)
                 else:
-                    custom_values.pop(field, None)
-                self._replace_director_context(record, position, context)
+                    custom_values = context.setdefault("custom_values", {})
+                    if custom_value:
+                        custom_values[field] = custom_value
+                    else:
+                        custom_values.pop(field, None)
+                    self._replace_director_context(record, position, context)
             else:
                 custom_values = shot.setdefault("custom_values", {})
                 if custom_value:
