@@ -511,6 +511,11 @@ function displayValue(value) {
   return text.replace(/[A-Za-z]/, (letter) => letter.toUpperCase());
 }
 
+function displayCatalogLabel(value) {
+  const text = String(value ?? '').replace(/^template[_ ]/i, '').replaceAll('_', ' ');
+  return displayValue(text);
+}
+
 async function api(path, options = {}) {
   const response = await fetch(path, {
     ...options,
@@ -726,6 +731,7 @@ function structuralConfigFromForm() {
     nsfw_percent: mode === 'photoshoot' && contentMode === 'progressive' ? Number(form.elements.nsfw_percent.value) : null,
     plateau_percent: mode === 'photoshoot' && contentMode === 'progressive' ? Number(form.elements.plateau_percent.value) : null,
     prompt_seed: form.elements.prompt_seed.value === '' ? null : String(form.elements.prompt_seed.value),
+    use_curated_defaults: form.elements.use_curated_defaults.checked,
   };
 }
 
@@ -740,6 +746,7 @@ function structuralConfigFromBoard(board) {
     nsfw_percent: config.mode === 'photoshoot' && config.content_mode === 'progressive' ? Number(config.nsfw_percent) : null,
     plateau_percent: config.mode === 'photoshoot' && config.content_mode === 'progressive' ? Number(config.plateau_percent) : null,
     prompt_seed: config.prompt_seed == null ? null : String(config.prompt_seed),
+    use_curated_defaults: config.use_curated_defaults !== false,
   };
 }
 
@@ -747,8 +754,15 @@ function configSummary(config) {
   if (!config) return '';
   const mode = config.mode === 'photoshoot' ? `${config.photoshoots} set${Number(config.photoshoots) === 1 ? '' : 's'}` : 'Independent shots';
   const contentMode = config.content_mode;
-  const content = contentMode === 'sfw' ? 'SFW only' : (contentMode === 'xxx' ? 'Full XXX' : `NSFW ${config.nsfw_percent}% · Explicit ${config.plateau_percent}%`);
-  return `${mode} · ${config.count} shots · ${content} · Storyboard seed ${config.prompt_seed ?? 'automatic'}`;
+  const content = contentMode === 'sfw'
+    ? 'SFW only'
+    : contentMode === 'xxx'
+      ? 'Full XXX'
+      : config.nsfw_percent == null || config.plateau_percent == null
+        ? 'Progressive'
+        : `NSFW ${config.nsfw_percent}% · Explicit ${config.plateau_percent}%`;
+  const defaults = config.use_curated_defaults === false ? 'Full catalog paths' : 'Curated defaults';
+  return `${mode} · ${config.count} shots · ${content} · ${defaults} · Storyboard seed ${config.prompt_seed ?? 'automatic'}`;
 }
 
 function syncPendingState() {
@@ -762,6 +776,7 @@ function syncPendingState() {
     mode: 'mode', count: 'shot count', photoshoots: 'set count',
     content_mode: 'content mode', nsfw_percent: 'NSFW ending',
     plateau_percent: 'explicit plateau', prompt_seed: 'Storyboard seed',
+    use_curated_defaults: 'curated defaults',
   };
   $('#config-notice-copy').textContent = changedKeys.length
     ? `Changed: ${changedKeys.map((key) => changedLabels[key]).join(', ')}. Update before rendering.`
@@ -774,6 +789,7 @@ function syncPendingState() {
     nsfw_percent: $('#progression-fields'),
     plateau_percent: $('#progression-fields'),
     prompt_seed: form.elements.prompt_seed.closest('.field'),
+    use_curated_defaults: form.elements.use_curated_defaults.closest('.switch-row'),
   };
   Object.entries(pendingElements).forEach(([key, element]) => {
     element?.classList.toggle('pending-change', changedKeys.includes(key));
@@ -805,6 +821,7 @@ function restoreConfig(config, job) {
   form.elements.count.value = config.count;
   form.elements.photoshoots.value = config.photoshoots;
   form.elements.prompt_seed.value = config.prompt_seed ?? '';
+  form.elements.use_curated_defaults.checked = config.use_curated_defaults !== false;
   form.elements.inference_seed.value = config.inference_seed ?? '';
   form.elements.inference_strategy.value = config.inference_strategy || 'sequence';
   if (config.nsfw_percent != null) form.elements.nsfw_percent.value = config.nsfw_percent;
@@ -831,6 +848,7 @@ function configPayload() {
     prompt_seed: value('prompt_seed') === '' ? null : value('prompt_seed'),
     inference_seed: value('inference_seed') === '' ? null : value('inference_seed'),
     inference_strategy: value('inference_strategy'),
+    use_curated_defaults: form.elements.use_curated_defaults.checked,
     fast: state.renderMode === 'preview',
   };
 }
@@ -983,14 +1001,28 @@ async function importStoryboard(event) {
 function shotCard(shot) {
   const explicit = shot.stage.level === 'explicit' ? 'explicit' : '';
   const stage = shot.stage.plateau_kind || shot.stage.level;
+  const photoshoot = state.storyboard?.config.mode === 'photoshoot';
+  const displayShotNumber = photoshoot ? shot.shot_index + 1 : shot.number;
+  const manual = Boolean(shot.stage.manual || shot.manual_fields?.length);
+  const manualTitle = shot.manual_fields?.length
+    ? `Manual: ${shot.manual_fields.join(', ')}`
+    : 'Manual Director edit';
+  const statuses = [
+    manual ? `<span class="card-status manual" title="${escapeHtml(manualTitle)}">Manual</span>` : '',
+    shot.prompt_warnings?.length
+      ? `<span class="card-status warning" title="${escapeHtml(shot.prompt_warnings.join('; '))}">Warning</span>`
+      : '',
+  ].join('');
+  const fixed = photoshoot ? '<i class="detail-status fixed">Fixed</i>' : '';
   return `
     <article class="shot-card" data-shot="${shot.number}">
       <div class="shot-top">
-        <div class="shot-number"><i>${String(shot.number).padStart(2, '0')}</i> Shot ${shot.shot_index + 1}</div>
-        <span class="stage-badge ${explicit} ${shot.stage.manual ? 'manual' : ''}">${shot.stage.manual ? '<i>Manual</i>' : ''}${escapeHtml(displayValue(stage.replaceAll('_', ' ')))}</span>
+        <div class="shot-number">Shot ${displayShotNumber}</div>
+        <div class="shot-top-meta">${statuses}<span class="stage-badge ${explicit} ${shot.stage.manual ? 'manual' : ''}">${escapeHtml(displayValue(stage.replaceAll('_', ' ')))}</span></div>
       </div>
       <div class="shot-body">
-        <div class="shot-set" title="${escapeHtml(displayValue(shot.wardrobe))}">Set ${shot.photoshoot_index + 1} · ${escapeHtml(displayValue(shot.wardrobe))}</div>
+        <div class="shot-detail shot-subject" title="${escapeHtml(shot.subject)}"><span>Subject ${fixed}</span><strong>${escapeHtml(displayValue(shot.subject))}</strong></div>
+        <div class="shot-detail shot-wardrobe" title="${escapeHtml(displayCatalogLabel(shot.wardrobe))}"><span>Wardrobe ${fixed}</span><strong>${escapeHtml(displayCatalogLabel(shot.wardrobe))}</strong></div>
         <div class="shot-detail"><span>Pose</span><strong title="${escapeHtml(shot.pose.prompt)}">${escapeHtml(displayValue(shot.pose.prompt))}</strong></div>
         <div class="shot-detail"><span>Action</span><strong title="${escapeHtml(shot.action.prompt)}">${escapeHtml(displayValue(shot.action.prompt))}</strong></div>
         <div class="shot-detail"><span>Role</span><strong title="${escapeHtml(shot.editorial_role.prompt)}">${escapeHtml(displayValue(shot.editorial_role.prompt))}</strong></div>
@@ -1008,6 +1040,23 @@ function shotCard(shot) {
     </article>`;
 }
 
+function storyboardCards(shots) {
+  if (state.storyboard?.config.mode !== 'photoshoot') return shots.map(shotCard).join('');
+  const setCounts = new Map();
+  shots.forEach((shot) => setCounts.set(
+    shot.photoshoot_index,
+    (setCounts.get(shot.photoshoot_index) || 0) + 1,
+  ));
+  let previousSet = -1;
+  return shots.map((shot) => {
+    const heading = shot.photoshoot_index === previousSet
+      ? ''
+      : `<div class="storyboard-set-heading"><strong>Set ${shot.photoshoot_index + 1}</strong><small>${setCounts.get(shot.photoshoot_index)} shots</small></div>`;
+    previousSet = shot.photoshoot_index;
+    return heading + shotCard(shot);
+  }).join('');
+}
+
 function renderStoryboard() {
   const board = state.storyboard;
   if (!board) return;
@@ -1016,7 +1065,7 @@ function renderStoryboard() {
     state.director = null;
     state.directorOpenGroup = null;
   }
-  shotGrid.innerHTML = board.shots.map(shotCard).join('');
+  shotGrid.innerHTML = storyboardCards(board.shots);
   const sets = board.config.mode === 'photoshoot' ? board.config.photoshoots : 'Independent';
   const contentMode = board.config.content_mode;
   const contentLabel = { sfw: 'SFW only', progressive: 'Progressive', xxx: 'Full XXX' }[contentMode];

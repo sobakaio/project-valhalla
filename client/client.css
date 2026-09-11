@@ -363,6 +363,7 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: .42; }
 .switch-row i::after { content: ""; position: absolute; top: 3px; left: 3px; width: 13px; height: 13px; border-radius: 50%; background: white; box-shadow: 0 1px 3px rgb(0 0 0 / 18%); transition: .2s; }
 .switch-row input:checked + i { background: var(--brand); }
 .switch-row input:checked + i::after { transform: translateX(15px); }
+.curated-defaults-row { margin: 15px 1px 0; }
 .batch-summary { display: flex; justify-content: space-between; align-items: center; margin: 17px 1px 10px; color: var(--muted); font-size: 0.625rem; }
 .batch-summary strong { color: var(--text); font-size: 0.6875rem; }
 .config-notice { margin: 0 0 12px; padding: 11px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid color-mix(in srgb, var(--warning) 40%, var(--line)); border-radius: 9px; background: color-mix(in srgb, var(--warning) 8%, var(--surface)); }
@@ -394,19 +395,30 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: .42; }
 .spinner.small { width: 20px; height: 20px; margin: 0; border-width: 2px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .shot-grid { padding: 14px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; background: var(--surface-2); }
+.storyboard-set-heading { grid-column: 1 / -1; min-width: 0; display: flex; align-items: center; justify-content: space-between; margin: 2px 2px -2px; padding: 9px 11px; border: 1px solid color-mix(in srgb, var(--brand) 28%, var(--line)); border-left: 3px solid var(--brand); border-radius: 8px; background: color-mix(in srgb, var(--brand) 8%, var(--surface)); color: var(--brand); font-size: 0.5625rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.storyboard-set-heading strong { color: var(--text); font-size: 0.75rem; letter-spacing: .06em; }
+.storyboard-set-heading small { color: var(--muted); font-size: 0.5625rem; font-weight: 650; letter-spacing: .04em; text-transform: none; }
 .shot-card { min-width: 0; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); overflow: hidden; transition: transform .15s, border-color .15s, box-shadow .15s; }
 .shot-card:hover { transform: translateY(-1px); border-color: var(--line-strong); box-shadow: var(--shadow); }
-.shot-top { height: 42px; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
-.shot-number { display: flex; align-items: center; gap: 7px; font-size: 0.75rem; font-weight: 750; }
-.shot-number i { width: 20px; height: 20px; display: grid; place-items: center; border-radius: 6px; background: var(--surface-3); color: var(--muted); font-style: normal; font-size: 0.5625rem; }
+.shot-top { min-width: 0; height: 42px; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; gap: 7px; border-bottom: 1px solid var(--line); }
+.shot-number { min-width: 0; overflow: hidden; color: var(--text); font-size: 0.75rem; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+.shot-top-meta { min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+.card-status { flex: 0 0 auto; padding: 3px 5px; border-radius: 99px; font-size: 0.4375rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.card-status.manual { background: color-mix(in srgb, var(--warning) 13%, transparent); color: var(--warning); }
+.card-status.warning { background: color-mix(in srgb, var(--danger) 13%, transparent); color: var(--danger); }
 .stage-badge { padding: 3px 7px; border-radius: 99px; background: var(--brand-soft); color: var(--brand); font-size: 0.5rem; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; }
 .stage-badge i { margin-right: 5px; padding-right: 5px; border-right: 1px solid currentColor; font-style: normal; }
 .stage-badge.manual { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning) 45%, transparent); }
 .stage-badge.explicit { background: var(--brand-soft); color: var(--brand); }
 .shot-body { padding: 12px; }
-.shot-set { margin-bottom: 10px; color: var(--faint); font-size: 0.5625rem; text-transform: uppercase; letter-spacing: .07em; }
+.shot-subject { margin-top: 0; }
+.shot-wardrobe { margin-top: 0; }
 .shot-detail { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 7px; margin: 7px 0; font-size: 0.6875rem; }
 .shot-detail span { color: var(--faint); }
+.shot-detail.shot-subject span, .shot-detail.shot-wardrobe span { color: var(--muted); font-weight: 650; }
+.shot-detail.shot-subject strong, .shot-detail.shot-wardrobe strong { font-weight: 600; }
+.detail-status { margin-left: 3px; font-size: 0.4375rem; font-style: normal; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.detail-status.fixed { color: var(--success); }
 .shot-detail strong { overflow: hidden; color: var(--text); font-weight: 450; white-space: nowrap; text-overflow: ellipsis; }
 .shot-footer { padding: 8px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; border-top: 1px solid var(--line); background: var(--surface-2); }
 .shot-footer button { min-width: 0; padding: 5px 4px; overflow: hidden; border: 0; border-radius: 5px; background: transparent; color: var(--muted); cursor: pointer; font-size: 0.5625rem; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
@@ -659,11 +671,11 @@ pre { min-height: 280px; max-height: 50vh; margin: 0; padding: 15px; overflow-x:
 .segmented span, .advanced summary, .switch-row strong, .batch-summary strong,
 .gallery-view-center p, .job-copy > div, pre, .director-loading, .director-no-results,
 .toast strong { font-size: 0.75rem; }
-.field-help, .range-heading, .switch-row small, .batch-summary, .shot-set,
+.field-help, .range-heading, .switch-row small, .batch-summary,
 .shot-footer button, .output-delete, .output-card footer, .job-copy p,
 .viewer-fit, .viewer-zoom, .image-viewer-bar span, .prompt-tabs button,
 .toast { font-size: 0.6875rem; }
-.stage-badge, .shot-number i { font-size: 0.5625rem; }
+.stage-badge { font-size: 0.5625rem; }
 
 @keyframes toast-in { from { opacity: 0; transform: translateY(-6px); } }
 @keyframes toast-clock { to { transform: rotate(360deg); } }

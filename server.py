@@ -1970,9 +1970,15 @@ HUMAN_SELECTION_ORDER = (
 
 
 class Composer:
-    def __init__(self, db: dict[str, Any], rng: random.Random):
+    def __init__(
+        self,
+        db: dict[str, Any],
+        rng: random.Random,
+        use_curated_defaults: bool = True,
+    ):
         self.db = db
         self.rng = rng
+        self.use_curated_defaults = bool(use_curated_defaults)
         self.max_scene_attempts = load_config()[0]["limits"]["max_scene_attempts"]
         self.colors = {
             item["id"]: item for item in db["colors"] if not item.get("disabled", False)
@@ -2080,9 +2086,11 @@ class Composer:
         self,
         overrides: dict[str, dict[str, Any]] | None = None,
         use_default_ethnicity: bool = True,
-        use_human_defaults: bool = True,
+        use_human_defaults: bool | None = None,
     ) -> dict[str, Any]:
         overrides = dict(overrides or {})
+        if use_human_defaults is None:
+            use_human_defaults = self.use_curated_defaults
         human_defaults = self.db["settings"].get("human_defaults", {})
         default_pools = (
             dict(human_defaults.get("pools", {})) if use_human_defaults else {}
@@ -2156,13 +2164,17 @@ class Composer:
         allowed = set(
             self.db["settings"]["scene_defaults"]["wardrobe_categories"]
         )
-        selected_category = selected_category or self.choose_catalog_category(
-            "wardrobe", allowed
-        )
+        if self.use_curated_defaults:
+            selected_category = selected_category or self.choose_catalog_category(
+                "wardrobe", allowed
+            )
         candidates = [
             template for template in self.db["outfit_templates"]
             if not template.get("disabled", False)
-            and template["catalog_category"] == selected_category
+            and (
+                selected_category is None
+                or template["catalog_category"] == selected_category
+            )
             and (content_mode != "sfw" or template_supports_sfw(self.db, template))
         ]
         return weighted_choice(self.rng, candidates)
@@ -2188,7 +2200,7 @@ class Composer:
                     item for item in candidates
                     if set(item.get("mix_tags", item.get("tags", []))) & group_tags[match_group]
                 ]
-            if catalog_category(template) == "luxury":
+            if self.use_curated_defaults and catalog_category(template) == "luxury":
                 candidates = prefer_catalog_category(candidates, "luxury")
             choice = weighted_choice(self.rng, candidates)
             selected[slot] = choice
@@ -2452,14 +2464,16 @@ class Composer:
         allowed_wardrobes = set(
             self.db["settings"]["scene_defaults"]["wardrobe_categories"]
         )
-        selected_wardrobe_category = self.choose_catalog_category(
-            "wardrobe", allowed_wardrobes
+        selected_wardrobe_category = (
+            self.choose_catalog_category("wardrobe", allowed_wardrobes)
+            if self.use_curated_defaults else None
         )
         allowed_environments = set(
             self.db["settings"]["scene_defaults"]["environment_categories"]
         )
-        selected_environment_category = self.choose_catalog_category(
-            "environment", allowed_environments
+        selected_environment_category = (
+            self.choose_catalog_category("environment", allowed_environments)
+            if self.use_curated_defaults else None
         )
         for _ in range(attempts):
             try:
@@ -2467,9 +2481,15 @@ class Composer:
                 interiors = [
                     interior for interior in self.db["interiors"]
                     if not interior.get("disabled", False)
-                    and catalog_category(interior) == selected_environment_category
+                    and (
+                        selected_environment_category is None
+                        or catalog_category(interior) == selected_environment_category
+                    )
                 ]
-                scene_pools = self.db["settings"]["scene_defaults"].get("pools", {})
+                scene_pools = (
+                    self.db["settings"]["scene_defaults"].get("pools", {})
+                    if self.use_curated_defaults else {}
+                )
                 if scene_pools.get("interiors"):
                     interiors = apply_preferred_pool(interiors, scene_pools["interiors"])
                 interior = weighted_choice(self.rng, interiors)
@@ -2478,7 +2498,10 @@ class Composer:
                     if compatible_with_requirements(item, tags(interior))
                     and category_allows(interior, item)
                 ]
-                if selected_environment_category == "luxury":
+                if (
+                    self.use_curated_defaults
+                    and selected_environment_category == "luxury"
+                ):
                     furniture_candidates = prefer_catalog_category(
                         furniture_candidates, "luxury"
                     )
@@ -2541,9 +2564,16 @@ class Composer:
             and compatible_with_requirements(item, tags(fixed["interior"]))
             and category_allows(fixed["interior"], item)
         ]
-        scene_pools = self.db["settings"]["scene_defaults"].get("pools", {})
+        scene_pools = (
+            self.db["settings"]["scene_defaults"].get("pools", {})
+            if self.use_curated_defaults else {}
+        )
         luxury_environment = catalog_category(fixed["interior"]) == "luxury"
-        if not overrides.get("furniture") and luxury_environment:
+        if (
+            self.use_curated_defaults
+            and not overrides.get("furniture")
+            and luxury_environment
+        ):
             furniture_candidates = prefer_catalog_category(
                 furniture_candidates, "luxury"
             )
@@ -2622,7 +2652,10 @@ class Composer:
         if overrides.get("pose"):
             poses = [item for item in poses if item["id"] == overrides["pose"]]
         pose = choose("pose", poses)
-        action_tags = available_tags | tags(pose)
+        outfit_tags = set().union(*(
+            tags(item) for item in fixed["outfit"]["garments"].values()
+        ), set())
+        action_tags = available_tags | outfit_tags | tags(pose)
         actions = [
             item for item in self.db["actions"]
             if stage["level"] in item.get("allowed_levels", [stage["level"]])
@@ -2825,21 +2858,6 @@ class Composer:
                 scene.update(self.variable_context(
                     stage, fixed, overrides, avoid, bag_scope
                 ))
-                scene_pools = self.db["settings"]["scene_defaults"].get("pools", {})
-                base_photo_ids = set(scene_pools.get("photography_styles", []))
-                explicit_photo_ids = scene_pools.get("explicit_photography_styles", [])
-                if (
-                    stage["level"] == "explicit"
-                    and explicit_photo_ids
-                    and fixed["photography_style"]["id"] in base_photo_ids
-                ):
-                    explicit_candidates = [
-                        item for item in self.db["photography_styles"]
-                        if item["id"] in set(explicit_photo_ids)
-                    ]
-                    scene["photography_style"] = weighted_choice(
-                        self.rng, explicit_candidates
-                    )
                 scene["stage"] = stage
                 scene["dependencies"] = self.resolve_dependencies(scene)
                 self.validate_scene_rules(scene)
@@ -3430,6 +3448,39 @@ def compile_scene(
 def prompt_lint(scene: dict[str, Any], positive: str) -> list[str]:
     warnings: list[str] = []
     folded = positive.casefold()
+    stage = scene["stage"]
+    action_context_tags = (
+        set(stage.get("body_visibility", []))
+        | set(stage.get("visible_slots", []))
+        | {stage["level"]}
+        | tags(scene.get("interior", {}))
+        | tags(scene.get("furniture", {}))
+        | tags(scene.get("pose", {}))
+        | set().union(*(
+            tags(item) for item in scene["outfit"]["garments"].values()
+        ), set())
+    )
+    if stage.get("visual_category"):
+        action_context_tags.add(stage["visual_category"])
+    action = scene.get("action") or {}
+    missing_action_tags = set(action.get("requires_tags", [])) - action_context_tags
+    if missing_action_tags:
+        warnings.append(
+            "Action requires unavailable tags: "
+            + ", ".join(sorted(missing_action_tags))
+        )
+    required_any = set(action.get("requires_any_tags", []))
+    if required_any and not required_any & action_context_tags:
+        warnings.append(
+            "Action requires one of unavailable tags: "
+            + ", ".join(sorted(required_any))
+        )
+    excluded_action_tags = set(action.get("excludes_tags", [])) & action_context_tags
+    if excluded_action_tags:
+        warnings.append(
+            "Action excludes present tags: "
+            + ", ".join(sorted(excluded_action_tags))
+        )
     if folded.count("single subject") > 1:
         warnings.append("Subject identity is repeated")
     stale_sequence_phrases = (
@@ -3492,7 +3543,7 @@ def model_description(
         value for key, value in custom.items()
         if key.startswith("human.") and key not in summarized and value
     )
-    return " · ".join(parts)
+    return " · ".join(part for part in parts if part)
 
 
 def photoshoot_signature(context: dict[str, Any]) -> tuple[Any, ...]:
@@ -5673,6 +5724,9 @@ def parse_run_config(payload: dict[str, Any], db: dict[str, Any]) -> SimpleNames
         raise AppError("Inference seed strategy must be random, fixed, or sequence")
     if inference_strategy in {"fixed", "sequence"} and inference_seed is None:
         inference_seed = secrets.randbelow(2**63)
+    use_curated_defaults = payload.get("use_curated_defaults", True)
+    if not isinstance(use_curated_defaults, bool):
+        raise AppError("use_curated_defaults must be a boolean")
     content_mode = payload.get("content_mode", "progressive")
     if content_mode not in {"sfw", "progressive", "xxx"}:
         raise AppError("content_mode must be sfw, progressive, or xxx")
@@ -5697,6 +5751,7 @@ def parse_run_config(payload: dict[str, Any], db: dict[str, Any]) -> SimpleNames
         content_mode=content_mode,
         nsfw_percent=None if content_mode != "progressive" or mode == "random" else nsfw,
         plateau_percent=None if content_mode != "progressive" or mode == "random" else plateau,
+        use_curated_defaults=use_curated_defaults,
         fast=bool(payload.get("fast", False)),
     )
 
@@ -5743,13 +5798,14 @@ def serialize_shot(db: dict[str, Any], shot: dict[str, Any]) -> dict[str, Any]:
         },
         "inference_seed": shot["inference_seed"],
         "seed_manual": bool(shot.get("seed_manual", False)),
+        "manual_fields": sorted(set(shot.get("manual_fields", []))),
         "subject": model_description(context["human"], scene.get("custom_values")),
         "wardrobe": template.get("menu_label", template["id"]),
         "outfit": _outfit_summary(context["outfit"]),
         "location": context["interior"]["prompt"],
         "surface": _surface_summary(scene),
         "mood": context["mood"]["prompt"],
-        "photography": context["photography_style"]["prompt"],
+        "photography": scene["photography_style"]["prompt"],
         "pose": {"id": scene["pose"]["id"], "prompt": scene["pose"]["prompt"]},
         "action": {"id": scene["action"]["id"], "prompt": scene["action"]["prompt"]},
         "expression": {"id": scene["expression"]["id"], "prompt": scene["expression"]["prompt"]},
@@ -6014,7 +6070,7 @@ class WebState:
         prompt_seed = args.prompt_seed if args.prompt_seed is not None else secrets.randbits(63)
         args.prompt_seed = prompt_seed
         rng = random.Random(prompt_seed)
-        composer = Composer(db, rng)
+        composer = Composer(db, rng, args.use_curated_defaults)
         progression = db["settings"].get("photoshoot_progression", {})
         nsfw = float(progression.get("nsfw_final_percent", 50) if args.nsfw_percent is None else args.nsfw_percent)
         plateau = float(progression.get("explicit_plateau_percent", 30) if args.plateau_percent is None else args.plateau_percent)
@@ -6078,7 +6134,10 @@ class WebState:
         shot = record["shots"][number - 1]
         db = record["db"]
         context = shot["context"]
-        human_defaults = db["settings"].get("human_defaults", {}).get("pools", {})
+        human_defaults = (
+            db["settings"].get("human_defaults", {}).get("pools", {})
+            if record["composer"].use_curated_defaults else {}
+        )
         groups = []
         for group_name, categories in DIRECTOR_HUMAN_GROUPS:
             fields = []
@@ -6121,8 +6180,11 @@ class WebState:
                     item, template["id"],
                     {
                         candidate["id"] for candidate in db["outfit_templates"]
-                        if candidate["catalog_category"] in set(
-                            db["settings"]["scene_defaults"]["wardrobe_categories"]
+                        if (
+                            not record["composer"].use_curated_defaults
+                            or candidate["catalog_category"] in set(
+                                db["settings"]["scene_defaults"]["wardrobe_categories"]
+                            )
                         )
                     },
                 )
@@ -6242,7 +6304,10 @@ class WebState:
                 })
         groups.append({"id": "wardrobe", "label": "Wardrobe", "fields": wardrobe_fields})
 
-        scene_defaults = db["settings"]["scene_defaults"].get("pools", {})
+        scene_defaults = (
+            db["settings"]["scene_defaults"].get("pools", {})
+            if record["composer"].use_curated_defaults else {}
+        )
         scene_fields = []
         for key, section, label in (
             ("interior", "interiors", "Location"),
@@ -6439,7 +6504,10 @@ class WebState:
                     if recipe_focus_compatible(item, recipe, "pose")
                 ]
             elif key == "action":
-                action_tags = available | tags(shot["scene"]["pose"])
+                outfit_tags = set().union(*(
+                    tags(item) for item in shot["scene"]["outfit"]["garments"].values()
+                ), set())
+                action_tags = available | outfit_tags | tags(shot["scene"]["pose"])
                 compatible = [
                     item for item in compatible
                     if stage["level"] in item.get("allowed_levels", [stage["level"]])
@@ -6573,6 +6641,7 @@ class WebState:
         context: dict[str, Any],
         recalculate_stages: bool = False,
         preserve_photography: bool = False,
+        manual_field: str | None = None,
     ) -> None:
         args = record["args"]
         db = record["db"]
@@ -6637,6 +6706,10 @@ class WebState:
             record["shots"][index]["context"] = context
             record["shots"][index]["stage"] = stage
             record["shots"][index]["scene"] = scene
+            if manual_field:
+                fields = set(record["shots"][index].get("manual_fields", []))
+                fields.add(manual_field)
+                record["shots"][index]["manual_fields"] = sorted(fields)
             if recalculate_stages:
                 record["shots"][index]["stage_manual"] = False
 
@@ -6748,14 +6821,18 @@ class WebState:
                             target_custom_values[field] = custom_value
                         else:
                             target_custom_values.pop(field, None)
-                        self._replace_director_context(record, target_position, target_context)
+                        self._replace_director_context(
+                            record, target_position, target_context, manual_field=field
+                        )
                 else:
                     custom_values = context.setdefault("custom_values", {})
                     if custom_value:
                         custom_values[field] = custom_value
                     else:
                         custom_values.pop(field, None)
-                    self._replace_director_context(record, position, context)
+                    self._replace_director_context(
+                        record, position, context, manual_field=field
+                    )
             else:
                 custom_values = shot.setdefault("custom_values", {})
                 if custom_value:
@@ -6763,6 +6840,9 @@ class WebState:
                 else:
                     custom_values.pop(field, None)
                 self._apply_director_customs(shot, shot["scene"], shot["context"])
+            fields = set(shot.get("manual_fields", []))
+            fields.add(field)
+            shot["manual_fields"] = sorted(fields)
             return self.director_payload(storyboard_id, number)
 
         if field.startswith("remix."):
@@ -6786,8 +6866,11 @@ class WebState:
                 interiors = [
                     item for item in db["interiors"]
                     if not item.get("disabled", False)
-                    and catalog_category(item) in set(
-                        db["settings"]["scene_defaults"]["environment_categories"]
+                    and (
+                        not record["composer"].use_curated_defaults
+                        or catalog_category(item) in set(
+                            db["settings"]["scene_defaults"]["environment_categories"]
+                        )
                     )
                 ]
                 context["interior"] = weighted_choice(record["rng"], interiors)
@@ -7085,7 +7168,8 @@ class WebState:
             raise AppError("Unknown Director field")
 
         self._replace_director_context(
-            record, position, context, recalculate_stages, preserve_photography
+            record, position, context, recalculate_stages, preserve_photography,
+            manual_field=field,
         )
         return self.director_payload(storyboard_id, number)
 
@@ -7107,6 +7191,7 @@ class WebState:
                 "seed": shot["inference_seed"],
                 "stage": encode_database_refs(shot["stage"], index),
                 "stage_manual": bool(shot.get("stage_manual", False)),
+                "manual_fields": sorted(set(shot.get("manual_fields", []))),
                 "context": encode_database_refs(context, index),
                 "scene": encode_database_refs(scene_delta, index),
                 "custom": shot.get("custom_values", {}),
@@ -7156,7 +7241,7 @@ class WebState:
         if len(compact_shots) != expected_total:
             raise AppError("Storyboard shot count does not match its configuration")
         rng = random.Random(args.prompt_seed)
-        composer = Composer(db, rng)
+        composer = Composer(db, rng, args.use_curated_defaults)
         index = {item["id"]: item for item in iter_content_items(db)}
         shots = []
         for position, compact in enumerate(compact_shots, 1):
@@ -7180,6 +7265,11 @@ class WebState:
                 for key, value in custom_values.items()
             ):
                 raise AppError(f"Storyboard shot {position} has invalid custom values")
+            manual_fields = compact.get("manual_fields", [])
+            if not isinstance(manual_fields, list) or not all(
+                isinstance(field, str) for field in manual_fields
+            ):
+                raise AppError(f"Storyboard shot {position} has invalid manual fields")
             shot = {
                 "number": _safe_int(compact.get("n"), "Shot number", 1, 10_000),
                 "photoshoot_index": _safe_int(
@@ -7194,6 +7284,7 @@ class WebState:
                 "context": context,
                 "stage": stage,
                 "stage_manual": bool(compact.get("stage_manual", False)),
+                "manual_fields": sorted(set(manual_fields)),
                 "scene": scene,
                 "custom_values": custom_values,
             }

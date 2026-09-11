@@ -46,6 +46,18 @@ class StudioGenerationLimitTests(unittest.TestCase):
 
     def test_content_mode_accepts_only_current_values(self):
         database, _ = app.load_database()
+        self.assertTrue(
+            app.parse_run_config({"content_mode": "progressive"}, database)
+            .use_curated_defaults
+        )
+        self.assertFalse(
+            app.parse_run_config(
+                {"content_mode": "progressive", "use_curated_defaults": False},
+                database,
+            ).use_curated_defaults
+        )
+        with self.assertRaisesRegex(app.AppError, "use_curated_defaults"):
+            app.parse_run_config({"use_curated_defaults": "false"}, database)
         for mode in ("sfw", "progressive", "xxx"):
             self.assertEqual(
                 app.parse_run_config({"content_mode": mode}, database).content_mode,
@@ -56,6 +68,49 @@ class StudioGenerationLimitTests(unittest.TestCase):
 
 
 class CatalogQualityTests(unittest.TestCase):
+    def test_clothing_actions_require_the_garment_they_describe(self):
+        database, _ = app.load_database()
+        actions = {item["id"]: item for item in database["actions"]}
+        self.assertIn("bra", actions["action_unhook_bra"]["requires_tags"])
+        for action_id in ("action_curated_05", "action_curated_06"):
+            self.assertIn("panties", actions[action_id]["requires_tags"])
+
+        state = app.WebState()
+        board = state.create_storyboard({
+            "mode": "photoshoot", "content_mode": "progressive", "count": 20,
+            "photoshoots": 1, "prompt_seed": 6, "inference_seed": 7,
+        })
+        for shot in state.get_storyboard(board["id"])["shots"]:
+            action = shot["scene"]["action"]
+            requirements = set(action.get("requires_tags", []))
+            outfit_tags = set().union(*(
+                app.tags(item)
+                for item in shot["scene"]["outfit"]["garments"].values()
+            ), set())
+            available = (
+                set(shot["stage"].get("body_visibility", []))
+                | set(shot["stage"].get("visible_slots", []))
+                | outfit_tags
+                | app.tags(shot["scene"]["pose"])
+                | app.tags(shot["scene"]["interior"])
+                | app.tags(shot["scene"]["furniture"])
+            )
+            self.assertTrue(
+                requirements.issubset(available),
+                (shot["number"], action["id"], requirements, available),
+            )
+
+        broken = copy.deepcopy(
+            state.get_storyboard(board["id"])["shots"][0]["scene"]
+        )
+        broken["action"] = actions["action_unhook_bra"]
+        broken["outfit"]["garments"].pop("bra", None)
+        positive, _, _ = app.compile_scene(database, broken)
+        self.assertIn(
+            "Action requires unavailable tags: bra",
+            app.prompt_lint(broken, positive),
+        )
+
     def test_every_bra_and_panties_template_uses_one_exact_color_group(self):
         database, _ = app.load_database()
         composer = app.Composer(database, app.random.Random(20260724))
@@ -1111,6 +1166,62 @@ class DirectorRegressionTests(unittest.TestCase):
                 for field in ("mood", "photography_style"):
                     self.assertIn(scene[field]["id"], allowed[field], (seed, field))
 
+    def test_photography_style_is_fixed_and_summary_matches_compiled_scene(self):
+        state, storyboard_id = self.make_storyboard(count=20, prompt_seed=0)
+        record = state.get_storyboard(storyboard_id)
+        rendered = state.storyboard_payload(record)["shots"]
+        for index, (shot, payload) in enumerate(zip(record["shots"], rendered)):
+            self.assertEqual(
+                shot["scene"]["photography_style"]["id"],
+                record["shots"][0]["context"]["photography_style"]["id"],
+                index + 1,
+            )
+            self.assertEqual(
+                payload["photography"], shot["scene"]["photography_style"]["prompt"]
+            )
+
+    def test_curated_default_switch_can_use_the_full_enabled_catalog(self):
+        database, _ = app.load_database()
+        pools = database["settings"]["scene_defaults"]["pools"]
+        human_pool = set(
+            database["settings"]["human_defaults"]["pools"]["ethnic_appearance"]
+        )
+        full_humans = [
+            app.Composer(database, app.random.Random(seed), False).choose_human()
+            for seed in range(20)
+        ]
+        self.assertTrue(any(
+            item["ethnic_appearance"]["id"] not in human_pool
+            for item in full_humans
+        ))
+
+        curated_state = app.WebState()
+        curated = curated_state.create_storyboard({
+            "mode": "photoshoot", "count": 12, "photoshoots": 1,
+            "prompt_seed": 0, "inference_seed": 1,
+        })
+        full_state = app.WebState()
+        full = full_state.create_storyboard({
+            "mode": "photoshoot", "count": 12, "photoshoots": 1,
+            "prompt_seed": 0, "inference_seed": 1,
+            "use_curated_defaults": False,
+        })
+        self.assertTrue(curated["config"]["use_curated_defaults"])
+        self.assertFalse(full["config"]["use_curated_defaults"])
+        full_record = full_state.get_storyboard(full["id"])
+        self.assertTrue(any(
+            shot["context"]["human"]["ethnic_appearance"]["id"] not in human_pool
+            for shot in full_record["shots"]
+        ))
+        self.assertTrue(any(
+            shot["context"]["mood"]["id"] not in set(pools["moods"])
+            or shot["context"]["photography_style"]["id"]
+            not in set(pools["photography_styles"])
+            for shot in full_record["shots"]
+        ))
+        imported = full_state.import_storyboard(full_state.export_storyboard(full["id"]))
+        self.assertFalse(imported["config"]["use_curated_defaults"])
+
     def test_compiled_prompt_contains_only_current_frame_visual_instructions(self):
         state, storyboard_id = self.make_storyboard(count=12)
         prompts = [
@@ -1475,6 +1586,14 @@ class DirectorRegressionTests(unittest.TestCase):
         )
         self.assertIn("vivid copper hair", updated["summary"]["subject"])
 
+    def test_subject_summary_omits_empty_neutral_traits(self):
+        state, storyboard_id = self.make_storyboard()
+        subject = state.storyboard_payload(
+            state.get_storyboard(storyboard_id)
+        )["shots"][0]["subject"]
+        self.assertNotIn("· ·", subject)
+        self.assertNotIn(" ·  ", subject)
+
     def test_set_scoped_custom_age_propagates_across_only_the_current_set(self):
         state, storyboard_id = self.make_storyboard(photoshoots=2, count=3)
         marker = "custom adult age prompt"
@@ -1676,6 +1795,21 @@ class DirectorRegressionTests(unittest.TestCase):
         shot = state.storyboard_payload(state.get_storyboard(imported_id))["shots"][0]
         self.assertIn("exported hair", shot["positive_prompt"])
         self.assertIn("exported pose", shot["positive_prompt"])
+
+    def test_director_manual_fields_are_visible_and_survive_export_import(self):
+        state, storyboard_id = self.make_storyboard()
+        state.update_director(
+            storyboard_id,
+            {"shot": 1, "field": "human.hair_color", "custom_value": "manual hair"},
+        )
+        payload = state.storyboard_payload(state.get_storyboard(storyboard_id))
+        self.assertIn("human.hair_color", payload["shots"][0]["manual_fields"])
+
+        exported = state.export_storyboard(storyboard_id)
+        self.assertIn("manual_fields", exported["shots"][0])
+        imported = state.import_storyboard(exported)
+        imported_payload = state.storyboard_payload(state.get_storyboard(imported["id"]))
+        self.assertIn("human.hair_color", imported_payload["shots"][0]["manual_fields"])
 
     def test_photoshoot_stages_never_move_back_toward_more_clothing(self):
         levels = {"covered": 0, "lingerie": 1, "topless": 2, "nude": 3, "explicit": 4}
@@ -3075,6 +3209,47 @@ class OutputDeletionRegressionTests(unittest.TestCase):
 
 
 class FrontendContractTests(unittest.TestCase):
+    def test_studio_exposes_curated_defaults_switch_and_persists_it(self):
+        root = Path(app.__file__).parent
+        html = (root / "client" / "client.html").read_text(encoding="utf-8")
+        js = (root / "client" / "client.js").read_text(encoding="utf-8")
+        self.assertIn(
+            '<input type="checkbox" name="use_curated_defaults" checked>',
+            html,
+        )
+        self.assertLess(
+            html.index('name="use_curated_defaults"'),
+            html.index('id="resolve-button"'),
+        )
+        self.assertIn(
+            "use_curated_defaults: form.elements.use_curated_defaults.checked",
+            js,
+        )
+        self.assertIn("config.use_curated_defaults !== false", js)
+
+    def test_storyboard_cards_show_subject_before_set_details(self):
+        root = Path(app.__file__).parent
+        js = (root / "client" / "client.js").read_text(encoding="utf-8")
+        subject = js.index('class="shot-detail shot-subject"')
+        wardrobe = js.index('class="shot-detail shot-wardrobe"')
+        self.assertLess(subject, wardrobe)
+        self.assertIn('<span>Subject ${fixed}</span>', js)
+        self.assertIn('<span>Wardrobe ${fixed}</span>', js)
+        self.assertIn("function displayCatalogLabel(value)", js)
+        self.assertIn("function storyboardCards(shots)", js)
+        self.assertIn('class="storyboard-set-heading"', js)
+        self.assertIn("const displayShotNumber = photoshoot ? shot.shot_index + 1 : shot.number;", js)
+        self.assertNotIn('class="set-badge"', js)
+        self.assertNotIn('class="shot-number"><i>', js)
+        self.assertIn('class="card-status manual"', js)
+        self.assertIn('class="card-status warning"', js)
+
+    def test_storyboard_summary_does_not_render_missing_content_percentages(self):
+        root = Path(app.__file__).parent
+        js = (root / "client" / "client.js").read_text(encoding="utf-8")
+        self.assertIn("config.nsfw_percent == null || config.plateau_percent == null", js)
+        self.assertIn("? 'Progressive'", js)
+
     def test_release_version_is_consistent_across_server_and_ui(self):
         html = (Path(app.__file__).parent / "client" / "client.html").read_text(
             encoding="utf-8"

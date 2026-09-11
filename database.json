@@ -18312,6 +18312,9 @@
         "undressing_action",
         "erotic_action"
       ],
+      "requires_tags": [
+        "bra"
+      ],
       "allowed_levels": [
         "lingerie",
         "topless"
@@ -19102,6 +19105,7 @@
         "panties_aside_action"
       ],
       "requires_tags": [
+        "panties",
         "genitals",
         "open_legs"
       ],
@@ -19117,6 +19121,7 @@
         "panties_aside_action"
       ],
       "requires_tags": [
+        "panties",
         "genitals",
         "open_legs"
       ],
