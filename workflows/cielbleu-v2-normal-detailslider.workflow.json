@@ -1,0 +1,210 @@
+{
+  "UNETLoader": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "cielbleuZIT_v2.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "VAELoader": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "ultra_ae.safetensors"
+    }
+  },
+  "CLIPLoader": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "lumina2"
+    }
+  },
+  "Loras_Base": {
+    "class_type": "LoraLoader",
+    "inputs": {
+      "model": [
+        "UNETLoader",
+        0
+      ],
+      "clip": [
+        "CLIPLoader",
+        0
+      ],
+      "lora_name": "Z-Detail-Slider.safetensors",
+      "strength_model": 0.3,
+      "strength_clip": 1.0
+    }
+  },
+  "EmptySD3LatentImage": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+      "width": 1152,
+      "height": 896,
+      "batch_size": 1
+    }
+  },
+  "PositiveCLIP_Base": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "Loras_Base",
+        1
+      ],
+      "text": ""
+    }
+  },
+  "NegativeCLIP_Base": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "Loras_Base",
+        1
+      ],
+      "text": ""
+    }
+  },
+  "ModelSamplingAuraFlow": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+      "model": [
+        "Loras_Base",
+        0
+      ],
+      "shift": 3.0
+    }
+  },
+  "Sampler": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "ModelSamplingAuraFlow",
+        0
+      ],
+      "seed": 1948031467,
+      "steps": 16,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "positive": [
+        "PositiveCLIP_Base",
+        0
+      ],
+      "negative": [
+        "NegativeCLIP_Base",
+        0
+      ],
+      "latent_image": [
+        "EmptySD3LatentImage",
+        0
+      ],
+      "denoise": 1.0
+    }
+  },
+  "VAEDecode_1": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "Sampler",
+        0
+      ],
+      "vae": [
+        "VAELoader",
+        0
+      ]
+    }
+  },
+  "HiresFix_ModelUpscale_UpscaleModelLoader": {
+    "class_type": "UpscaleModelLoader",
+    "inputs": {
+      "model_name": "RealESRGAN_x2plus.pth"
+    }
+  },
+  "HiresFix_ModelUpscale_ImageUpscaleWithModel": {
+    "class_type": "ImageUpscaleWithModel",
+    "inputs": {
+      "upscale_model": [
+        "HiresFix_ModelUpscale_UpscaleModelLoader",
+        0
+      ],
+      "image": [
+        "VAEDecode_1",
+        0
+      ]
+    }
+  },
+  "HiresFix_ImageScale": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": [
+        "HiresFix_ModelUpscale_ImageUpscaleWithModel",
+        0
+      ],
+      "upscale_method": "bilinear",
+      "height": 1344,
+      "width": 1728,
+      "crop": "disabled"
+    }
+  },
+  "VAEEncode_1": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "HiresFix_ImageScale",
+        0
+      ],
+      "vae": [
+        "VAELoader",
+        0
+      ]
+    }
+  },
+  "HiresFix_Sampler": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "ModelSamplingAuraFlow",
+        0
+      ],
+      "seed": 1948031467,
+      "steps": 4,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "positive": [
+        "PositiveCLIP_Base",
+        0
+      ],
+      "negative": [
+        "NegativeCLIP_Base",
+        0
+      ],
+      "latent_image": [
+        "VAEEncode_1",
+        0
+      ],
+      "denoise": 0.3
+    }
+  },
+  "VAEDecode_2": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "HiresFix_Sampler",
+        0
+      ],
+      "vae": [
+        "VAELoader",
+        0
+      ]
+    }
+  },
+  "SaveImage": {
+    "class_type": "PreviewImage",
+    "inputs": {
+      "images": [
+        "VAEDecode_2",
+        0
+      ]
+    }
+  }
+}

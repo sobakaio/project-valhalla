@@ -53,7 +53,9 @@ const state = {
   outputs: [],
   pendingGroups: [],
   galleryBenchmark: false,
-  galleryView: sessionStorage.getItem('valhalla-gallery-view') === 'flat' ? 'flat' : 'photoshoots',
+  galleryView: sessionStorage.getItem('valhalla-gallery-view') === 'videos'
+    ? 'videos'
+    : (sessionStorage.getItem('valhalla-gallery-view') === 'flat' ? 'flat' : 'photoshoots'),
   galleryGroup: sessionStorage.getItem('valhalla-gallery-group') || null,
   galleryCardSize: storedGalleryCardSize !== null && Number.isFinite(Number(storedGalleryCardSize))
     ? Math.min(GALLERY_CARD_MAX, Math.max(GALLERY_CARD_MIN, Number(storedGalleryCardSize)))
@@ -93,6 +95,9 @@ const state = {
   privacyIdleMinutes: Math.max(0, Number(localStorage.getItem('valhalla-privacy-idle-minutes')) || 0),
   privacyIdleOptions: [5, 15],
   workflowProfiles: null,
+  workflowProfilesByMedia: { image: null, video: null },
+  profileMedia: sessionStorage.getItem('valhalla-profile-media') === 'video' ? 'video' : 'image',
+  videoSource: null,
   proofsPositions: (() => {
     try { return JSON.parse(sessionStorage.getItem('valhalla-proofs-positions') || '{}'); }
     catch { return {}; }
@@ -108,11 +113,13 @@ const shotGrid = $('#shot-grid');
 const storyboardActions = $('#storyboard-actions');
 const storyboardMeta = $('#storyboard-meta');
 const imageDialog = $('#image-dialog');
+const videoDialog = $('#video-dialog');
 const deleteDialog = $('#delete-dialog');
 const promptDialog = $("#prompt-dialog");
 const directorCustomDialog = $("#director-custom-dialog");
 const updateStoryboardDialog = $('#update-storyboard-dialog');
 const outputGrid = $('#output-grid');
+const jobDock = $('#job-dock');
 const OUTPUT_OVERSCAN_ROWS = 3;
 const OUTPUT_VIRTUALIZATION_THRESHOLD = 100;
 let outputLayout = null;
@@ -181,6 +188,11 @@ function stripImageResources() {
     image.removeAttribute('sizes');
     image.removeAttribute('src');
   });
+  $$('video').forEach((video) => {
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+  });
 }
 
 function applyPrivacyCover(covered, { persist = true } = {}) {
@@ -192,6 +204,7 @@ function applyPrivacyCover(covered, { persist = true } = {}) {
     privacyIdleTimer = null;
     stopSlideshow();
     if (promptDialog.open) promptDialog.close();
+    if (videoDialog.open) videoDialog.close();
     if (imageDialog.open) $('#image-viewer-title').textContent = 'Preview';
     stripImageResources();
   }
@@ -258,7 +271,58 @@ window.addEventListener('keydown', notePrivacyActivity, { capture: true });
 
 const OUTPUT_FILENAME = /^(\d{8}_\d{6}_\d{6})_(photoshoot|random)_(\d+)_(production|preview)_shot_(\d+)_/;
 
+function isVideoOutput(item) {
+  return item?.media_type === 'video' || /\.(mp4|webm|mov|mkv|avi)$/i.test(item?.name || '');
+}
+
+function galleryMediaMatches(item) {
+  if (state.galleryView === 'flat') return true;
+  return state.galleryView === 'videos' ? isVideoOutput(item) : !isVideoOutput(item);
+}
+
+function galleryPendingGroupMatches(group) {
+  if (state.galleryView === 'flat') return true;
+  return state.galleryView === 'videos'
+    ? group.generation_mode === 'video'
+    : group.generation_mode !== 'video';
+}
+
+function galleryMediaItems() {
+  return state.outputs
+    .map((item, outputIndex) => ({ item, outputIndex }))
+    .filter(({ item }) => galleryMediaMatches(item));
+}
+
+function videoGroups() {
+  const groups = new Map();
+  galleryMediaItems().forEach((entry) => {
+    const item = entry.item;
+    const key = item.source_key || item.source_image || `video:${item.name}`;
+    if (!groups.has(key)) groups.set(key, {
+      key,
+      identity: {
+        key, kind: 'video', tier: 'production',
+        run: item.source_image || 'Source image',
+        source_image: item.source_image || 'Source image',
+      },
+      items: [], firstIndex: entry.outputIndex,
+    });
+    groups.get(key).items.push(entry);
+  });
+  groups.forEach((group) => group.items.sort((left, right) => (
+    left.item.name.localeCompare(right.item.name)
+    || outputIdentity(left.item).localeCompare(outputIdentity(right.item))
+  )));
+  return [...groups.values()].sort((a, b) => a.firstIndex - b.firstIndex);
+}
+
+function galleryGroups() {
+  if (state.galleryView === 'videos') return videoGroups();
+  return state.galleryView === 'photoshoots' ? photoshootGroups() : [];
+}
+
 function modeTitle(mode) {
+  if (mode === 'video') return 'Video';
   return mode === 'random' ? 'Random' : 'Photoshoot';
 }
 
@@ -298,13 +362,13 @@ function outputShotSequence(item) {
 
 function photoshootGroups() {
   const groups = new Map();
-  state.outputs.forEach((item, outputIndex) => {
+  galleryMediaItems().forEach(({ item, outputIndex }) => {
     const identity = outputGroupIdentity(item);
     const key = identity?.key || 'ungrouped';
     if (!groups.has(key)) groups.set(key, { key, identity, items: [], firstIndex: outputIndex });
     groups.get(key).items.push({ item, outputIndex });
   });
-  state.pendingGroups.forEach((pendingGroup, groupIndex) => {
+  state.pendingGroups.filter((pendingGroup) => galleryPendingGroupMatches(pendingGroup)).forEach((pendingGroup, groupIndex) => {
     const key = pendingGroup.group_key;
     const identity = {
       key,
@@ -341,6 +405,10 @@ function pendingGroupCount(group) {
   return group?.positions?.length || 0;
 }
 
+function visiblePendingGroups() {
+  return state.pendingGroups.filter((group) => galleryPendingGroupMatches(group));
+}
+
 function groupEntryCount(group) {
   return group.items.length + pendingGroupCount(group.pendingGroup);
 }
@@ -351,15 +419,15 @@ function groupEntryAt(group, index) {
 }
 
 function flatEntryCount() {
-  return state.outputs.length + state.pendingGroups.reduce(
-    (count, group) => count + pendingGroupCount(group), 0,
-  );
+  return galleryMediaItems().length + state.pendingGroups.filter((group) => galleryPendingGroupMatches(group))
+    .reduce((count, group) => count + pendingGroupCount(group), 0);
 }
 
 function flatEntryAt(index) {
-  if (index < state.outputs.length) return { item: state.outputs[index], outputIndex: index };
-  let offset = index - state.outputs.length;
-  for (const group of state.pendingGroups) {
+  const visible = galleryMediaItems();
+  if (index < visible.length) return visible[index];
+  let offset = index - visible.length;
+  for (const group of state.pendingGroups.filter((pendingGroup) => galleryPendingGroupMatches(pendingGroup))) {
     const count = pendingGroupCount(group);
     if (offset < count) {
       return { item: pendingOutput(group, offset), outputIndex: null };
@@ -371,7 +439,7 @@ function flatEntryAt(index) {
 
 function activePhotoshootGroup() {
   return state.galleryGroup
-    ? photoshootGroups().find((group) => group.key === state.galleryGroup) || null
+    ? galleryGroups().find((group) => group.key === state.galleryGroup) || null
     : null;
 }
 
@@ -399,12 +467,11 @@ function restoreProofsPosition({ fallbackToGrid = false } = {}) {
 
 function displayedOutputs() {
   const group = activePhotoshootGroup();
-  return group ? group.items : state.outputs.map((item, outputIndex) => ({ item, outputIndex }));
+  return group ? group.items : galleryMediaItems();
 }
 
 function previewOutputs() {
-  const items = activePhotoshootGroup()?.items
-    || state.outputs.map((item, outputIndex) => ({ item, outputIndex }));
+  const items = activePhotoshootGroup()?.items || galleryMediaItems();
   return items.filter(({ item }) => !item.pending);
 }
 
@@ -524,21 +591,40 @@ async function refreshStatus(showToast = false) {
     $('#comfy-status').textContent = status.comfy.online ? 'Online' : 'Offline';
     statusRefreshSeconds = Number(status.comfy.refresh_seconds) || statusRefreshSeconds;
     $('#comfy-dot').className = `status-dot ${status.comfy.online ? 'online' : 'error'}`;
-    const productionProfile = status.workflow.profiles.find(
-      (profile) => profile.id === status.workflow.production,
+    const imageWorkflow = status.workflow.image || status.workflow;
+    const videoWorkflow = status.workflow.video || {
+      source: 'profiles', profiles: [], production: null, ready: false,
+    };
+    const productionProfile = imageWorkflow.profiles.find(
+      (profile) => profile.id === imageWorkflow.production,
     );
-    const liveWorkflow = status.workflow.source === 'live';
+    const liveWorkflow = imageWorkflow.source === 'live';
     $('#workflow-status').textContent = liveWorkflow
       ? 'Live ComfyUI'
-      : status.workflow.ready
-      ? productionProfile.name
-      : (status.workflow.profiles.length ? 'Select profiles' : 'Missing');
+      : imageWorkflow.ready
+      ? productionProfile?.name || 'Ready'
+      : (imageWorkflow.profiles.length ? 'Select profiles' : 'Missing');
     $('#workflow-status').title = liveWorkflow
       ? 'Latest successful workflow run directly in ComfyUI'
       : productionProfile
-      ? `Production: ${productionProfile.file}\nPreview: ${status.workflow.preview}`
+      ? `Production: ${productionProfile.file}\nPreview: ${imageWorkflow.preview}`
       : '';
-    $('#workflow-dot').className = `status-dot ${status.workflow.ready ? 'online' : 'error'}`;
+    $('#workflow-dot').className = `status-dot ${imageWorkflow.ready ? 'online' : 'error'}`;
+    const videoProduction = videoWorkflow.profiles.find(
+      (profile) => profile.id === videoWorkflow.production,
+    );
+    const liveVideoWorkflow = videoWorkflow.source === 'live';
+    $('#video-workflow-status').textContent = liveVideoWorkflow
+      ? 'Live ComfyUI'
+      : videoWorkflow.ready
+      ? videoProduction?.name || 'Ready'
+      : (videoWorkflow.profiles.length ? 'Select profile' : 'Missing');
+    $('#video-workflow-status').title = liveVideoWorkflow
+      ? 'Latest successful external video workflow run directly in ComfyUI'
+      : videoProduction
+      ? `Production: ${videoProduction.file}`
+      : '';
+    $('#video-workflow-dot').className = `status-dot ${videoWorkflow.ready ? 'online' : 'error'}`;
     $('#catalog-status').textContent = status.catalog_records.toLocaleString();
     applyPrivacyIdleOptions(status.interface.privacy.auto_cover_minutes);
   } catch (error) {
@@ -1127,7 +1213,8 @@ function sizeLoggerImageColumn() {
 function renderLoggerImage(prompt) {
   const image = $('#logger-rendered-image');
   const empty = $('#logger-rendered-empty');
-  const url = state.privacyCovered ? null : prompt?.image_url;
+  const isVideo = prompt?.media_type === 'video' || prompt?.video_url;
+  const url = state.privacyCovered || isVideo ? null : prompt?.image_url;
   if (url) {
     if (image.getAttribute('src') !== url) image.src = url;
     image.alt = `Rendered shot ${prompt.shot || ''}`.trim();
@@ -1144,7 +1231,7 @@ function renderLoggerImage(prompt) {
   const floatingWindow = $('#shot-preview-window');
   const loggerPreview = state.previewWindowSessions.logger;
   if (!state.privacyCovered && loggerPreview.open && loggerPreview.displayed?.persistent) {
-    if (prompt?.image_url) {
+    if (prompt?.image_url && !isVideo) {
       const changed = loggerPreview.displayed.image_url !== prompt.image_url
         || loggerPreview.displayed.shot !== prompt.shot;
       loggerPreview.displayed.image_url = prompt.image_url;
@@ -1236,24 +1323,37 @@ function renderLogger() {
 function showJob() {
   const job = state.job;
   if (!job) return;
+  const mediaTitle = job.kind === 'video' || job.generation_mode === 'video' ? 'Video' : 'Image';
   const allImagesRendered = job.total > 0 && job.completed >= job.total;
   const queueSuffix = job.queued_after
     ? ` · ${job.queued_after} job${job.queued_after === 1 ? '' : 's'} queued`
     : '';
   syncRenderControls();
-  $('#job-dock').classList.remove('hidden');
+  syncJobDockLayer();
+  jobDock.classList.remove('hidden');
   $('#job-percent').textContent = `${job.progress || 0}%`;
   $('#job-progress').style.width = `${job.progress || 0}%`;
   $('#job-detail').textContent = job.cancel_requested
-    ? 'Cancelling… current image will finish'
+    ? `Cancelling… current ${mediaTitle.toLowerCase()} will finish`
     : (job.status === 'queued'
       ? `Waiting to start${queueSuffix}`
       : (allImagesRendered
         ? `Finalizing ${tierTitle(job.render_tier).toLowerCase()}…${queueSuffix}`
-        : `Image ${job.completed} of ${job.total} · ${formatTime(job.eta_seconds)}${queueSuffix}`));
+        : `${mediaTitle} ${job.completed} of ${job.total} · ${formatTime(job.eta_seconds)}${queueSuffix}`));
   $('#cancel-job').classList.toggle('hidden', allImagesRendered);
   $('#cancel-job').disabled = Boolean(job.cancel_requested) || allImagesRendered;
   renderLogger();
+}
+
+function syncJobDockLayer() {
+  const shell = $('#image-viewer-shell');
+  if (imageDialog.open) {
+    if (jobDock.parentElement !== shell) shell.append(jobDock);
+    jobDock.classList.add('in-lightbox');
+    return;
+  }
+  if (jobDock.parentElement !== document.body) document.body.append(jobDock);
+  jobDock.classList.remove('in-lightbox');
 }
 
 async function pollJob() {
@@ -1281,7 +1381,9 @@ async function finishJob() {
   syncRenderControls();
   $('#job-dock').classList.add('hidden');
   if (job.status === 'completed') {
-    toast(`${modeTitle(job.generation_mode)} ${tierTitle(job.render_tier).toLowerCase()} complete`, `${job.outputs.length} output${job.outputs.length === 1 ? '' : 's'} saved.`, 'success');
+    const mediaLabel = job.kind === 'video' || job.generation_mode === 'video' ? 'video' : 'image';
+    toast(`${modeTitle(job.generation_mode)} ${tierTitle(job.render_tier).toLowerCase()} complete`, `${job.outputs.length} ${mediaLabel}${job.outputs.length === 1 ? '' : 's'} saved.`, 'success');
+    if (mediaLabel === 'video') setGalleryView('videos');
     switchView('outputs');
   } else if (job.status === 'cancelled') {
     toast(`${modeTitle(job.generation_mode)} ${tierTitle(job.render_tier).toLowerCase()} cancelled`, `${job.completed} of ${job.total} images completed.`);
@@ -1312,6 +1414,7 @@ function addOutputs(outputs) {
     if (existingIndex >= 0 && item.group_key && !state.outputs[existingIndex].queue_group_key) {
       state.outputs[existingIndex] = {
         ...state.outputs[existingIndex],
+        ...item,
         queue_job_id: item.group_key.split(':')[1],
         queue_group_key: item.group_key,
         generation_mode: item.generation_mode,
@@ -1458,22 +1561,25 @@ function syncDeleteControls() {
   const disabled = Boolean(isRenderActive());
   const deleteButton = $('#delete-all-outputs');
   const group = activePhotoshootGroup();
-  const hasCompleted = (group?.items.map(({ item }) => item) || state.outputs)
+  const hasCompleted = (group?.items.map(({ item }) => item) || galleryMediaItems().map(({ item }) => item))
     .some((item) => !item.pending);
   const photoshootList = state.galleryView === 'photoshoots' && !group;
+  const mediaGroupList = ['photoshoots', 'videos'].includes(state.galleryView) && !group;
   deleteButton.classList.toggle(
     'hidden', state.outputs.length === 0 || state.galleryBenchmark
-      || photoshootList || !hasCompleted,
+      || mediaGroupList || !hasCompleted,
   );
   deleteButton.disabled = disabled || state.galleryBenchmark;
   const groupLabel = group?.identity?.kind === 'random' ? 'random group' : 'photoshoot';
-  deleteButton.textContent = group ? `Delete ${groupLabel}` : 'Delete all';
+  const mediaGroupLabel = group?.identity?.kind === 'video' ? 'video source' : groupLabel;
+  const legacyDeleteLabel = group ? `Delete ${groupLabel}` : 'Delete all';
+  deleteButton.textContent = group?.identity?.kind === 'video' ? `Delete ${mediaGroupLabel}` : legacyDeleteLabel;
   deleteButton.title = disabled
     ? 'Bulk deletion is unavailable while rendering'
-    : (group ? `Delete only the opened ${groupLabel}` : 'Delete every proof');
+    : (group ? `Delete only the opened ${mediaGroupLabel}` : 'Delete every proof');
   $$('.output-delete, #image-viewer-delete').forEach((button) => {
     button.disabled = false;
-    button.title = 'Delete this completed image';
+    button.title = 'Delete this completed media';
   });
 }
 
@@ -1500,9 +1606,9 @@ async function deleteOutput(index) {
   const previewScope = imageDialog.open ? previewOutputs() : [];
   const previewPosition = previewScope.findIndex((entry) => entry.outputIndex === index);
   const confirmed = await confirmDeletion(
-    'Delete this image?',
+    `Delete this ${isVideoOutput(item) ? 'video' : 'image'}?`,
     `${item.name} will be permanently removed from its proof directory.`,
-    'Delete image',
+    `Delete ${isVideoOutput(item) ? 'video' : 'image'}`,
   );
   if (!confirmed) return;
   try {
@@ -1521,7 +1627,7 @@ async function deleteOutput(index) {
       }
     }
   } catch (error) {
-    toast('Could not delete image', error.message, 'error');
+    toast(`Could not delete ${isVideoOutput(item) ? 'video' : 'image'}`, error.message, 'error');
   }
 }
 
@@ -1533,20 +1639,35 @@ async function deleteAllOutputs() {
   }
   const group = activePhotoshootGroup();
   const groupLabel = group?.identity?.kind === 'random' ? 'random group' : 'photoshoot';
+  const mediaGroupLabel = group?.identity?.kind === 'video' ? 'video source' : groupLabel;
+  const galleryMediaWord = state.galleryView === 'videos'
+    ? 'video' : (state.galleryView === 'flat' ? 'media' : 'image');
+  const galleryMediaPlural = state.galleryView === 'videos'
+    ? 'videos' : (state.galleryView === 'flat' ? 'media' : 'images');
   const targets = group
     ? group.items.map(({ item }) => item).filter((item) => !item.pending)
-    : state.outputs.filter((item) => !item.pending);
+    : galleryMediaItems().map(({ item }) => item).filter((item) => !item.pending);
   const count = targets.length;
+  const legacyDescription = group
+    ? `Only the opened ${groupLabel} will be permanently deleted. This cannot be undone.`
+    : 'Every image in the configured proof directories will be permanently deleted. This cannot be undone.';
+  const mediaDescription = group
+    ? `Only the opened ${mediaGroupLabel} will be permanently deleted. This cannot be undone.`
+    : (state.galleryView === 'flat'
+      ? 'Every image and video in the current gallery will be permanently deleted. This cannot be undone.'
+      : `Every ${galleryMediaWord} in the current gallery will be permanently deleted. This cannot be undone.`);
+  const countLabel = count === 1 && state.galleryView === 'flat'
+    ? '1 media item' : `${count} ${galleryMediaPlural}`;
   const confirmed = await confirmDeletion(
-    group ? `Delete this ${groupLabel} (${count} images)?` : `Delete all ${count} images?`,
-    group
-      ? `Only the opened ${groupLabel} will be permanently deleted. This cannot be undone.`
-      : 'Every image in the configured proof directories will be permanently deleted. This cannot be undone.',
-    group ? `Delete ${groupLabel}` : 'Delete everything',
+    group ? `Delete this ${mediaGroupLabel} (${count} ${group?.identity?.kind === 'video' ? 'video' : 'image'}${count === 1 ? '' : 's'})?` : `Delete all ${countLabel}?`,
+    group?.identity?.kind === 'video' || state.galleryView !== 'photoshoots'
+      ? mediaDescription
+      : legacyDescription,
+    group?.identity?.kind === 'video' ? `Delete ${mediaGroupLabel}` : (group ? `Delete ${groupLabel}` : 'Delete everything'),
   );
   if (!confirmed) return;
   try {
-    if (group) {
+    if (group || state.galleryView !== 'photoshoots') {
       const results = await Promise.allSettled(
         targets.map((item) => api(item.url, { method: 'DELETE' })),
       );
@@ -1563,20 +1684,24 @@ async function deleteAllOutputs() {
       );
       if (results.some((result) => result.status === 'rejected')) {
         throw new Error(
-          `${deletedKeys.size} of ${count} images were deleted; ${count - deletedKeys.size} could not be removed.`,
+          `${deletedKeys.size} of ${count} ${state.galleryView === 'videos' ? 'videos' : 'images'} were deleted; ${count - deletedKeys.size} could not be removed.`,
         );
       }
-      state.galleryGroup = null;
-      sessionStorage.setItem('valhalla-gallery-group', '');
+      if (group) {
+        state.galleryGroup = null;
+        sessionStorage.setItem('valhalla-gallery-group', '');
+      }
     } else {
       const result = await api('/api/outputs', { method: 'DELETE' });
       state.outputs = [];
-      toast('Proofs deleted', `${result.deleted} image${result.deleted === 1 ? '' : 's'} permanently removed.`, 'success');
+      const deletedLabel = result.deleted === 1 && state.galleryView === 'flat'
+        ? '1 media item' : `${result.deleted} ${galleryMediaPlural}`;
+      toast('Proofs deleted', `${deletedLabel} permanently removed.`, 'success');
     }
     if (imageDialog.open) imageDialog.close();
     renderOutputs();
     if (group) {
-      toast(`${groupLabel[0].toUpperCase()}${groupLabel.slice(1)} deleted`, `${count} images permanently removed.`, 'success');
+      toast(`${mediaGroupLabel[0].toUpperCase()}${mediaGroupLabel.slice(1)} deleted`, `${count} ${state.galleryView === 'videos' ? 'videos' : 'images'} permanently removed.`, 'success');
     }
   } catch (error) {
     if (imageDialog.open) imageDialog.close();
@@ -1610,7 +1735,8 @@ async function restoreApplication() {
     syncQueuePlaceholders(session.jobs || []);
     (session.jobs || []).forEach((job) => addOutputs(job.outputs || []));
     renderLogger();
-    if (state.job) {
+    const videoJob = state.job?.kind === 'video' || state.job?.generation_mode === 'video';
+    if (state.job && !videoJob) {
       try {
         state.storyboard = await api(`/api/storyboards/${state.job.storyboard_id}`);
         restoreConfig(state.storyboard.config, state.job);
@@ -1621,36 +1747,47 @@ async function restoreApplication() {
       showJob();
       if (session.active_job) pollJob();
     }
+    if (videoJob && session.active_job) pollJob();
   } catch (error) {
     toast('Could not restore render state', error.message, 'error');
   }
-  if (!state.storyboard && !state.initialAutoResolved) {
+  if (!state.storyboard
+    && !(['queued', 'running'].includes(state.job?.status)
+      && (state.job?.kind === 'video' || state.job?.generation_mode === 'video'))
+    && !state.initialAutoResolved) {
     state.initialAutoResolved = true;
     await resolveStoryboard(null, { initial: true });
   }
-  const restoredView = state.restoredView === 'director' && !state.storyboard
-    ? 'studio'
-    : state.restoredView;
+  const activeVideoJob = ['queued', 'running'].includes(state.job?.status)
+    && (state.job?.kind === 'video' || state.job?.generation_mode === 'video');
+  const restoredView = activeVideoJob
+    ? 'outputs'
+    : (state.restoredView === 'director' && !state.storyboard ? 'studio' : state.restoredView);
   switchView(restoredView);
 }
 
 function renderOutputs() {
-  const pendingCount = state.pendingGroups.reduce(
+  const pendingCount = visiblePendingGroups().reduce(
     (count, group) => count + pendingGroupCount(group), 0,
   );
-  const completedCount = state.outputs.length;
+  const completedCount = galleryMediaItems().length;
   const count = completedCount + pendingCount;
   if (state.galleryGroup && !activePhotoshootGroup()) state.galleryGroup = null;
   $('#output-count').textContent = completedCount;
   $('#outputs-empty').classList.toggle('hidden', count > 0);
   const group = activePhotoshootGroup();
-  const groups = photoshootGroups();
+  const groups = galleryGroups();
   const photoshootCount = groups.filter((entry) => entry.identity?.kind === 'photoshoot').length;
   const randomCount = groups.filter((entry) => entry.identity?.kind === 'random').length;
+  const videoCount = groups.filter((entry) => entry.identity?.kind === 'video').length;
+  const viewMediaPlural = state.galleryView === 'videos'
+    ? 'videos' : (state.galleryView === 'flat' ? 'media' : 'images');
+  const groupMediaWord = group?.identity?.kind === 'video' ? 'video' : 'image';
   const groupedSummary = [
+    videoCount ? `${videoCount} video source${videoCount === 1 ? '' : 's'}` : '',
     photoshootCount ? `${photoshootCount} photoshoot${photoshootCount === 1 ? '' : 's'}` : '',
     randomCount ? `${randomCount} random group${randomCount === 1 ? '' : 's'}` : '',
-    `${completedCount} images`,
+    `${completedCount} ${viewMediaPlural}`,
     pendingCount ? `${pendingCount} waiting` : '',
   ].filter(Boolean).join(' · ');
   $$('#gallery-view-toggle button').forEach((button) => {
@@ -1660,11 +1797,13 @@ function renderOutputs() {
     ? (state.galleryBenchmark
       ? `Benchmark: ${count.toLocaleString()} synthetic records.`
       : (group
-        ? `${groupEntryCount(group)} image${groupEntryCount(group) === 1 ? '' : 's'} in this group.`
-        : (state.galleryView === 'photoshoots'
+        ? `${groupEntryCount(group)} ${groupMediaWord}${groupEntryCount(group) === 1 ? '' : 's'} in this group.`
+        : (['photoshoots', 'videos'].includes(state.galleryView)
           ? `${groupedSummary}.`
-          : `${completedCount} generated image${completedCount === 1 ? '' : 's'}${pendingCount ? ` · ${pendingCount} waiting` : ''}.`)))
-    : 'No generated images.';
+          : `${completedCount === 1 ? '1 generated item' : `${completedCount} generated media`}${pendingCount ? ` · ${pendingCount} waiting` : ''}.`)))
+    : (state.galleryView === 'videos'
+      ? 'No generated videos.'
+      : (state.galleryView === 'flat' ? 'No generated media.' : 'No generated images.'));
   outputRenderSignature = '';
   renderVirtualOutputs(true);
   syncDeleteControls();
@@ -1685,11 +1824,11 @@ function measureOutputGrid() {
 }
 
 function showingPhotoshootList() {
-  return state.galleryView === 'photoshoots' && !state.galleryGroup;
+  return ['photoshoots', 'videos'].includes(state.galleryView) && !state.galleryGroup;
 }
 
 function outputEntryCount() {
-  if (showingPhotoshootList()) return photoshootGroups().length;
+  if (showingPhotoshootList()) return galleryGroups().length;
   const group = activePhotoshootGroup();
   return group ? groupEntryCount(group) : flatEntryCount();
 }
@@ -1716,12 +1855,17 @@ function outputCardHtml(item, index, layout, position, group = null) {
     </article>`;
   }
   const visual = state.privacyCovered
-    ? '<div class="privacy-placeholder" aria-label="Image hidden by privacy cover"></div>'
-    : `<img src="${encodeURI(item.thumbnail_url || item.url)}" alt="Generated ${escapeHtml(shotLabel)}" loading="lazy" decoding="async">`;
+    ? '<div class="privacy-placeholder" aria-label="Media hidden by privacy cover"></div>'
+    : isVideoOutput(item)
+      ? `<div class="video-thumb"><img src="${encodeURI(item.thumbnail_url || item.url)}" alt="Video thumbnail for ${escapeHtml(shotLabel)}" loading="lazy" decoding="async"><span aria-hidden="true">▶</span></div>`
+      : `<img src="${encodeURI(item.thumbnail_url || item.url)}" alt="Generated ${escapeHtml(shotLabel)}" loading="lazy" decoding="async">`;
+  const mediaLabel = isVideoOutput(item)
+    ? `Video ${group?.identity?.kind === 'video' ? position + 1 : ''}`.trim()
+    : shotLabel;
   return `<article class="output-card" data-output-index="${index}" tabindex="0" role="button"
-    aria-label="Maximize ${escapeHtml(shotLabel)}" aria-posinset="${position + 1}" aria-setsize="${outputEntryCount()}">
+    aria-label="Maximize ${escapeHtml(mediaLabel)}" aria-posinset="${position + 1}" aria-setsize="${outputEntryCount()}">
     ${visual}
-    <footer><span>${escapeHtml(shotLabel)}</span><span class="output-actions">${state.galleryBenchmark ? '' : `<button class="output-delete" data-action="delete-output" aria-label="Delete ${escapeHtml(item.name)}">Delete</button>`}<a href="${encodeURI(item.url)}" download="${escapeHtml(item.name)}">Download</a></span></footer>
+    <footer><span>${escapeHtml(mediaLabel)}${item.source_image ? `<small class="source-image">from ${escapeHtml(item.source_image)}</small>` : ''}</span><span class="output-actions">${state.galleryBenchmark ? '' : `<button class="output-delete" data-action="delete-output" aria-label="Delete ${escapeHtml(item.name)}">Delete</button>`}<a href="${encodeURI(item.url)}" download="${escapeHtml(item.name)}">Download</a></span></footer>
   </article>`;
 }
 
@@ -1746,9 +1890,10 @@ function photoshootCardHtml(group, index) {
     ? `Photoshoot ${group.displayNumber}`
     : (group.identity?.kind === 'random'
       ? `Random ${group.displayNumber}`
-      : 'Ungrouped');
+      : (group.identity?.kind === 'video' ? `From ${group.identity.run}` : 'Ungrouped'));
   const tier = tierTitle(group.identity?.tier || representative.render_tier);
-  const run = group.identity ? formatOutputRun(group.identity.run) : 'Files without photoshoot naming';
+  const run = group.identity?.kind === 'video'
+    ? 'Linked video renders' : (group.identity ? formatOutputRun(group.identity.run) : 'Files without photoshoot naming');
   const runTitle = group.identity ? `Render ID: ${group.identity.run}` : '';
   const pendingGroup = group.pendingGroup;
   const completionDeadline = pendingGroup?.group_eta_seconds != null
@@ -1769,7 +1914,7 @@ function photoshootCardHtml(group, index) {
     ? `<footer><span>${groupEntryCount(group)} frames</span></footer>`
     : `<footer><span title="${escapeHtml(runTitle)}"><strong>${escapeHtml(title)}</strong><br>${escapeHtml(tier)} · ${pendingGroup ? `<span${pendingDeadlineAttribute}>${escapeHtml(pendingStatus)}</span>` : escapeHtml(run)}</span><span class="photoshoot-count">${groupEntryCount(group)}</span></footer>`;
   return `<article class="output-card photoshoot-card" data-group-key="${escapeHtml(group.key)}" data-group-index="${index}" tabindex="0" role="button"
-    aria-label="Open ${escapeHtml(title)}, ${groupEntryCount(group)} images">
+    aria-label="Open ${escapeHtml(title)}, ${groupEntryCount(group)} ${group.identity?.kind === 'video' ? 'videos' : 'images'}">
     ${visual}
     ${footer}
   </article>`;
@@ -1777,7 +1922,7 @@ function photoshootCardHtml(group, index) {
 
 function outputEntriesHtml(start, end, layout) {
   if (showingPhotoshootList()) {
-    return photoshootGroups().slice(start, end)
+    return galleryGroups().slice(start, end)
       .map((group, offset) => photoshootCardHtml(group, start + offset))
       .join('');
   }
@@ -1950,6 +2095,14 @@ function resetPreviewPan() {
   applyPreviewPan();
 }
 
+function unloadViewerVideo() {
+  const video = $('#image-viewer-video');
+  video.pause();
+  video.removeAttribute('src');
+  video.load();
+  video.removeAttribute('data-output-key');
+}
+
 state.previewZoom = Math.min(300, Math.max(25, Number(state.previewZoom) || 100));
 function fitPreviewImage() {
   const image = $('#image-viewer-image');
@@ -1992,16 +2145,42 @@ function showPreview(index) {
   if (position < 0) position = 0;
   state.previewIndex = scope[position].outputIndex;
   const item = state.outputs[state.previewIndex];
-  resetPreviewPan();
   const image = $('#image-viewer-image');
-  if (state.privacyCovered) image.removeAttribute('src');
-  else image.src = item.url;
+  const video = $('#image-viewer-video');
+  const videoOutput = isVideoOutput(item);
+  const createVideoButton = $('#image-create-video');
+  state.videoSource = !videoOutput ? item : null;
+  createVideoButton.classList.toggle('hidden', videoOutput || state.privacyCovered);
+  createVideoButton.disabled = videoOutput || state.privacyCovered;
+  resetPreviewPan();
+  if (state.privacyCovered) {
+    image.removeAttribute('src');
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+  } else if (videoOutput) {
+    image.removeAttribute('src');
+    video.src = item.url;
+    video.load();
+  } else {
+    unloadViewerVideo();
+    image.src = item.url;
+  }
+  image.classList.toggle('hidden', videoOutput);
+  video.classList.toggle('hidden', !videoOutput || state.privacyCovered);
+  video.controls = videoOutput && !state.privacyCovered;
+  video.autoplay = videoOutput && !state.privacyCovered;
+  video.style.display = videoOutput && !state.privacyCovered ? '' : 'none';
+  if (videoOutput) video.dataset.outputKey = outputIdentity(item);
+  video.onloadedmetadata = () => {
+    if (videoOutput && !state.privacyCovered) video.play().catch(() => {});
+  };
+  if (videoOutput && !state.privacyCovered) video.play().catch(() => {});
   image.alt = `Maximized generated output from shot ${outputDisplayShot(item)}`;
   $('#image-viewer-title').textContent = state.privacyCovered ? 'Preview' : item.name;
   $('#image-viewer-count').textContent = `${position + 1} of ${scope.length}`;
-  const download = $('#image-viewer-download');
-  download.href = item.url;
-  download.download = item.name;
+  $('#image-viewer-download').href = item.url;
+  $('#image-viewer-download').download = item.name;
   const single = scope.length < 2;
   $('#image-previous').disabled = single;
   $('#image-next').disabled = single;
@@ -2012,7 +2191,81 @@ function showPreview(index) {
 function openPreview(index) {
   showPreview(index);
   if (!imageDialog.open) imageDialog.showModal();
+  syncJobDockLayer();
   requestAnimationFrame(fitPreviewImage);
+}
+
+function savedVideoDuration() {
+  const value = Number(localStorage.getItem('valhalla-video-duration'));
+  return Number.isInteger(value) && value >= 1 && value <= 60 ? value : 5;
+}
+
+function openVideoDialog() {
+  const source = state.videoSource || state.outputs[state.previewIndex];
+  if (!source || source.pending || isVideoOutput(source) || state.privacyCovered) return;
+  state.videoSource = source;
+  $('#video-source-label').textContent = source.name;
+  $('#video-prompt').value = localStorage.getItem('valhalla-video-prompt') || '';
+  $('#video-duration').value = String(savedVideoDuration());
+  videoDialog.showModal();
+  requestAnimationFrame(() => $('#video-prompt').focus());
+}
+
+async function submitVideo() {
+  const source = state.videoSource;
+  const promptInput = $('#video-prompt');
+  const durationInput = $('#video-duration');
+  const prompt = promptInput.value.trim();
+  const duration = Math.round(Number(durationInput.value));
+  if (!source || !prompt) {
+    toast('Video prompt required', 'Describe the motion before queuing the video.', 'error');
+    promptInput.focus();
+    return;
+  }
+  if (!Number.isInteger(duration) || duration < 1 || duration > 60) {
+    toast('Invalid duration', 'Choose a whole number of seconds from 1 to 60.', 'error');
+    durationInput.focus();
+    return;
+  }
+  localStorage.setItem('valhalla-video-prompt', prompt);
+  localStorage.setItem('valhalla-video-duration', String(duration));
+  const button = $('#video-submit');
+  const alreadyActive = Boolean(isRenderActive());
+  const previousActiveId = alreadyActive ? state.job.id : null;
+  setBusy(button, true, 'Queueing…');
+  try {
+    const queuedJob = await api('/api/videos', {
+      method: 'POST',
+      body: JSON.stringify({
+        source: source.source || 'output',
+        relative_path: source.relative_path || source.name,
+        prompt,
+        duration,
+        source_metadata: {
+          key: source.key,
+          source_key: source.source_key,
+          source_image: source.name,
+          generation_mode: source.generation_mode,
+          render_tier: source.render_tier,
+          group_index: source.group_index,
+          shot: source.shot,
+        },
+      }),
+    });
+    videoDialog.close();
+    await trackQueuedJob(queuedJob, previousActiveId);
+    setGalleryView('videos');
+    switchView('outputs');
+    toast(
+      alreadyActive ? 'Video added to queue' : 'Video queued',
+      `Video from ${source.name} is waiting${alreadyActive ? ` at position ${queuedJob.queue_position}` : ''}.`,
+      'success',
+    );
+  } catch (error) {
+    toast('Could not queue video', error.message, 'error');
+  } finally {
+    setBusy(button, false);
+  }
 }
 
 function movePreview(direction) {
@@ -2154,7 +2407,7 @@ function rememberFlatGalleryPosition() {
 }
 
 function setGalleryView(view) {
-  const next = view === 'photoshoots' ? 'photoshoots' : 'flat';
+  const next = ['photoshoots', 'flat', 'videos'].includes(view) ? view : 'photoshoots';
   if (next === state.galleryView && !state.galleryGroup) return;
   rememberFlatGalleryPosition();
   rememberProofsPosition();
@@ -2334,9 +2587,12 @@ $('#image-next').addEventListener('click', () => movePreview(1));
 $('.image-viewer-close').addEventListener('click', () => imageDialog.close());
 imageDialog.addEventListener('close', () => {
   stopSlideshow();
+  unloadViewerVideo();
+  state.videoSource = null;
   showFullscreenControls({ autoHide: false });
   if (document.fullscreenElement === $('#image-viewer-shell')) document.exitFullscreen().catch(() => {});
   setFallbackFullscreen(false);
+  syncJobDockLayer();
   syncOutputGridToPreview();
 });
 let suppressPreviewStageClick = false;
@@ -3042,6 +3298,7 @@ function clampShotPreviewWindow() {
 
 function switchView(name) {
   if (!['studio', 'director', 'outputs', 'logger'].includes(name)) name = 'studio';
+  if (name !== 'outputs' && imageDialog.open) imageDialog.close();
   const previousView = $('.view.active')?.id?.replace('-view', '');
   if (previousView === 'outputs' && name !== 'outputs') rememberProofsPosition();
   if (state.previewWindowOwner) suspendFloatingPreview();
@@ -3069,35 +3326,105 @@ function switchView(name) {
   }
 }
 
-function renderWorkflowProfiles(profiles) {
-  state.workflowProfiles = profiles;
+function profileControls(media = state.profileMedia) {
+  const video = media === 'video';
+  return {
+    media: video ? 'video' : 'image',
+    source: $(`#${video ? 'live-video-workflow-source' : 'live-workflow-source'}`),
+    selectors: $(`#${video ? 'video-profile-selector' : 'workflow-profile-selectors'}`),
+    production: $(`#${video ? 'video-production-profile' : 'production-profile'}`),
+    preview: video ? null : $('#preview-profile'),
+    help: $(`#${video ? 'live-video-workflow-help' : 'live-workflow-help'}`),
+    list: $(`#${video ? 'video-workflow-profile-list' : 'workflow-profile-list'}`),
+  };
+}
+
+function syncProfileControls(media = state.profileMedia) {
+  const controls = profileControls(media);
+  const profiles = state.workflowProfilesByMedia[controls.media];
+  if (!profiles) return;
   const live = profiles.source === 'live';
-  $('#live-workflow-source').checked = live;
-  $('#workflow-profile-selectors').classList.toggle('disabled', live);
-  $('#live-workflow-help').classList.toggle('hidden', !live);
+  const hasProfiles = profiles.profiles.some((profile) => profile.valid);
+  controls.source.disabled = false;
+  controls.selectors.classList.toggle('disabled', live);
+  controls.help.classList.toggle('hidden', !live);
+  controls.production.disabled = live || !hasProfiles;
+  if (controls.preview) controls.preview.disabled = live || !hasProfiles;
+}
+
+function renderWorkflowProfiles(profiles, media = profiles?.media_type || state.profileMedia) {
+  if (!profiles) return;
+  const controls = profileControls(media);
+  state.workflowProfilesByMedia[controls.media] = profiles;
+  if (controls.media === state.profileMedia) state.workflowProfiles = profiles;
+  const live = profiles.source === 'live';
   const options = profiles.profiles
     .map((profile) => `<option value="${escapeHtml(profile.id)}"${profile.valid ? '' : ' disabled'}>${escapeHtml(profile.name)}${profile.valid ? '' : ' · invalid'}</option>`)
     .join('');
-  for (const [mode, selector] of [['production', '#production-profile'], ['preview', '#preview-profile']]) {
-    const select = $(selector);
+  const selectors = controls.preview
+    ? [[controls.production, profiles.production], [controls.preview, profiles.preview]]
+    : [[controls.production, profiles.production]];
+  selectors.forEach(([select, value]) => {
     select.innerHTML = options || '<option value="">No captured profiles</option>';
-    select.value = profiles[mode] || '';
-    select.disabled = live || !profiles.profiles.some((profile) => profile.valid);
-  }
-  $('#workflow-profile-list').innerHTML = profiles.profiles.length
+    select.value = value || '';
+  });
+  controls.source.checked = live;
+  controls.list.innerHTML = profiles.profiles.length
     ? profiles.profiles.map((profile) => `
-      <div class="workflow-profile-item${profile.valid ? '' : ' invalid'}" data-profile-id="${escapeHtml(profile.id)}">
+      <div class="workflow-profile-item${profile.valid ? '' : ' invalid'}" data-profile-id="${escapeHtml(profile.id)}" data-profile-media-type="${controls.media}">
         <div><strong>${escapeHtml(profile.name)}</strong><small>${escapeHtml(profile.file)}${profile.valid ? ` · ${profile.negative_conditioning ? 'Auxiliary negative connected' : 'Positive-only workflow'}` : ` · ${profile.error}`}</small></div>
         <button type="button" class="text-button" data-profile-action="rename">Rename</button>
         <button type="button" class="text-button danger" data-profile-action="delete">Delete</button>
       </div>`).join('')
     : '<p class="profile-empty">No profiles captured yet.</p>';
+  syncProfileControls(controls.media);
+}
+
+function setProfileMedia(media) {
+  const next = media === 'video' ? 'video' : 'image';
+  state.profileMedia = next;
+  sessionStorage.setItem('valhalla-profile-media', next);
+  $$('.profile-media-tabs [data-profile-media]').forEach((button) => {
+    button.classList.toggle('active', button.dataset.profileMedia === next);
+    button.setAttribute('aria-selected', String(button.dataset.profileMedia === next));
+  });
+  $('#image-profile-settings').classList.toggle('hidden', next !== 'image');
+  $('#video-profile-settings').classList.toggle('hidden', next !== 'video');
+  const cached = state.workflowProfilesByMedia[next];
+  if (cached) renderWorkflowProfiles(cached, next);
+  else loadWorkflowProfileMedia(next, { candidate: true });
+}
+
+async function loadWorkflowProfileMedia(media, { candidate = false } = {}) {
+  const next = media === 'video' ? 'video' : 'image';
+  try {
+    const profiles = await api(`/api/workflow/profiles?media=${next}`);
+    renderWorkflowProfiles(profiles, next);
+  } catch (error) {
+    if (next === state.profileMedia) $('#capture-candidate-status').textContent = error.message;
+    return;
+  }
+  if (candidate && next === state.profileMedia) await loadWorkflowCaptureCandidate(next);
+}
+
+async function loadWorkflowCaptureCandidate(media = state.profileMedia) {
+  const next = media === 'video' ? 'video' : 'image';
+  const status = $('#capture-candidate-status');
+  status.textContent = `Inspecting the latest successful ${next} ComfyUI run…`;
+  try {
+    const candidate = await api(`/api/workflow/capture-candidate?media=${next}`);
+    $('#capture-profile-name').value = candidate.suggested_name;
+    status.textContent = `Detected from ComfyUI · ${candidate.suggested_id}.workflow.json`;
+  } catch (error) {
+    status.textContent = error.message;
+  }
 }
 
 async function manageWorkflowProfile(button) {
   const item = button.closest('[data-profile-id]');
   const profileId = item?.dataset.profileId;
   if (!profileId) return;
+  const media = item.dataset.profileMediaType === 'video' ? 'video' : 'image';
   const action = button.dataset.profileAction;
   let name = '';
   if (action === 'rename') {
@@ -3107,12 +3434,12 @@ async function manageWorkflowProfile(button) {
   setBusy(button, true, action === 'rename' ? 'Saving…' : 'Deleting…');
   try {
     const profiles = await api(
-      `/api/workflow/profiles/${encodeURIComponent(profileId)}${action === 'rename' ? '/rename' : ''}`,
+      `/api/workflow/profiles/${encodeURIComponent(profileId)}${action === 'rename' ? '/rename' : ''}?media=${media}`,
       action === 'rename'
         ? { method: 'POST', body: JSON.stringify({ name }) }
         : { method: 'DELETE' },
     );
-    renderWorkflowProfiles(profiles);
+    renderWorkflowProfiles(profiles, media);
     refreshStatus();
   } catch (error) {
     toast(`Could not ${action} profile`, error.message, 'error');
@@ -3124,49 +3451,50 @@ async function openWorkflowProfiles() {
   $('#system-settings').open = false;
   closeMobileSystem();
   $('#capture-dialog').showModal();
-  $('#capture-candidate-status').textContent = 'Inspecting the latest successful ComfyUI run…';
-  try {
-    const [profiles, candidate] = await Promise.all([
-      api('/api/workflow/profiles'), api('/api/workflow/capture-candidate'),
-    ]);
-    renderWorkflowProfiles(profiles);
-    $('#capture-profile-name').value = candidate.suggested_name;
-    $('#capture-candidate-status').textContent = `Detected from ComfyUI · ${candidate.suggested_id}.workflow.json`;
-  } catch (error) {
-    try { renderWorkflowProfiles(await api('/api/workflow/profiles')); } catch { /* status already explains failure */ }
-    $('#capture-candidate-status').textContent = error.message;
-  }
+  setProfileMedia(state.profileMedia);
+  await Promise.allSettled([
+    loadWorkflowProfileMedia('image'),
+    loadWorkflowProfileMedia('video'),
+  ]);
+  await loadWorkflowCaptureCandidate(state.profileMedia);
 }
 
 let workflowSettingsSaving = false;
 
-async function saveWorkflowProfileSelection() {
+async function saveWorkflowProfileSelection(media = state.profileMedia) {
+  const next = typeof media === 'string' ? media : state.profileMedia;
+  const controls = profileControls(next);
   if (workflowSettingsSaving) return;
   workflowSettingsSaving = true;
-  const controls = $$('#live-workflow-source, #workflow-profile-selectors select');
-  controls.forEach((control) => { control.disabled = true; });
+  [controls.source, controls.production, controls.preview].filter(Boolean)
+    .forEach((control) => { control.disabled = true; });
   try {
     const profiles = await api('/api/workflow/profiles/select', {
       method: 'POST',
-      body: JSON.stringify({
+      body: JSON.stringify(next === 'video' ? {
+        production: controls.production.value,
+        preview: '',
+        source: controls.source.checked ? 'live' : 'profiles',
+        media: 'video',
+      } : {
         production: $('#production-profile').value,
         preview: $('#preview-profile').value,
         source: $('#live-workflow-source').checked ? 'live' : 'profiles',
+        media: 'image',
       }),
     });
-    renderWorkflowProfiles(profiles);
+    renderWorkflowProfiles(profiles, next);
     refreshStatus();
   } catch (error) {
     toast('Could not select profiles', error.message, 'error');
-    try { renderWorkflowProfiles(await api('/api/workflow/profiles')); } catch { /* keep original error */ }
+    try {
+      renderWorkflowProfiles(
+        await api(`/api/workflow/profiles?media=${next}`), next,
+      );
+    } catch { /* keep original error */ }
   } finally {
     workflowSettingsSaving = false;
-    $('#live-workflow-source').disabled = false;
-    const live = $('#live-workflow-source').checked;
-    const hasProfiles = state.workflowProfiles?.profiles.some((profile) => profile.valid);
-    $$('#workflow-profile-selectors select').forEach((select) => {
-      select.disabled = live || !hasProfiles;
-    });
+    syncProfileControls(next);
   }
 }
 
@@ -3175,25 +3503,34 @@ $('#live-workflow-source').addEventListener('change', (event) => {
   $('#workflow-profile-selectors').classList.toggle('disabled', live);
   $('#live-workflow-help').classList.toggle('hidden', !live);
   $$('#workflow-profile-selectors select').forEach((select) => { select.disabled = live; });
-  saveWorkflowProfileSelection();
+  saveWorkflowProfileSelection('image');
 });
 
-$$('#workflow-profile-selectors select').forEach((select) => {
+$('#live-video-workflow-source').addEventListener('change', (event) => {
+  const live = event.currentTarget.checked;
+  $('#video-profile-selector').classList.toggle('disabled', live);
+  $('#live-video-workflow-help').classList.toggle('hidden', !live);
+  saveWorkflowProfileSelection('video');
+});
+
+$$('#workflow-profile-selectors select, #video-profile-selector select').forEach((select) => {
   select.addEventListener('change', saveWorkflowProfileSelection);
 });
 
 async function captureWorkflow() {
   const button = $('#capture-confirm');
   setBusy(button, true, 'Capturing…');
+  const media = state.profileMedia;
   try {
     const result = await api('/api/workflow/capture', {
       method: 'POST',
       body: JSON.stringify({
         name: $('#capture-profile-name').value,
         replace: $('#capture-force').checked,
+        media,
       }),
     });
-    renderWorkflowProfiles(await api('/api/workflow/profiles'));
+    await loadWorkflowProfileMedia(media);
     $('#capture-force').checked = false;
     toast('Workflow profile captured', `${result.profile.file} is ready to select.`, 'success');
     refreshStatus();
@@ -3423,10 +3760,28 @@ $('#copy-prompt').addEventListener('click', async () => {
 $('#capture-button').addEventListener('click', openWorkflowProfiles);
 $$('.capture-close').forEach((button) => button.addEventListener('click', () => $('#capture-dialog').close()));
 $('#capture-confirm').addEventListener('click', captureWorkflow);
+$$('.profile-media-tabs [data-profile-media]').forEach((button) => {
+  button.addEventListener('click', () => setProfileMedia(button.dataset.profileMedia));
+});
 $('#workflow-profile-list').addEventListener('click', (event) => {
   const button = event.target.closest('[data-profile-action]');
   if (button) manageWorkflowProfile(button);
 });
+$('#video-workflow-profile-list').addEventListener('click', (event) => {
+  const button = event.target.closest('[data-profile-action]');
+  if (button) manageWorkflowProfile(button);
+});
+$('#image-create-video').addEventListener('click', openVideoDialog);
+$$('.video-dialog-close').forEach((button) => button.addEventListener('click', () => videoDialog.close()));
+videoDialog.addEventListener('close', () => { state.videoSource = null; });
+videoDialog.addEventListener('cancel', () => { state.videoSource = null; });
+$('#video-prompt').addEventListener('input', (event) => {
+  localStorage.setItem('valhalla-video-prompt', event.currentTarget.value);
+});
+$('#video-duration').addEventListener('input', (event) => {
+  localStorage.setItem('valhalla-video-duration', event.currentTarget.value);
+});
+$('#video-submit').addEventListener('click', submitVideo);
 const mobileSystemToggle = $('#mobile-system-toggle');
 const systemCard = $('#system-card');
 

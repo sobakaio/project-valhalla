@@ -28,7 +28,8 @@
       <section class="system-card" id="system-card" aria-label="System status">
         <div class="system-title"><span>System</span><button class="icon-button" id="refresh-status" title="Refresh status" aria-label="Refresh status">↻</button></div>
         <div class="status-row"><span><i class="status-dot" id="comfy-dot"></i>ComfyUI</span><strong id="comfy-status">Checking</strong></div>
-        <div class="status-row workflow-status-row"><span><i class="status-dot" id="workflow-dot"></i>Workflow</span><strong id="workflow-status">Checking</strong></div>
+        <div class="status-row workflow-status-row"><span><i class="status-dot" id="workflow-dot"></i>Image workflow</span><strong id="workflow-status">Checking</strong></div>
+        <div class="status-row workflow-status-row"><span><i class="status-dot" id="video-workflow-dot"></i>Video workflow</span><strong id="video-workflow-status">Checking</strong></div>
         <div class="status-row"><span>Catalog</span><strong id="catalog-status">—</strong></div>
         <details class="system-settings" id="system-settings">
           <summary><span>Options</span><i aria-hidden="true">⌄</i></summary>
@@ -77,7 +78,7 @@
           </div>
         </details>
       </section>
-      <div class="sidebar-footer"><span>Local workspace</span><span class="version">v1.5.0</span></div>
+      <div class="sidebar-footer"><span>Local workspace</span><span class="version">v1.5.1</span></div>
     </aside>
 
     <main class="main-area">
@@ -86,7 +87,7 @@
           <p class="eyebrow" id="view-eyebrow">Creative workspace</p>
           <h1 id="view-title">Photo Studio</h1>
         </div>
-        <div class="gallery-view-center hidden" id="outputs-topbar-center"><div class="gallery-view-toggle" id="gallery-view-toggle" role="group" aria-label="Gallery view"><button type="button" data-gallery-view="photoshoots">Photoshoots</button><button type="button" data-gallery-view="flat">All images</button></div><p id="outputs-summary">No generated images.</p></div>
+        <div class="gallery-view-center hidden" id="outputs-topbar-center"><div class="gallery-view-toggle" id="gallery-view-toggle" role="group" aria-label="Gallery view"><button type="button" data-gallery-view="photoshoots">Photoshoots</button><button type="button" data-gallery-view="videos">Motion</button><button type="button" data-gallery-view="flat">All proofs</button></div><p id="outputs-summary">No generated media.</p></div>
         <div class="topbar-actions" id="studio-topbar-actions">
           <details class="studio-files-menu" id="studio-files-menu">
             <summary class="button ghost" aria-label="Studio files" title="Studio files">Studio files <span>⌄</span></summary>
@@ -262,7 +263,7 @@
 
       <section class="view" id="outputs-view">
         <div class="output-grid" id="output-grid"></div>
-        <div class="empty-state compact" id="outputs-empty"><div class="output-placeholder">▦</div><h3>No proofs yet</h3><p>Generated images will appear here as soon as each render completes.</p></div>
+        <div class="empty-state compact" id="outputs-empty"><div class="output-placeholder">▦</div><h3>No proofs yet</h3><p>Generated images and videos will appear here as soon as each render completes.</p></div>
       </section>
 
       <section class="view" id="logger-view">
@@ -341,17 +342,29 @@
         </div>
       </div>
       <div class="image-viewer-actions">
-        <button class="button viewer-delete" id="image-viewer-delete">Delete</button>
+        <button class="button viewer-video" id="image-create-video" type="button">Create video</button>
         <a class="button viewer-download" id="image-viewer-download" href="#" download>Download</a>
+        <button class="button viewer-delete" id="image-viewer-delete">Delete</button>
         <button class="icon-button image-viewer-close" aria-label="Close image preview">×</button>
       </div>
       </div>
       <div class="image-stage" aria-label="Image preview. Drag to pan when zoomed.">
         <button class="viewer-nav previous" id="image-previous" aria-label="Previous image">‹</button>
         <img id="image-viewer-image" src="" alt="Maximized generated output" draggable="false">
+        <video id="image-viewer-video" class="hidden" controls playsinline autoplay></video>
         <button class="viewer-nav next" id="image-next" aria-label="Next image">›</button>
       </div>
     </div>
+  </dialog>
+
+  <dialog id="video-dialog" class="small-dialog">
+    <div class="dialog-header"><div><p class="eyebrow">LTX 2.5</p><h2>Create video</h2></div><button class="icon-button video-dialog-close" aria-label="Close">×</button></div>
+    <div class="dialog-body">
+      <div class="video-source"><span>Source image</span><strong id="video-source-label">—</strong></div>
+      <label class="field"><span>Video prompt</span><textarea id="video-prompt" rows="7" maxlength="6000" placeholder="Describe the motion, camera movement, and changes in the scene…"></textarea></label>
+      <label class="field"><span>Duration (seconds)</span><input id="video-duration" type="number" min="1" max="60" step="1" value="5"></label>
+    </div>
+    <div class="dialog-footer"><button class="button ghost video-dialog-close">Cancel</button><button class="button primary" id="video-submit">Queue video</button></div>
   </dialog>
 
   <dialog id="prompt-dialog">
@@ -385,14 +398,23 @@
     <div class="dialog-header"><div><p class="eyebrow">ComfyUI</p><h2>Rendering profiles</h2></div><button class="icon-button capture-close" aria-label="Close">×</button></div>
     <div class="dialog-body">
       <section class="profile-selection">
-        <p>Choose captured profiles or use the latest workflow run directly in ComfyUI.</p>
-        <label class="switch-row"><span><strong>Live ComfyUI workflow</strong><small>Use the latest successful external ComfyUI job without saving it to disk</small></span><input type="checkbox" id="live-workflow-source"><i></i></label>
-        <div id="workflow-profile-selectors">
-          <label class="field"><span>Production rendering</span><select id="production-profile"></select></label>
-          <label class="field"><span>Preview rendering</span><select id="preview-profile"></select></label>
+        <p>Choose separate Image and Video workflows. Live mode selects the latest compatible workflow for that media type.</p>
+        <div class="profile-media-tabs" role="tablist"><button type="button" class="active" data-profile-media="image">Image</button><button type="button" data-profile-media="video">Video</button></div>
+        <div id="image-profile-settings">
+          <label class="switch-row"><span><strong>Live Image workflow</strong><small>Use the latest successful external image workflow</small></span><input type="checkbox" id="live-workflow-source"><i></i></label>
+          <div id="workflow-profile-selectors">
+            <label class="field"><span>Production rendering</span><select id="production-profile"></select></label>
+            <label class="field"><span>Preview rendering</span><select id="preview-profile"></select></label>
+          </div>
+          <p class="field-help hidden" id="live-workflow-help">Preview size and node bypass limits still apply.</p>
+          <div class="workflow-profile-list" id="workflow-profile-list"></div>
         </div>
-        <p class="field-help hidden" id="live-workflow-help">Valhalla previews are excluded from live selection. Preview size and node bypass limits still apply.</p>
-        <div class="workflow-profile-list" id="workflow-profile-list"></div>
+        <div id="video-profile-settings" class="hidden">
+          <label class="switch-row"><span><strong>Live Video workflow</strong><small>Use the latest successful external video workflow</small></span><input type="checkbox" id="live-video-workflow-source"><i></i></label>
+          <label class="field" id="video-profile-selector"><span>Production rendering</span><select id="video-production-profile"></select></label>
+          <p class="field-help hidden" id="live-video-workflow-help">Only a captured Video profile is used when Live mode is off.</p>
+          <div class="workflow-profile-list" id="video-workflow-profile-list"></div>
+        </div>
       </section>
       <section class="profile-capture">
         <p class="setup-section-title">Capture latest successful workflow</p>

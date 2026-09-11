@@ -3079,9 +3079,9 @@ class FrontendContractTests(unittest.TestCase):
         html = (Path(app.__file__).parent / "client" / "client.html").read_text(
             encoding="utf-8"
         )
-        self.assertEqual(app.APP_VERSION, "1.5.0")
-        self.assertEqual(app.ValhallaHandler.server_version, "Valhalla/1.5.0")
-        self.assertIn('<span class="version">v1.5.0</span>', html)
+        self.assertEqual(app.APP_VERSION, "1.5.1")
+        self.assertEqual(app.ValhallaHandler.server_version, "Valhalla/1.5.1")
+        self.assertIn('<span class="version">v1.5.1</span>', html)
 
     def test_primary_workspace_names_and_headers_use_photography_terms(self):
         root = Path(app.__file__).parent
@@ -3130,6 +3130,14 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("alreadyActive ? 'Added to render queue'", js)
         self.assertIn("queuedJob.queue_position", js)
         self.assertIn("session.active_job.id !== job.id", js)
+
+    def test_active_render_progress_dock_is_visible_inside_open_lightbox(self):
+        js = (Path(app.__file__).parent / "client" / "client.js").read_text(encoding="utf-8")
+        self.assertIn("function syncJobDockLayer()", js)
+        self.assertIn("shell.append(jobDock)", js)
+        self.assertIn("jobDock.classList.add('in-lightbox')", js)
+        self.assertIn("document.body.append(jobDock)", js)
+        self.assertIn("syncJobDockLayer();", js)
 
     def test_system_status_refreshes_while_the_browser_is_active(self):
         js = (Path(app.__file__).parent / "client" / "client.js").read_text(encoding="utf-8")
@@ -3412,6 +3420,13 @@ class FrontendContractTests(unittest.TestCase):
 
         self.assertIn('data-gallery-view="flat"', html)
         self.assertIn('data-gallery-view="photoshoots"', html)
+        self.assertIn('>Motion</button>', html)
+        self.assertIn('>All proofs</button>', html)
+        self.assertNotIn('>Videos</button>', html)
+        self.assertNotIn('>All media</button>', html)
+        self.assertNotIn('>All images</button>', html)
+        self.assertLess(html.index('data-gallery-view="photoshoots"'), html.index('data-gallery-view="videos"'))
+        self.assertLess(html.index('data-gallery-view="videos"'), html.index('data-gallery-view="flat"'))
         self.assertIn("const OUTPUT_FILENAME", js)
         self.assertIn("(photoshoot|random)", js)
         self.assertIn("(production|preview)", js)
@@ -3426,6 +3441,8 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("function formatOutputRun(run)", js)
         self.assertIn("Render ID: ${group.identity.run}", js)
         self.assertIn("function photoshootGroups()", js)
+        self.assertIn("function galleryMediaMatches(item)", js)
+        self.assertIn("if (state.galleryView === 'flat') return true;", js)
         self.assertIn("function outputShotSequence(item)", js)
         self.assertIn("outputShotSequence(left.item) - outputShotSequence(right.item)", js)
         self.assertIn("function sortOutputsByFilename()", js)

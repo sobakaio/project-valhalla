@@ -13,6 +13,7 @@ import random
 import re
 import secrets
 import sys
+import subprocess
 import time
 import uuid
 from concurrent.futures import Future
@@ -30,7 +31,15 @@ class AppError(RuntimeError):
     """An expected, user-facing application error."""
 
 
-APP_VERSION = "1.5.0"
+APP_VERSION = "1.5.1"
+MEDIA_TYPES = {"image", "video"}
+
+
+def validate_media_type(media_type: str) -> str:
+    media_type = str(media_type)
+    if media_type not in MEDIA_TYPES:
+        raise AppError("Media type must be image or video")
+    return media_type
 
 
 def weighted_choice(rng: random.Random, items: list[dict[str, Any]]) -> dict[str, Any]:
@@ -245,6 +254,22 @@ def load_config() -> tuple[dict[str, Any], Path]:
             raise AppError(f"config.comfy.profiles must contain '{mode}'")
         if profiles.get(mode) is not None and not isinstance(profiles.get(mode), str):
             raise AppError(f"config.comfy.profiles.{mode} must be a string or null")
+    media_profiles = comfy.get("media_profiles")
+    if media_profiles is not None:
+        if not isinstance(media_profiles, dict):
+            raise AppError("config.comfy.media_profiles must be an object")
+        for media_type in ("image", "video"):
+            settings = media_profiles.get(media_type)
+            if not isinstance(settings, dict):
+                raise AppError(f"config.comfy.media_profiles.{media_type} must be an object")
+            if settings.get("source", "profiles") not in {"profiles", "live"}:
+                raise AppError(f"config.comfy.media_profiles.{media_type}.source must be profiles or live")
+            required_modes = ("production", "preview") if media_type == "image" else ("production",)
+            for mode in required_modes:
+                if mode not in settings:
+                    raise AppError(f"config.comfy.media_profiles.{media_type} must contain '{mode}'")
+                if settings.get(mode) is not None and not isinstance(settings.get(mode), str):
+                    raise AppError(f"config.comfy.media_profiles.{media_type}.{mode} must be a string or null")
     return config, path
 
 
@@ -1076,6 +1101,116 @@ def detect_fast_mode_mapping(workflow: dict[str, Any]) -> dict[str, Any]:
             "width": width,
             "height": height,
         },
+    }
+
+
+def workflow_is_video(workflow: Any) -> bool:
+    if not isinstance(workflow, dict):
+        return False
+    return any(
+        any(marker in str(node.get("class_type", "")).casefold() for marker in ("savevideo", "videocombine", "createvideo"))
+        for node in workflow.values() if isinstance(node, dict)
+    )
+
+
+def detect_video_node_mapping(workflow: dict[str, Any]) -> dict[str, Any]:
+    """Detect the small set of controls needed by an image-to-video workflow."""
+    if not isinstance(workflow, dict) or not workflow:
+        raise AppError("Video workflow must be a non-empty JSON object")
+    image_targets = [
+        {"node": node_id, "input": "image"}
+        for node_id, node in workflow.items()
+        if isinstance(node, dict)
+        and str(node.get("class_type", "")).casefold() == "loadimage"
+        and isinstance(node.get("inputs"), dict)
+        and isinstance(node["inputs"].get("image"), str)
+    ]
+    if not image_targets:
+        raise AppError("Video workflow must expose a LoadImage image input")
+    prompt_targets = []
+    for node_id, node in workflow.items():
+        if not isinstance(node, dict):
+            continue
+        inputs = node.get("inputs") if isinstance(node.get("inputs"), dict) else {}
+        class_name = str(node.get("class_type", "")).casefold()
+        if isinstance(inputs.get("prompt"), str):
+            prompt_targets.append({"node": node_id, "input": "prompt"})
+        elif "primitive" in class_name and isinstance(inputs.get("value"), str):
+            prompt_targets.append({"node": node_id, "input": "value"})
+    if not prompt_targets:
+        raise AppError("Video workflow must expose a text prompt input")
+    # Prefer the explicit prompt primitive over optional prompt-enhancement nodes.
+    prompt_target = next(
+        (target for target in prompt_targets if "primitive" in str(workflow[target["node"]].get("class_type", "")).casefold()),
+        prompt_targets[0],
+    )
+    seed_targets = []
+    for node_id, node in workflow.items():
+        if not isinstance(node, dict):
+            continue
+        inputs = node.get("inputs") if isinstance(node.get("inputs"), dict) else {}
+        class_name = str(node.get("class_type", "")).casefold()
+        if (
+            "randomnoise" in class_name
+            and isinstance(inputs.get("noise_seed"), int)
+            and not isinstance(inputs.get("noise_seed"), bool)
+        ):
+            seed_targets.append({"node": node_id, "input": "noise_seed"})
+        elif (
+            "sampler" in class_name
+            and isinstance(inputs.get("seed"), int)
+            and not isinstance(inputs.get("seed"), bool)
+        ):
+            seed_targets.append({"node": node_id, "input": "seed"})
+    if not seed_targets:
+        raise AppError("Video workflow must expose at least one scalar noise seed")
+    output_nodes = [
+        node_id for node_id, node in workflow.items()
+        if isinstance(node, dict)
+        and any(marker in str(node.get("class_type", "")).casefold() for marker in ("savevideo", "videocombine", "createvideo"))
+    ]
+    if not output_nodes:
+        raise AppError("Video workflow must expose a SaveVideo or VHS Video Combine output")
+    duration = None
+    # LTX 2.5's captured graph derives frame count from duration * FPS + 1.
+    for node_id, node in workflow.items():
+        if not isinstance(node, dict):
+            continue
+        if "emptyltxvlatentvideo" not in str(node.get("class_type", "")).casefold():
+            continue
+        node_inputs = node.get("inputs") if isinstance(node.get("inputs"), dict) else {}
+        length_link = node_inputs.get("length")
+        expression = workflow.get(str(length_link[0])) if isinstance(length_link, list) and len(length_link) == 2 else None
+        if not isinstance(expression, dict) or "mathexpression" not in str(expression.get("class_type", "")).casefold():
+            continue
+        expression_inputs = expression.get("inputs") if isinstance(expression.get("inputs"), dict) else {}
+        source = expression_inputs.get("values.a")
+        candidate = workflow.get(str(source[0])) if isinstance(source, list) and len(source) == 2 else None
+        candidate_inputs = candidate.get("inputs") if isinstance(candidate, dict) and isinstance(candidate.get("inputs"), dict) else {}
+        value = candidate_inputs.get("value")
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            duration = {"node": str(source[0]), "input": "value"}
+            break
+    if duration is None:
+        for node_id, node in workflow.items():
+            if not isinstance(node, dict):
+                continue
+            inputs = node.get("inputs") if isinstance(node.get("inputs"), dict) else {}
+            for key in ("duration", "seconds"):
+                if isinstance(inputs.get(key), (int, float)) and not isinstance(inputs.get(key), bool):
+                    duration = {"node": node_id, "input": key}
+                    break
+            if duration:
+                break
+    if duration is None:
+        raise AppError("Video workflow must expose a duration input")
+    return {
+        "media_type": "video",
+        "image_targets": image_targets,
+        "prompt": prompt_target,
+        "inference_seed": seed_targets,
+        "duration": duration,
+        "output_nodes": output_nodes,
     }
 
 
@@ -3569,7 +3704,10 @@ def comfy_history_from_valhalla(item: dict[str, Any]) -> bool:
     )
 
 
-def latest_comfy_workflow(db: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+def latest_comfy_workflow(
+    db: dict[str, Any], media_type: str = "image"
+) -> tuple[str, dict[str, Any]]:
+    media_type = validate_media_type(media_type)
     session, url, timeout = comfy_session(db)
     try:
         response = session.get(f"{url}/history", timeout=timeout)
@@ -3584,6 +3722,11 @@ def latest_comfy_workflow(db: dict[str, Any]) -> tuple[str, dict[str, Any]]:
             status.get("completed") and status.get("status_str") == "success"
             and item.get("outputs") and not comfy_history_from_valhalla(item)
         ):
+            workflow = item.get("prompt", [None, None, {}])[2]
+            if media_type == "video" and not workflow_is_video(workflow):
+                continue
+            if media_type == "image" and workflow_is_video(workflow):
+                continue
             timestamp = 0
             for message, payload in status.get("messages", []):
                 if message == "execution_success":
@@ -3601,9 +3744,39 @@ def latest_comfy_workflow(db: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     return prompt_id, prompt_record[2]
 
 
-def workflow_profile_directory(db: dict[str, Any], db_path: Path) -> Path:
+def workflow_profile_directory(
+    db: dict[str, Any], db_path: Path, media_type: str = "image"
+) -> Path:
+    validate_media_type(media_type)
     config, path = load_config()
-    return resolve_path(path.parent, config["comfy"]["workflows_dir"])
+    root = resolve_path(path.parent, config["comfy"]["workflows_dir"])
+    migrate_legacy_video_workflows(root)
+    return root
+
+
+def migrate_legacy_video_workflows(root: Path) -> None:
+    """Move profiles from the old workflows/video directory into workflows."""
+    legacy = root / "video"
+    if not legacy.is_dir():
+        return
+    root.mkdir(parents=True, exist_ok=True)
+    for source in sorted(legacy.iterdir()):
+        if not source.is_file():
+            continue
+        target = root / source.name
+        if target.exists():
+            if target.is_file() and target.read_bytes() == source.read_bytes():
+                source.unlink()
+                continue
+            raise AppError(
+                f"Cannot migrate video workflow {source.name}: "
+                f"a different file already exists in {root}"
+            )
+        source.replace(target)
+    try:
+        legacy.rmdir()
+    except OSError:
+        pass
 
 
 def workflow_profile_slug(name: str) -> str:
@@ -3624,43 +3797,97 @@ def workflow_model_name(workflow: dict[str, Any]) -> str:
     return "ComfyUI model"
 
 
-def load_workflow_profile_registry(db: dict[str, Any], db_path: Path) -> dict[str, Any]:
-    config, _ = load_config()
-    return dict(config["comfy"]["profiles"])
+def media_workflow_settings(config: dict[str, Any], media_type: str = "image") -> dict[str, Any]:
+    media_type = validate_media_type(media_type)
+    configured = config["comfy"].get("media_profiles", {}).get(media_type)
+    if isinstance(configured, dict):
+        return dict(configured)
+    # Existing installations keep their image settings at the old locations.
+    if media_type == "image":
+        return {
+            "source": config["comfy"].get("workflow_source", "profiles"),
+            **dict(config["comfy"]["profiles"]),
+        }
+    return {"source": "profiles", "production": None}
 
 
-def workflow_source() -> str:
+def load_workflow_profile_registry(
+    db: dict[str, Any], db_path: Path, media_type: str = "image"
+) -> dict[str, Any]:
     config, _ = load_config()
-    return str(config["comfy"].get("workflow_source", "profiles"))
+    settings = media_workflow_settings(config, media_type)
+    return {key: settings.get(key) for key in ("production", "preview") if key in settings}
+
+
+def workflow_source(media_type: str = "image") -> str:
+    config, _ = load_config()
+    return str(media_workflow_settings(config, media_type).get("source", "profiles"))
 
 
 def save_workflow_profile_registry(
-    db: dict[str, Any], db_path: Path, registry: dict[str, Any], source: str | None = None
+    db: dict[str, Any], db_path: Path, registry: dict[str, Any], source: str | None = None,
+    media_type: str = "image",
 ) -> None:
+    media_type = validate_media_type(media_type)
     config, _ = load_config()
-    config["comfy"]["profiles"] = {
-        "production": registry.get("production"),
-        "preview": registry.get("preview"),
-    }
-    if source is not None:
-        if source not in {"profiles", "live"}:
-            raise AppError("Workflow source must be profiles or live")
-        config["comfy"]["workflow_source"] = source
+    legacy_config = "media_profiles" not in config["comfy"]
+    if legacy_config:
+        # Migrate legacy image settings on the first write while also creating
+        # the independent video registry.  Keep the old aliases for clients
+        # and exports that still read them.
+        config["comfy"]["media_profiles"] = {
+            "image": {
+                "source": config["comfy"].get("workflow_source", "profiles"),
+                "production": config["comfy"]["profiles"].get("production"),
+                "preview": config["comfy"]["profiles"].get("preview"),
+            },
+            "video": {"source": "profiles", "production": None},
+        }
+    if media_type == "image" and legacy_config:
+        config["comfy"]["profiles"] = {
+            "production": registry.get("production"),
+            "preview": registry.get("preview"),
+        }
+        config["comfy"]["media_profiles"]["image"]["production"] = registry.get("production")
+        config["comfy"]["media_profiles"]["image"]["preview"] = registry.get("preview")
+        if source is not None:
+            if source not in {"profiles", "live"}:
+                raise AppError("Workflow source must be profiles or live")
+            config["comfy"]["workflow_source"] = source
+            config["comfy"]["media_profiles"]["image"]["source"] = source
+    else:
+        media = dict(config["comfy"].setdefault("media_profiles", {}).get(media_type, {}))
+        media["production"] = registry.get("production")
+        if media_type == "image":
+            media["preview"] = registry.get("preview")
+        if source is not None:
+            if source not in {"profiles", "live"}:
+                raise AppError("Workflow source must be profiles or live")
+            media["source"] = source
+        config["comfy"]["media_profiles"][media_type] = media
     save_config(config)
 
 
-def list_workflow_profiles(db: dict[str, Any], db_path: Path) -> dict[str, Any]:
-    directory = workflow_profile_directory(db, db_path)
-    registry = load_workflow_profile_registry(db, db_path)
+def list_workflow_profiles(
+    db: dict[str, Any], db_path: Path, media_type: str = "image"
+) -> dict[str, Any]:
+    media_type = validate_media_type(media_type)
+    directory = workflow_profile_directory(db, db_path, media_type)
+    registry = load_workflow_profile_registry(db, db_path, media_type)
     profiles = []
     if directory.is_dir():
         for path in sorted(directory.glob("*.workflow.json")):
             profile_id = path.name.removesuffix(".workflow.json")
             try:
                 workflow = json.loads(path.read_text(encoding="utf-8"))
-                mapping = detect_node_mapping(workflow, include_fast=True)
+                if workflow_is_video(workflow) != (media_type == "video"):
+                    continue
+                mapping = (
+                    detect_video_node_mapping(workflow)
+                    if media_type == "video" else detect_node_mapping(workflow, include_fast=True)
+                )
                 valid, error = True, None
-                negative_conditioning = mapping.get("negative_prompt") is not None
+                negative_conditioning = mapping.get("negative_prompt") is not None if media_type == "image" else True
             except Exception as exc:
                 valid, error = False, str(exc)
                 negative_conditioning = False
@@ -3673,75 +3900,114 @@ def list_workflow_profiles(db: dict[str, Any], db_path: Path) -> dict[str, Any]:
                 "negative_conditioning": negative_conditioning,
             })
     ids = {item["id"] for item in profiles if item["valid"]}
-    for mode in ("production", "preview"):
+    for mode in (("production", "preview") if media_type == "image" else ("production",)):
         if registry.get(mode) not in ids:
             registry[mode] = None
     return {
         "profiles": profiles,
         "production": registry.get("production"),
         "preview": registry.get("preview"),
-        "source": workflow_source(),
+        "source": workflow_source(media_type),
+        "media_type": media_type,
     }
 
 
-def workflow_capture_candidate(db: dict[str, Any]) -> dict[str, Any]:
-    prompt_id, workflow = latest_comfy_workflow(db)
-    detect_node_mapping(workflow, include_fast=True)
+def workflow_capture_candidate(
+    db: dict[str, Any], media_type: str = "image"
+) -> dict[str, Any]:
+    media_type = validate_media_type(media_type)
+    prompt_id, workflow = latest_comfy_workflow(db, media_type)
+    if media_type == "video":
+        detect_video_node_mapping(workflow)
+    else:
+        detect_node_mapping(workflow, include_fast=True)
     name = workflow_model_name(workflow)
     return {"prompt_id": prompt_id, "suggested_name": name, "suggested_id": workflow_profile_slug(name)}
 
 
-def capture_workflow_profile(db: dict[str, Any], db_path: Path, name: str, replace: bool) -> dict[str, Any]:
-    prompt_id, workflow = latest_comfy_workflow(db)
-    mapping = detect_node_mapping(workflow, include_fast=True)
+def capture_workflow_profile(
+    db: dict[str, Any], db_path: Path, name: str, replace: bool,
+    media_type: str = "image",
+) -> dict[str, Any]:
+    media_type = validate_media_type(media_type)
+    prompt_id, workflow = latest_comfy_workflow(db, media_type)
+    mapping = (
+        detect_video_node_mapping(workflow)
+        if media_type == "video" else detect_node_mapping(workflow, include_fast=True)
+    )
     profile_id = workflow_profile_slug(name)
-    directory = workflow_profile_directory(db, db_path)
+    directory = workflow_profile_directory(db, db_path, media_type)
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / f"{profile_id}.workflow.json"
+    if path.exists() and replace:
+        try:
+            existing_workflow = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            existing_workflow = None
+        if (
+            isinstance(existing_workflow, dict)
+            and workflow_is_video(existing_workflow) != (media_type == "video")
+        ):
+            existing_media = "Video" if workflow_is_video(existing_workflow) else "Image"
+            raise AppError(
+                f"Profile filename '{path.name}' is already used by an {existing_media} workflow. "
+                "Choose a different name"
+            )
     if path.exists() and not replace:
         raise AppError(f"Workflow profile '{name}' already exists. Confirm replacement to overwrite it")
     temporary = directory / f".{profile_id}.{uuid.uuid4().hex}.tmp"
     temporary.write_text(json.dumps(workflow, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     temporary.replace(path)
-    registry = load_workflow_profile_registry(db, db_path)
+    registry = load_workflow_profile_registry(db, db_path, media_type)
     if not registry.get("production"):
         registry["production"] = profile_id
-    if not registry.get("preview"):
+    if media_type == "image" and not registry.get("preview"):
         registry["preview"] = profile_id
-    save_workflow_profile_registry(db, db_path, registry)
+    save_workflow_profile_registry(db, db_path, registry, media_type=media_type)
     return {
         "id": profile_id,
         "name": name.strip(),
         "file": path.name,
         "prompt_id": prompt_id,
         "seed_targets": len(mapping["inference_seed"]),
-        "negative_conditioning": mapping["negative_prompt"] is not None,
+        "negative_conditioning": (
+            mapping.get("negative_prompt") is not None
+            if media_type == "image" else True
+        ),
+        "media_type": media_type,
     }
 
 
 def select_workflow_profiles(
-    db: dict[str, Any], db_path: Path, production: str, preview: str,
-    source: str = "profiles",
+    db: dict[str, Any], db_path: Path, production: str, preview: str = "",
+    source: str = "profiles", media_type: str = "image",
 ) -> dict[str, Any]:
-    available = list_workflow_profiles(db, db_path)
+    media_type = validate_media_type(media_type)
+    available = list_workflow_profiles(db, db_path, media_type)
     valid = {item["id"] for item in available["profiles"] if item["valid"]}
     if source not in {"profiles", "live"}:
         raise AppError("Workflow source must be profiles or live")
-    if source == "profiles" and (production not in valid or preview not in valid):
-        raise AppError("Production and Preview must each select a valid workflow profile")
+    if source == "profiles" and production not in valid:
+        raise AppError("Production must select a valid workflow profile")
+    if media_type == "image" and source == "profiles" and preview not in valid:
+        raise AppError("Preview must select a valid workflow profile")
     registry = (
-        load_workflow_profile_registry(db, db_path)
+        load_workflow_profile_registry(db, db_path, media_type)
         if source == "live"
-        else {"production": production, "preview": preview}
+        else {"production": production, **({"preview": preview} if media_type == "image" else {})}
     )
-    save_workflow_profile_registry(db, db_path, registry, source)
-    return list_workflow_profiles(db, db_path)
+    save_workflow_profile_registry(db, db_path, registry, source, media_type)
+    return list_workflow_profiles(db, db_path, media_type)
 
 
-def rename_workflow_profile(db: dict[str, Any], db_path: Path, profile_id: str, name: str) -> dict[str, Any]:
+def rename_workflow_profile(
+    db: dict[str, Any], db_path: Path, profile_id: str, name: str,
+    media_type: str = "image",
+) -> dict[str, Any]:
+    media_type = validate_media_type(media_type)
     old_id = workflow_profile_slug(profile_id)
     new_id = workflow_profile_slug(name)
-    directory = workflow_profile_directory(db, db_path)
+    directory = workflow_profile_directory(db, db_path, media_type)
     source = directory / f"{old_id}.workflow.json"
     target = directory / f"{new_id}.workflow.json"
     if not source.is_file():
@@ -3749,24 +4015,35 @@ def rename_workflow_profile(db: dict[str, Any], db_path: Path, profile_id: str, 
     if target != source and target.exists():
         raise AppError(f"Workflow profile filename already exists: {target.name}")
     source.replace(target)
-    registry = load_workflow_profile_registry(db, db_path)
-    for mode in ("production", "preview"):
+    registry = load_workflow_profile_registry(db, db_path, media_type)
+    modes = ("production", "preview") if media_type == "image" else ("production",)
+    for mode in modes:
         if registry.get(mode) == old_id:
             registry[mode] = new_id
-    save_workflow_profile_registry(db, db_path, registry)
-    return list_workflow_profiles(db, db_path)
+    save_workflow_profile_registry(db, db_path, registry, media_type=media_type)
+    return list_workflow_profiles(db, db_path, media_type)
 
 
-def delete_workflow_profile(db: dict[str, Any], db_path: Path, profile_id: str) -> dict[str, Any]:
+def delete_workflow_profile(
+    db: dict[str, Any], db_path: Path, profile_id: str, media_type: str = "image"
+) -> dict[str, Any]:
+    media_type = validate_media_type(media_type)
     profile_id = workflow_profile_slug(profile_id)
-    registry = load_workflow_profile_registry(db, db_path)
-    if profile_id in {registry.get("production"), registry.get("preview")}:
-        raise AppError("Select another Production and Preview profile before deleting this one")
-    path = workflow_profile_directory(db, db_path) / f"{profile_id}.workflow.json"
+    registry = load_workflow_profile_registry(db, db_path, media_type)
+    protected = {registry.get("production")}
+    if media_type == "image":
+        protected.add(registry.get("preview"))
+    if profile_id in protected:
+        raise AppError(
+            "Select another Production and Preview profile before deleting this one"
+            if media_type == "image" else
+            "Select another Video Production profile before deleting this one"
+        )
+    path = workflow_profile_directory(db, db_path, media_type) / f"{profile_id}.workflow.json"
     if not path.is_file():
         raise AppError(f"Workflow profile not found: {profile_id}")
     path.unlink()
-    return list_workflow_profiles(db, db_path)
+    return list_workflow_profiles(db, db_path, media_type)
 
 
 def patch_workflow(workflow: dict[str, Any], mapping: dict[str, Any], positive: str, negative: str, seed: int) -> None:
@@ -3954,15 +4231,19 @@ def valhalla_prompt_request(workflow: dict[str, Any]) -> dict[str, Any]:
 
 
 def load_workflow_runtime(
-    db: dict[str, Any], db_path: Path, fast: bool, profile_id: str | None = None
+    db: dict[str, Any], db_path: Path, fast: bool, profile_id: str | None = None,
+    media_type: str = "image",
 ) -> tuple[dict[str, Any], dict[str, Any]]:
+    media_type = validate_media_type(media_type)
+    if media_type == "video" and fast:
+        raise AppError("Video workflows do not have a Preview tier")
     mode = "preview" if fast else "production"
-    registry = load_workflow_profile_registry(db, db_path)
+    registry = load_workflow_profile_registry(db, db_path, media_type)
     selected = profile_id or registry.get(mode)
     if not selected:
         raise AppError(f"No {mode} workflow profile is selected. Capture or select one in Studio files")
     selected = workflow_profile_slug(str(selected))
-    workflow_path = workflow_profile_directory(db, db_path) / f"{selected}.workflow.json"
+    workflow_path = workflow_profile_directory(db, db_path, media_type) / f"{selected}.workflow.json"
     try:
         workflow = json.loads(workflow_path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
@@ -3971,15 +4252,25 @@ def load_workflow_runtime(
         raise AppError(f"Invalid workflow JSON in {workflow_path}: {exc}") from exc
     if not isinstance(workflow, dict) or not workflow:
         raise AppError(f"Workflow must be a non-empty JSON object: {workflow_path}")
-    return workflow, detect_node_mapping(workflow, include_fast=fast)
+    mapping = (
+        detect_video_node_mapping(workflow)
+        if media_type == "video" else detect_node_mapping(workflow, include_fast=fast)
+    )
+    return workflow, mapping
 
 
 def snapshot_live_workflow(
-    db: dict[str, Any], fast: bool
+    db: dict[str, Any], fast: bool, media_type: str = "image"
 ) -> tuple[str, str, dict[str, Any], dict[str, Any]]:
-    """Freeze the latest external ComfyUI workflow in memory for one queued task."""
-    prompt_id, workflow = latest_comfy_workflow(db)
-    mapping = detect_node_mapping(workflow, include_fast=fast)
+    """Freeze the latest compatible external ComfyUI workflow for one queued task."""
+    media_type = validate_media_type(media_type)
+    if media_type == "video" and fast:
+        raise AppError("Video workflows do not have a Preview tier")
+    prompt_id, workflow = latest_comfy_workflow(db, media_type)
+    mapping = (
+        detect_video_node_mapping(workflow)
+        if media_type == "video" else detect_node_mapping(workflow, include_fast=fast)
+    )
     model = workflow_model_name(workflow)
     label = f"Live ComfyUI · {model} · {prompt_id[:10]}"
     return label, prompt_id, copy.deepcopy(workflow), mapping
@@ -4083,6 +4374,135 @@ def generate_one(
             saved.append(destination)
     if not saved:
         raise AppError(f"ComfyUI completed prompt_id {prompt_id} but returned no images")
+    return prompt_id, saved
+
+
+def upload_comfy_image(
+    session: Any, url: str, timeout: float, source_path: Path
+) -> str:
+    try:
+        with source_path.open("rb") as handle:
+            response = session.post(
+                f"{url}/upload/image",
+                files={"image": (source_path.name, handle, mimetypes.guess_type(source_path.name)[0] or "application/octet-stream")},
+                data={"type": "input", "overwrite": "true"},
+                timeout=timeout,
+            )
+        response.raise_for_status()
+        payload = response.json()
+    except Exception as exc:
+        raise AppError(f"Could not upload source image to ComfyUI: {exc}") from exc
+    name = payload.get("name")
+    if not isinstance(name, str) or not name:
+        raise AppError(f"ComfyUI upload response has no image name: {payload}")
+    return name
+
+
+def patch_video_workflow(
+    workflow: dict[str, Any], mapping: dict[str, Any], image_name: str,
+    prompt: str, seed: int, duration: int,
+) -> None:
+    targets = list(mapping.get("image_targets", []))
+    try:
+        for target in targets:
+            workflow[target["node"]]["inputs"][target["input"]] = image_name
+        target = mapping["prompt"]
+        workflow[target["node"]]["inputs"][target["input"]] = prompt
+        for target in mapping["inference_seed"]:
+            workflow[target["node"]]["inputs"][target["input"]] = seed
+        target = mapping["duration"]
+        workflow[target["node"]]["inputs"][target["input"]] = duration
+    except (KeyError, TypeError) as exc:
+        raise AppError(f"Video workflow mapping is no longer valid: {exc}") from exc
+
+
+def generate_video_one(
+    db: dict[str, Any], source_path: Path, source_item: dict[str, Any],
+    prompt: str, seed: int, duration: int, workflow_template: dict[str, Any],
+    mapping: dict[str, Any], run_id: str,
+) -> tuple[str, list[Path]]:
+    workflow = copy.deepcopy(workflow_template)
+    session, url, timeout = comfy_session(db)
+    image_name = upload_comfy_image(session, url, timeout, source_path)
+    patch_video_workflow(workflow, mapping, image_name, prompt, seed, duration)
+    try:
+        response = session.post(
+            f"{url}/prompt", json=valhalla_prompt_request(workflow), timeout=timeout
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except Exception as exc:
+        raise AppError(f"Could not queue ComfyUI video workflow: {exc}") from exc
+    if payload.get("node_errors"):
+        raise AppError(f"ComfyUI rejected video workflow: {json.dumps(payload['node_errors'], ensure_ascii=False)}")
+    prompt_id = payload.get("prompt_id")
+    if not prompt_id:
+        raise AppError(f"ComfyUI response has no prompt_id: {payload}")
+    outputs = wait_for_outputs(session, url, prompt_id)
+    config, config_file = load_config()
+    output_dir = resolve_path(config_file.parent, config["storage"]["output_dir"])
+    output_dir.mkdir(parents=True, exist_ok=True)
+    source_name = re.sub(r"[^A-Za-z0-9._-]+", "-", source_path.stem).strip("-._")[:120] or "source"
+    saved: list[Path] = []
+    number = 0
+    for node_id, node_output in outputs.items():
+        if not isinstance(node_output, dict):
+            continue
+        video_outputs = [
+            video for output_key in ("videos", "gifs")
+            for video in (node_output.get(output_key) if isinstance(node_output.get(output_key), list) else [])
+            if isinstance(video, dict)
+        ]
+        image_outputs = node_output.get("images")
+        candidates = video_outputs + [
+            image for image in (image_outputs if isinstance(image_outputs, list) else [])
+            if isinstance(image, dict)
+            and Path(str(image.get("filename", ""))).suffix.lower() in VIDEO_SUFFIXES
+        ]
+        if mapping.get("output_nodes") and node_id not in mapping["output_nodes"]:
+            continue
+        for video in candidates:
+            number += 1
+            filename = str(video.get("filename", ""))
+            suffix = Path(filename).suffix.lower() if filename else ".mp4"
+            if suffix not in VIDEO_SUFFIXES:
+                suffix = ".mp4"
+            response = session.get(
+                f"{url}/view",
+                params={
+                    "filename": filename,
+                    "subfolder": video.get("subfolder", ""),
+                    "type": video.get("type", "output"),
+                },
+                timeout=timeout,
+            )
+            response.raise_for_status()
+            destination = output_dir / f"{run_id}_video_from_{source_name}_{seed}_video_{number:02d}{suffix}"
+            temporary = output_dir / f".{destination.name}.{uuid.uuid4().hex}.tmp"
+            temporary.write_bytes(response.content)
+            temporary.replace(destination)
+            source_key = source_item.get("source_key") or source_item.get("key")
+            if not isinstance(source_key, str) or not source_key:
+                source_key = f"{source_item.get('source', 'output')}:{source_item.get('relative_path', source_path.name)}"
+            try:
+                write_output_metadata(destination, {
+                    "media_type": "video",
+                    "source_key": source_key,
+                    "source_relative_path": source_item.get("relative_path", source_path.name),
+                    "source_image": source_item.get("source_image") or source_item.get("name") or source_path.name,
+                    "source_generation_mode": source_item.get("source_generation_mode") or source_item.get("generation_mode"),
+                    "source_render_tier": source_item.get("source_render_tier") or source_item.get("render_tier"),
+                    "source_group_index": source_item.get("source_group_index") or source_item.get("group_index"),
+                    "source_shot": source_item.get("source_shot") or source_item.get("shot"),
+                    "video_prompt": prompt,
+                    "video_duration": duration,
+                })
+            except Exception:
+                destination.unlink(missing_ok=True)
+                raise
+            saved.append(destination)
+    if not saved:
+        raise AppError(f"ComfyUI completed video prompt_id {prompt_id} but returned no video files")
     return prompt_id, saved
 
 
@@ -6988,6 +7408,88 @@ class WebState:
             threading.Thread(target=self._run_job_queue, daemon=True).start()
         return payload
 
+    def create_video_job(
+        self, source: str, relative_path: str, prompt: str, duration: int,
+        source_metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        db, db_path = load_database()
+        source = str(source)
+        if source not in {source_id for source_id, _ in proof_directories()}:
+            raise AppError("Unknown proof source")
+        prompt = str(prompt).strip()
+        if not prompt:
+            raise AppError("Video prompt cannot be empty")
+        if len(prompt) > 6000:
+            raise AppError("Video prompt is too long (maximum 6000 characters)")
+        if isinstance(duration, bool) or not isinstance(duration, int) or not 1 <= duration <= 60:
+            raise AppError("Video duration must be an integer from 1 to 60 seconds")
+        source_path = proof_image_path(str(relative_path), str(source))
+        if source_path.suffix.lower() not in IMAGE_SUFFIXES or not source_path.is_file():
+            raise AppError("Video source must be an existing generated image")
+        workflow_source_name = workflow_source("video")
+        live_workflow = live_mapping = None
+        source_prompt_id = None
+        if workflow_source_name == "live":
+            workflow_profile, source_prompt_id, live_workflow, live_mapping = snapshot_live_workflow(
+                db, False, "video"
+            )
+        else:
+            workflow_profile = load_workflow_profile_registry(db, db_path, "video").get("production")
+            if not workflow_profile:
+                raise AppError("No Video workflow profile is selected")
+        seed = secrets.randbelow(2**63)
+        job_id = uuid.uuid4().hex
+        source_record = {
+            "source": source,
+            "relative_path": str(relative_path),
+            "name": source_path.name,
+        }
+        if isinstance(source_metadata, dict):
+            for key in (
+                "key", "source_key", "source_image", "generation_mode", "render_tier",
+                "group_index", "shot", "source_generation_mode", "source_render_tier",
+                "source_group_index", "source_shot",
+            ):
+                value = source_metadata.get(key)
+                if isinstance(value, (str, int, float)) and not isinstance(value, bool):
+                    source_record[key] = value
+        source_record.setdefault("source_key", f"{source}:{relative_path}")
+        job = {
+            "id": job_id, "storyboard_id": None, "status": "queued", "fast": False,
+            "workflow_profile": workflow_profile, "workflow_source": workflow_source_name,
+            "source_prompt_id": source_prompt_id, "created_at": _iso_now(),
+            "started_at": None, "finished_at": None, "completed": 0, "total": 1,
+            "shot_numbers": [], "kind": "video", "generation_mode": "video",
+            "render_tier": "production", "render_groups": [{
+                "group_index": 1, "positions": [1], "shot_numbers": [1],
+            }], "current_shot": None, "progress": 0, "elapsed_seconds": 0,
+            "eta_seconds": None, "outputs": [], "current_prompt": None,
+            "logs": [{"time": _iso_now(), "type": "queued", "message": "Video job queued", "shot": None, "position": 0, "total": 1}],
+            "error": None, "cancel_requested": False, "_db": db, "_mode": "video",
+            "_shots": [], "_workflow_template": live_workflow, "_workflow_mapping": live_mapping,
+            "_frame_durations": [], "_media_type": "video", "_video_source": source_record,
+            "_video_prompt": prompt, "_video_duration": duration, "_video_seed": seed,
+        }
+        start_worker = False
+        with self.lock:
+            if any(preview["status"] in {"queued", "running"} for preview in self.previews.values()):
+                raise AppError("Wait for the active shot preview to finish")
+            max_jobs = load_config()[0]["limits"]["max_jobs"]
+            while len(self.jobs) >= max_jobs:
+                removable = next((job_id for job_id, item in self.jobs.items() if item["status"] not in {"queued", "running"}), None)
+                if removable is None:
+                    raise AppError(f"Render queue is full ({max_jobs} jobs)")
+                self.jobs.pop(removable)
+            self.jobs[job_id] = job
+            if not self._job_worker_running:
+                self._job_worker_running = True
+                start_worker = True
+            payload = self.job_payload(job)
+            payload["queue_position"] = sum(1 for item in self.jobs.values() if item["status"] == "queued")
+        if start_worker:
+            threading.Thread(target=self._run_job_queue, daemon=True).start()
+        return payload
+
     def create_preview(
         self, storyboard_id: str, number: int, fast: bool
     ) -> dict[str, Any]:
@@ -7371,6 +7873,73 @@ class WebState:
                 job_id = next_job["id"]
             self._run_job(job_id)
 
+    def _run_video_job(
+        self, job: dict[str, Any], job_id: str, db: dict[str, Any], db_path: Path,
+        started: float,
+    ) -> None:
+        workflow, mapping = job.get("_workflow_template"), job.get("_workflow_mapping")
+        if workflow is None or mapping is None:
+            workflow, mapping = load_workflow_runtime(db, db_path, False, job["workflow_profile"], "video")
+        source = job["_video_source"]
+        source_path = proof_image_path(source["relative_path"], source["source"])
+        prompt = job["_video_prompt"]
+        seed = job["_video_seed"]
+        with self.lock:
+            if job["cancel_requested"]:
+                job["status"] = "cancelled"
+                return
+            job["current_prompt"] = {
+                "media_type": "video", "positive": prompt, "negative": "",
+                "seed": seed, "source_image": source["name"],
+            }
+            job["logs"].append({
+                "time": _iso_now(), "type": "shot_started", "message": "Rendering video",
+                "shot": None, "position": 1, "total": 1, "positive": prompt,
+                "negative": "", "seed": seed, "source_image": source["name"],
+                "media_type": "video",
+            })
+        prompt_id, paths = generate_video_one(
+            db, source_path, source, prompt, seed, job["_video_duration"],
+            workflow, mapping, job["_run_id"],
+        )
+        for path in paths:
+            append_prompt_debug_record({
+                "time": _iso_now(), "kind": "video_render", "generation_mode": "video",
+                "render_tier": "production", "result": path.name, "job_id": job_id,
+                "source_image": source["name"], "source_key": f"{source['source']}:{source['relative_path']}",
+                "prompt": prompt, "seed": seed, "duration": job["_video_duration"],
+                "prompt_id": prompt_id, "workflow_profile": job["workflow_profile"],
+                "workflow_source": job["workflow_source"],
+            })
+        with self.lock:
+            elapsed = time.monotonic() - started
+            job["completed"] = 1
+            job["progress"] = 100
+            job["elapsed_seconds"] = round(elapsed, 1)
+            job["eta_seconds"] = 0
+            shot_outputs = []
+            for path in paths:
+                published = output_payload(path)
+                source_key = published.get("source_key") or source.get("source_key")
+                source_image = published.get("source_image") or source.get("source_image") or source["name"]
+                published.update(
+                    prompt_id=prompt_id, media_type="video", generation_mode="video",
+                    render_tier="production", group_index=1,
+                    source_image=source_image,
+                    source_key=source_key or f"{source['source']}:{source['relative_path']}",
+                    video_prompt=prompt, video_duration=job["_video_duration"], video_seed=seed,
+                    group_key=f"job:{job_id}:video:1:production",
+                )
+                job["outputs"].append(published)
+                shot_outputs.append(published)
+            job["logs"][-1].update({
+                "type": "shot_completed", "position": 1, "elapsed_seconds": round(elapsed, 1),
+                "duration_seconds": round(time.monotonic() - started, 1),
+                "video_url": shot_outputs[0]["url"] if shot_outputs else None,
+            })
+            job["current_prompt"]["video_url"] = shot_outputs[0]["url"] if shot_outputs else None
+            job["status"] = "completed"
+
     def _run_job(self, job_id: str) -> None:
         with self.lock:
             job = self.jobs[job_id]
@@ -7390,11 +7959,16 @@ class WebState:
             workflow, mapping = job.get("_workflow_template"), job.get("_workflow_mapping")
             if workflow is None or mapping is None:
                 workflow, mapping = load_workflow_runtime(
-                    db, db_path, job["fast"], job["workflow_profile"]
+                    db, db_path, job["fast"], job["workflow_profile"],
+                    job.get("_media_type", "image"),
                 )
+                job["_workflow_template"], job["_workflow_mapping"] = workflow, mapping
             run_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
             with self.lock:
                 job["_run_id"] = run_id
+            if job.get("_media_type") == "video":
+                self._run_video_job(job, job_id, db, db_path, started)
+                return
             selected_shots = job["_shots"]
             for completed_index, shot in enumerate(selected_shots, 1):
                 shot_started = time.monotonic()
@@ -7525,6 +8099,8 @@ WEB_STATE = WebState()
 
 
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
+VIDEO_SUFFIXES = {".mp4", ".webm", ".mov", ".mkv", ".avi"}
+MEDIA_SUFFIXES = IMAGE_SUFFIXES | VIDEO_SUFFIXES
 GALLERY_BENCHMARK_COUNT = 0
 GALLERY_BENCHMARK_SOURCES = 10
 
@@ -7532,6 +8108,33 @@ GALLERY_BENCHMARK_SOURCES = 10
 def output_directory() -> Path:
     config, path = load_config()
     return resolve_path(path.parent, config["storage"]["output_dir"])
+
+
+def output_metadata_path(path: Path) -> Path:
+    """Return the private sidecar used for restart-safe media relationships."""
+    return path.with_name(f".{path.name}.meta.json")
+
+
+def write_output_metadata(path: Path, metadata: dict[str, Any]) -> None:
+    sidecar = output_metadata_path(path)
+    temporary = sidecar.with_name(f".{sidecar.name}.{uuid.uuid4().hex}.tmp")
+    try:
+        temporary.write_text(
+            json.dumps(metadata, ensure_ascii=False, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        temporary.replace(sidecar)
+    except OSError as exc:
+        temporary.unlink(missing_ok=True)
+        raise AppError(f"Could not save media metadata: {exc}") from exc
+
+
+def read_output_metadata(path: Path) -> dict[str, Any]:
+    try:
+        metadata = json.loads(output_metadata_path(path).read_text(encoding="utf-8"))
+    except (FileNotFoundError, OSError, json.JSONDecodeError):
+        return {}
+    return metadata if isinstance(metadata, dict) else {}
 
 
 def proof_directories() -> list[tuple[str, Path]]:
@@ -7607,7 +8210,15 @@ def output_payload(path: Path, source: str = "output", root: Path | None = None)
     match = re.search(r"_shot_(\d+)_", path.name)
     stat = path.stat()
     encoded_path = quote(relative_path, safe="")
-    return {
+    is_video = path.suffix.lower() in VIDEO_SUFFIXES
+    source_image = None
+    metadata: dict[str, Any] = {}
+    if is_video:
+        source_match = re.search(r"_video_from_(.+)_(-?\d+)_video_\d+\.[^.]+$", path.name)
+        source_image = source_match.group(1) if source_match else None
+        metadata = read_output_metadata(path)
+        source_image = metadata.get("source_image") or source_image
+    payload = {
         "name": path.name,
         "relative_path": relative_path,
         "source": source,
@@ -7617,6 +8228,22 @@ def output_payload(path: Path, source: str = "output", root: Path | None = None)
         "shot": int(match.group(1)) if match else None,
         "size": stat.st_size,
     }
+    if is_video:
+        payload.update({
+            "media_type": "video",
+            "source_image": source_image,
+            "source_key": metadata.get("source_key"),
+            "source_relative_path": metadata.get("source_relative_path"),
+            "source_generation_mode": metadata.get("source_generation_mode"),
+            "source_render_tier": metadata.get("source_render_tier"),
+            "source_group_index": metadata.get("source_group_index"),
+            "source_shot": metadata.get("source_shot"),
+            "video_prompt": metadata.get("video_prompt"),
+            "video_duration": metadata.get("video_duration"),
+        })
+    else:
+        payload["media_type"] = "image"
+    return payload
 
 
 def _thumbnail_cache_remove(name: str | None = None, source: str | None = None) -> None:
@@ -7635,10 +8262,32 @@ def thumbnail_cache_max_bytes() -> int:
 
 
 def _generate_thumbnail(target: Path) -> bytes:
+    if target.suffix.lower() in VIDEO_SUFFIXES:
+        try:
+            result = subprocess.run(
+                ["ffmpeg", "-v", "error", "-i", str(target), "-frames:v", "1",
+                 "-f", "image2pipe", "-vcodec", "mjpeg", "pipe:1"],
+                check=True, capture_output=True, timeout=30,
+            )
+            if not result.stdout:
+                raise OSError("ffmpeg returned an empty poster frame")
+            return _generate_thumbnail_bytes(result.stdout)
+        except (OSError, subprocess.SubprocessError) as exc:
+            raise AppError(f"Could not create video thumbnail: {exc}") from exc
     if Image is None or ImageOps is None:
         raise AppError("Thumbnail support requires Pillow; restart with launcher.sh to install it")
     try:
-        with Image.open(target) as source:
+        return _generate_thumbnail_bytes(target)
+    except (OSError, ValueError) as exc:
+        raise AppError(f"Could not create thumbnail: {exc}") from exc
+
+
+def _generate_thumbnail_bytes(source_bytes: bytes | Path) -> bytes:
+    if Image is None or ImageOps is None:
+        raise AppError("Thumbnail support requires Pillow; restart with launcher.sh to install it")
+    try:
+        source_file = Image.open(BytesIO(source_bytes)) if isinstance(source_bytes, bytes) else Image.open(source_bytes)
+        with source_file as source:
             source.seek(0)
             thumbnail = ImageOps.exif_transpose(source)
             thumbnail_max_edge = load_config()[0]["gallery"]["thumbnail_max_edge"]
@@ -7661,8 +8310,8 @@ def _generate_thumbnail(target: Path) -> bytes:
 def output_thumbnail(relative_path: str, source: str = "output") -> bytes:
     global THUMBNAIL_CACHE_BYTES
     target = proof_image_path(relative_path, source)
-    if target.suffix.lower() not in IMAGE_SUFFIXES:
-        raise AppError("Only generated image files can be viewed")
+    if target.suffix.lower() not in MEDIA_SUFFIXES:
+        raise AppError("Only generated media files can be viewed")
     if not target.is_file():
         raise AppError("Output not found")
     stat = target.stat()
@@ -7709,7 +8358,7 @@ def list_output_images() -> list[dict[str, Any]]:
             continue
         source_paths = [
             path for path in proof_source_files(source, directory, live_output)
-            if path.is_file() and path.suffix.lower() in IMAGE_SUFFIXES
+            if path.is_file() and path.suffix.lower() in MEDIA_SUFFIXES
             and directory.resolve() in path.resolve().parents
         ]
         source_paths.sort(key=lambda path: (path.name, path.relative_to(directory).as_posix()))
@@ -7743,8 +8392,8 @@ def delete_output_image(relative_path: str, source: str = "output") -> dict[str,
     if GALLERY_BENCHMARK_COUNT:
         raise AppError("Output deletion is disabled in gallery benchmark mode")
     target = proof_image_path(relative_path, source)
-    if target.suffix.lower() not in IMAGE_SUFFIXES:
-        raise AppError("Only generated image files can be deleted")
+    if target.suffix.lower() not in MEDIA_SUFFIXES:
+        raise AppError("Only generated media files can be deleted")
     if not target.is_file():
         raise AppError("Output not found")
     with WEB_STATE.lock:
@@ -7767,6 +8416,10 @@ def delete_output_image(relative_path: str, source: str = "output") -> dict[str,
             target.unlink()
         except OSError as exc:
             raise AppError(f"Could not delete output: {exc}") from exc
+        try:
+            output_metadata_path(target).unlink(missing_ok=True)
+        except OSError as exc:
+            raise AppError(f"Could not delete media metadata: {exc}") from exc
         _thumbnail_cache_remove(relative_path, source)
         # Prevent subsequent job polling from restoring a deleted card in the UI.
         for job in WEB_STATE.jobs.values():
@@ -7788,7 +8441,7 @@ def delete_all_output_images() -> dict[str, Any]:
         (source, directory, path)
         for source, directory in proof_directories() if directory.is_dir()
         for path in proof_source_files(source, directory, live_output)
-        if path.is_file() and path.suffix.lower() in IMAGE_SUFFIXES
+        if path.is_file() and path.suffix.lower() in MEDIA_SUFFIXES
         and directory.resolve() in path.resolve().parents
     ]
     deleted: list[dict[str, str]] = []
@@ -7797,9 +8450,10 @@ def delete_all_output_images() -> dict[str, Any]:
         try:
             target.unlink()
             deleted.append({"name": target.name, "relative_path": relative_path, "source": source})
+            output_metadata_path(target).unlink(missing_ok=True)
         except OSError as exc:
             raise AppError(
-                f"Deleted {len(deleted)} images, then could not delete {target.name}: {exc}"
+                f"Deleted {len(deleted)} media files, then could not delete {target.name}: {exc}"
             ) from exc
     _thumbnail_cache_remove()
     return {"ok": True, "deleted": len(deleted), "files": deleted}
@@ -7809,8 +8463,14 @@ def application_status(check_comfy: bool = True) -> dict[str, Any]:
     db, db_path = load_database()
     settings = db["settings"]
     config, config_file = load_config()
-    workflow_profiles = list_workflow_profiles(db, db_path)
+    workflow_profiles = list_workflow_profiles(db, db_path, "image")
+    video_profiles = list_workflow_profiles(db, db_path, "video")
     live_workflow = workflow_profiles["source"] == "live"
+    live_video_workflow = video_profiles["source"] == "live"
+    image_ready = live_workflow or bool(
+        workflow_profiles["production"] and workflow_profiles["preview"]
+    )
+    video_ready = live_video_workflow or bool(video_profiles["production"])
     output_path = resolve_path(config_file.parent, config["storage"]["output_dir"])
     selectable = sum(1 for item in iter_content_items(db) if not item.get("disabled", False))
     comfy_config = config["comfy"]
@@ -7836,9 +8496,15 @@ def application_status(check_comfy: bool = True) -> dict[str, Any]:
         "version": APP_VERSION,
         "comfy": comfy,
         "workflow": {
-            "ready": live_workflow or bool(workflow_profiles["production"] and workflow_profiles["preview"]),
+            "ready": image_ready,
             "name": "Live ComfyUI" if live_workflow else f"{len(workflow_profiles['profiles'])} profiles",
             **workflow_profiles,
+            "image": {**workflow_profiles, "ready": image_ready},
+            "video": {
+                **video_profiles,
+                "ready": video_ready,
+                "name": "Live ComfyUI" if live_video_workflow else f"{len(video_profiles['profiles'])} profiles",
+            },
         },
         "output": {"path": str(output_path), "exists": output_path.is_dir()},
         "catalog_records": selectable,
@@ -7890,11 +8556,13 @@ class ValhallaHandler(BaseHTTPRequestHandler):
             if path == "/api/status":
                 self.send_json(application_status())
             elif path == "/api/workflow/profiles":
+                media_type = parse_qs(urlparse(self.path).query).get("media", ["image"])[0]
                 db, db_path = load_database()
-                self.send_json(list_workflow_profiles(db, db_path))
+                self.send_json(list_workflow_profiles(db, db_path, media_type))
             elif path == "/api/workflow/capture-candidate":
+                media_type = parse_qs(urlparse(self.path).query).get("media", ["image"])[0]
                 db, _ = load_database()
-                self.send_json(workflow_capture_candidate(db))
+                self.send_json(workflow_capture_candidate(db, media_type))
             elif path.endswith("/export") and path.startswith("/api/storyboards/"):
                 storyboard_id = path.split("/")[3]
                 self.send_json(WEB_STATE.export_storyboard(storyboard_id))
@@ -7981,13 +8649,23 @@ class ValhallaHandler(BaseHTTPRequestHandler):
                 )
             elif path.endswith("/cancel") and path.startswith("/api/jobs/"):
                 self.send_json(WEB_STATE.cancel_job(path.split("/")[3]))
+            elif path == "/api/videos":
+                payload = self.read_json()
+                self.send_json(WEB_STATE.create_video_job(
+                    str(payload.get("source", "output")),
+                    str(payload.get("relative_path", "")),
+                    str(payload.get("prompt", "")),
+                    _safe_int(payload.get("duration"), "Video duration", 1, 60),
+                    payload.get("source_metadata") if isinstance(payload.get("source_metadata"), dict) else None,
+                ), HTTPStatus.ACCEPTED)
             elif path == "/api/workflow/capture":
                 if WEB_STATE.has_active_render():
                     raise AppError("Workflow profiles cannot be captured while rendering is active")
                 payload = self.read_json()
+                media_type = str(payload.get("media", "image"))
                 db, db_path = load_database()
                 profile = capture_workflow_profile(
-                    db, db_path, str(payload.get("name", "")), bool(payload.get("replace", False))
+                    db, db_path, str(payload.get("name", "")), bool(payload.get("replace", False)), media_type
                 )
                 self.send_json({"ok": True, "message": "Workflow profile captured", "profile": profile})
             elif path == "/api/workflow/profiles/select":
@@ -7996,14 +8674,16 @@ class ValhallaHandler(BaseHTTPRequestHandler):
                 self.send_json(select_workflow_profiles(
                     db, db_path, str(payload.get("production", "")),
                     str(payload.get("preview", "")), str(payload.get("source", "profiles")),
+                    str(payload.get("media", "image")),
                 ))
             elif path.endswith("/rename") and path.startswith("/api/workflow/profiles/"):
                 if WEB_STATE.has_active_render():
                     raise AppError("Workflow profiles cannot be renamed while the render queue is active")
                 payload = self.read_json()
                 db, db_path = load_database()
+                media_type = parse_qs(urlparse(self.path).query).get("media", ["image"])[0]
                 self.send_json(rename_workflow_profile(
-                    db, db_path, path.split("/")[4], str(payload.get("name", ""))
+                    db, db_path, path.split("/")[4], str(payload.get("name", "")), media_type
                 ))
             else:
                 self.send_json({"error": "API endpoint not found"}, HTTPStatus.NOT_FOUND)
@@ -8028,8 +8708,9 @@ class ValhallaHandler(BaseHTTPRequestHandler):
             elif path.startswith("/api/workflow/profiles/"):
                 if WEB_STATE.has_active_render():
                     raise AppError("Workflow profiles cannot be deleted while the render queue is active")
+                media_type = parse_qs(urlparse(self.path).query).get("media", ["image"])[0]
                 db, db_path = load_database()
-                self.send_json(delete_workflow_profile(db, db_path, path.split("/")[4]))
+                self.send_json(delete_workflow_profile(db, db_path, path.split("/")[4], media_type))
             else:
                 self.send_json({"error": "API endpoint not found"}, HTTPStatus.NOT_FOUND)
         except AppError as exc:
@@ -8059,16 +8740,45 @@ class ValhallaHandler(BaseHTTPRequestHandler):
 
     def serve_output(self, relative_path: str, source: str = "output") -> None:
         target = proof_image_path(relative_path, source)
-        if target.suffix.lower() not in IMAGE_SUFFIXES:
-            raise AppError("Only generated image files can be viewed")
+        if target.suffix.lower() not in MEDIA_SUFFIXES:
+            raise AppError("Only generated media files can be viewed")
         if not target.is_file():
             self.send_json({"error": "Output not found"}, HTTPStatus.NOT_FOUND)
             return
         body = target.read_bytes()
-        self.send_response(HTTPStatus.OK)
+        total_size = len(body)
+        start, end = 0, total_size - 1
+        status = HTTPStatus.OK
+        range_header = self.headers.get("Range", "")
+        if range_header:
+            match = re.fullmatch(r"bytes=(\d*)-(\d*)", range_header.strip())
+            if not match or total_size == 0:
+                self.send_response(HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE)
+                self.send_header("Content-Range", f"bytes */{total_size}")
+                self.end_headers()
+                return
+            requested_start, requested_end = match.groups()
+            if requested_start:
+                start = int(requested_start)
+                end = int(requested_end) if requested_end else end
+            else:
+                suffix_size = int(requested_end or 0)
+                start = max(0, total_size - suffix_size)
+            if start >= total_size or start > end:
+                self.send_response(HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE)
+                self.send_header("Content-Range", f"bytes */{total_size}")
+                self.end_headers()
+                return
+            end = min(end, total_size - 1)
+            body = body[start:end + 1]
+            status = HTTPStatus.PARTIAL_CONTENT
+        self.send_response(status)
         self.send_header("Content-Type", mimetypes.guess_type(target.name)[0] or "application/octet-stream")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "private, max-age=3600")
+        self.send_header("Accept-Ranges", "bytes")
+        if status == HTTPStatus.PARTIAL_CONTENT:
+            self.send_header("Content-Range", f"bytes {start}-{end}/{total_size}")
         self.end_headers()
         self.wfile.write(body)
 

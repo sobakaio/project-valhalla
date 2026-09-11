@@ -1,12 +1,16 @@
 # Valhalla Photo Studio
 
-Valhalla Photo Studio 1.5 is a local production workspace for generating coherent SFW and NSFW photoshoots of adult women with your own ComfyUI instance. It turns creative direction into complete, automatically composed prompts, keeps the subject and visual story consistent across a set, and sends the approved shots to ComfyUI for image inference.
+Valhalla Photo Studio 1.5.1 is a local production workspace for generating coherent SFW and NSFW photoshoots of adult women with your own ComfyUI instance. It turns creative direction into complete, automatically composed prompts, keeps the subject and visual story consistent across a set, and sends the approved shots to ComfyUI for image inference and Motion proofs.
 
-The browser interface brings the full workflow together: storyboard planning, prompt automation, compatible scene and wardrobe selection, shot-level direction, Preview and Production rendering, progress tracking, and a built-in gallery manager for organizing and reviewing the resulting images. Every rule-compatible storyboard is resolved before GPU work begins, so poses, wardrobe, scene geometry, camera direction, content progression, prompts, and seeds can be inspected or edited before an expensive render.
+The browser interface brings the full workflow together: storyboard planning, prompt automation, compatible scene and wardrobe selection, shot-level direction, Preview and Production rendering, progress tracking, and a built-in Proofs gallery for organizing and reviewing generated images and Motion outputs. Every rule-compatible storyboard is resolved before GPU work begins, so poses, wardrobe, scene geometry, camera direction, content progression, prompts, and seeds can be inspected or edited before an expensive render.
 
 The application is designed for a private workstation or trusted LAN. It has no cloud service, account system, telemetry, or built-in authentication.
 
 > **Adult-content notice:** the production catalog supports SFW, progressive adult, and explicit solo-adult modes. All configured subjects are adults aged 21–23. Use the application only where its content is lawful and appropriate.
+
+## Version 1.5.1
+
+This release adds LTX 2.5 Motion rendering from generated proofs, independent Image and Video workflow profiles, a mixed **All proofs** gallery, shared top-level workflow storage, and an in-lightbox progress panel while Motion jobs are queued or rendering.
 
 ## Highlights
 
@@ -18,7 +22,8 @@ The application is designed for a private workstation or trusted LAN. It has no 
 - **Named ComfyUI profiles:** capture, validate, rename, and select independent Production and Preview workflows without manually editing workflow JSON.
 - **Fast Preview:** render smaller temporary drafts while preserving the selected workflow’s base sampler, LoRA chain, CLIP path, and VAE.
 - **Reliable job handling:** cancellable FIFO render queue, per-frame progress and ETA, reload-safe Logbook state, and clear first-error failure reporting.
-- **Production gallery:** virtualized thumbnails, photoshoot grouping, persistent thumbnail scaling (slider or Ctrl/Cmd + wheel), fullscreen inspection, zoom, slideshow, downloads, and confirmed deletion.
+- **Production gallery:** virtualized thumbnails, Photoshoots, Motion, and All proofs views, persistent thumbnail scaling (slider or Ctrl/Cmd + wheel), fullscreen inspection, zoom, slideshow, downloads, and confirmed deletion.
+- **LTX 2.5 Motion:** turn any generated proof image into an audio-preserving image-to-video job with a manual motion prompt and independent Video workflow profile.
 - **Privacy controls:** instantly hide decoded images and prompts with a configurable shortcut or inactivity timer; covering never deletes files or cancels renders.
 - **Validated catalog:** more than 1,100 subject, wardrobe, location, direction, camera, and treatment records with exact reachability analysis.
 
@@ -40,10 +45,10 @@ The application is designed for a private workstation or trusted LAN. It has no 
 
 ### Browse and inspect outputs
 
-| All images | Fullscreen lightbox |
+| All proofs | Fullscreen lightbox |
 |---|---|
 | [![Virtualized all-images gallery](screenshots/5-proofs-all-images.jpg)](screenshots/5-proofs-all-images.jpg) | [![Fullscreen image inspection lightbox](screenshots/6-proofs-lightbox.jpg)](screenshots/6-proofs-lightbox.jpg) |
-| Move through the complete virtualized output collection. | Inspect full images with fit, zoom, navigation, slideshow, download, and deletion controls. |
+| Move through the complete virtualized image and video collection. | Inspect full images and videos with fit, zoom, navigation, slideshow, download, and deletion controls. |
 
 ### Monitor and configure production
 
@@ -59,6 +64,7 @@ The application is designed for a private workstation or trusted LAN. It has no 
 - ComfyUI reachable locally or on a trusted LAN
 - a modern browser
 - a working ComfyUI image-generation workflow
+- `ffmpeg` on `PATH` for Video gallery poster frames
 
 The launcher installs the two Python packages used at runtime if necessary:
 
@@ -108,7 +114,16 @@ A usable profile must expose unambiguous nodes for:
 
 Negative conditioning is optional. If a workflow has no connected negative text encoder, Valhalla treats its positive prompt as the complete structural source of truth.
 
-Production and Preview may use the same profile or different profiles. Preview reduces the detected latent dimensions to `comfy.preview_max_edge` while keeping orientation and approximate aspect ratio. It prunes downstream refiners/detailers but deliberately retains upstream LoRA nodes because they are part of the visual design.
+Image Production and Preview may use the same profile or different profiles. Preview reduces the detected latent dimensions to `comfy.preview_max_edge` while keeping orientation and approximate aspect ratio. It prunes downstream refiners/detailers but deliberately retains upstream LoRA nodes because they are part of the visual design.
+
+Video profiles are independent from image profiles and are stored directly in
+`workflows/` alongside image profiles. Profile filenames must therefore be
+unique across both media types. A captured video workflow must expose a `LoadImage` input,
+a text prompt, at least one scalar seed, a duration input, and a
+`SaveVideo`, VHS `Video Combine`, or compatible video output node. The Studio
+profile manager has separate Image and Video tabs; Video has a Production
+profile only, while Image keeps its Production and Preview pair. Live mode is
+also selected independently for each media type.
 
 `database.json` may define reusable `settings.workflow_lora_rules`. A rule targets
 the exact configurable `lora_name`, matches resolved shot semantics such as stage,
@@ -153,7 +168,10 @@ anatomy; panty tan lines compile only when the hips/pubic area is uncovered. The
 selected marking remains stable across a Photoshoot and covered/SFW prompts do not
 mention hidden tan-line anatomy.
 
-If `comfy.workflow_source` is set to `live`, Valhalla reads the latest compatible ComfyUI workflow instead of the selected saved profiles. Saved profiles are recommended for reproducible production.
+If `comfy.workflow_source` is set to `live`, Valhalla reads the latest compatible ComfyUI image workflow instead of the selected saved profiles. The
+`comfy.media_profiles` object can select Image and Video sources independently;
+existing configurations are migrated when a profile selection is saved. Saved
+profiles are recommended for reproducible production.
 
 ## Production workflow
 
@@ -174,7 +192,12 @@ Storyboard export stores the selected catalog IDs, workflow profile, prompts, an
 
 ### Rendering and outputs
 
-Production jobs are immutable snapshots placed in a FIFO queue. Cancellation takes effect between images. Generated images are written to `storage.output_dir`; temporary shot previews remain in memory and are discarded when closed.
+Production jobs are immutable snapshots placed in a shared FIFO queue. Image
+jobs contain one output per shot; a Video job contains one LTX 2.5 image-to-video
+render from a selected proof image. Cancellation takes effect between images,
+and a queued video can be cancelled before it is submitted to ComfyUI.
+Generated images and videos are written to `storage.output_dir`; temporary shot
+previews remain in memory and are discarded when closed.
 
 Rendering has two independent dimensions: generation mode (`Photoshoot` or `Random`)
 and render tier (`Production` or `Preview`). Both tiers use the same grouping,
@@ -196,6 +219,18 @@ fullscreen/download/delete.
 
 Output deletion is permanent and requires confirmation. Deletion is disabled while a render job is active. Restarting Valhalla clears in-memory planning and job history but never removes generated files.
 
+### Creating videos
+
+Open an image in the Proof Gallery and choose **Create video**. Enter the
+motion/camera prompt and a whole-number duration from 1 to 60 seconds. The
+video uses the selected Video Production profile, is added to the same FIFO GPU
+queue as image renders, and appears in the **Motion** gallery view when ready. While
+the source lightbox remains open, the shared job dock is shown inside it immediately
+after queueing and continues to report progress.
+ComfyUI video outputs are copied without re-encoding, so audio tracks returned
+by the workflow remain embedded. A private sidecar next to each generated
+video preserves its source proof relationship across server restarts.
+
 ## Configuration
 
 Runtime settings live in `config.json`. Relative paths are resolved from the project directory.
@@ -203,7 +238,7 @@ Runtime settings live in `config.json`. Relative paths are resolved from the pro
 | Section | Important settings |
 |---|---|
 | `server` | listen host and port; keep loopback unless trusted-LAN access is required |
-| `comfy` | ComfyUI URL, workflow source, profiles directory, Production/Preview selections, timeouts, Preview size |
+| `comfy` | ComfyUI URL, image/video workflow sources and profiles, timeouts, Preview size |
 | `storage` | output directory, additional proof directories, PNG/JPEG output, JPEG quality, EXIF stripping, optional age-free prompt/result JSONL debug log |
 | `gallery` | thumbnail size and bounded in-memory thumbnail cache |
 | `interface` | privacy auto-cover intervals |
@@ -253,7 +288,7 @@ server.py       composition engine, ComfyUI client, HTTP server, validation CLI
 client/         browser interface
 database.json   creative catalog and compatibility rules
 config.json     local runtime configuration
-workflows/      captured ComfyUI rendering profiles
+workflows/      captured image and video profiles
 outputs/        default production output directory
 launcher.sh     dependency check and application launcher
 tests/          deterministic regression and stress tests
@@ -263,6 +298,6 @@ tests/          deterministic regression and stress tests
 
 - Everything runs locally unless `config.json` points to another trusted ComfyUI host.
 - The privacy cover hides images and prompts in the UI; it is not encryption or access control.
-- Server and storyboard state is held in memory; generated image files remain on disk.
+- Server and storyboard state is held in memory; generated media files and video relationship sidecars remain on disk.
 - Valhalla does not include an image-quality detector or identity/reference-image pipeline.
 - ComfyUI errors and invalid workflows are reported before or during the affected job without silently skipping failed frames.

@@ -16,6 +16,17 @@
     "profiles": {
       "production": "cielbleu-v2-normal-detailslider",
       "preview": "cielbleu-v2-normal-detailslider"
+    },
+    "media_profiles": {
+      "image": {
+        "source": "profiles",
+        "production": "cielbleu-v2-normal-detailslider",
+        "preview": "cielbleu-v2-normal-detailslider"
+      },
+      "video": {
+        "source": "profiles",
+        "production": "ltx-2-5-i2v"
+      }
     }
   },
   "storage": {
