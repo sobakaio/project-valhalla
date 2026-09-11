@@ -1071,8 +1071,8 @@ function renderStoryboard() {
   const navigationSetCount = board.config.mode === 'photoshoot'
     ? new Set(board.shots.map((shot) => shot.photoshoot_index)).size
     : (board.shots.length ? 1 : 0);
-  $('#studio-count').textContent = navigationSetCount;
-  $('#director-count').textContent = board.shots.length;
+  updateNavigationCount('studio-count', navigationSetCount, 'set');
+  updateNavigationCount('director-count', board.shots.length, 'shot');
   storyboardPanel.classList.add('resolved');
   $('#export-storyboard').disabled = false;
   if (state.director?.storyboard_id !== board.id) {
@@ -1089,6 +1089,15 @@ function renderStoryboard() {
   storyboardMeta.classList.remove('hidden');
   shotGrid.classList.remove('hidden');
   syncPendingState();
+}
+
+function updateNavigationCount(id, count, singular, plural = `${singular}s`) {
+  const element = $(`#${id}`);
+  if (!element) return;
+  const label = `${count} ${count === 1 ? singular : plural}`;
+  element.textContent = count;
+  element.title = label;
+  element.setAttribute('aria-label', label);
 }
 
 function renderOneShot(shot) {
@@ -1381,7 +1390,7 @@ function renderLogger() {
   if (!job && !preview) {
     empty.classList.remove('hidden');
     workspace.classList.add('hidden');
-    $('#log-count').textContent = '0';
+    updateNavigationCount('log-count', 0, 'log entry', 'log entries');
     $('#clear-logger').disabled = false;
     renderLoggerImage(null);
     return;
@@ -1390,7 +1399,7 @@ function renderLogger() {
   workspace.classList.remove('hidden');
   if (usePreview) {
     $('#clear-logger').disabled = ['queued', 'running'].includes(preview.status);
-    $('#log-count').textContent = '1';
+    updateNavigationCount('log-count', 1, 'log entry', 'log entries');
     $('#logger-progress').textContent = 'Preview';
     $('#logger-percent').textContent = preview.status === 'completed' ? 'Ready' : 'Rendering one shot';
     $('#logger-elapsed').textContent = formatDuration(preview.elapsed_seconds);
@@ -1408,7 +1417,7 @@ function renderLogger() {
   }
   const logs = job.logs || [];
   $('#clear-logger').disabled = ['queued', 'running'].includes(job.status);
-  $('#log-count').textContent = logs.length;
+  updateNavigationCount('log-count', logs.length, 'log entry', 'log entries');
   const visiblePosition = job.current_prompt?.position || job.completed || 0;
   $('#logger-progress').textContent = `${visiblePosition} / ${job.total}`;
   $('#logger-percent').textContent = `${job.progress || 0}% complete`;
@@ -1898,7 +1907,7 @@ function renderOutputs() {
   const completedCount = galleryMediaItems().length;
   const count = completedCount + pendingCount;
   if (state.galleryGroup && !activePhotoshootGroup()) state.galleryGroup = null;
-  $('#output-count').textContent = state.outputs.length;
+  updateNavigationCount('output-count', state.outputs.length, 'proof');
   $('#outputs-empty').classList.toggle('hidden', count > 0);
   const group = activePhotoshootGroup();
   const groups = galleryGroups();
