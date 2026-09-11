@@ -264,6 +264,94 @@ class CatalogQualityTests(unittest.TestCase):
         reachability = app.catalog_reachability(database)
         self.assertTrue(tshirts.issubset(reachability["automatic"]["garments"]))
 
+    def test_casual_core_catalog_is_unique_and_reachable_from_curated_defaults(self):
+        database, _ = app.load_database()
+        core = [
+            (section, item)
+            for section, values in database["garments"].items()
+            for item in values
+            if "casual_core" in app.tags(item)
+        ]
+        self.assertGreaterEqual(len(core), 60)
+        fingerprints = [item["diversity_fingerprint"] for _, item in core]
+        self.assertEqual(len(fingerprints), len(set(fingerprints)))
+
+        defaults = database["settings"]["scene_defaults"]["curated_wardrobe"]
+        profile = defaults["profiles"][defaults["default_profile"]]
+        self.assertTrue(profile["normal_template_ids"])
+        reachability = app.catalog_reachability(database)
+        self.assertTrue(
+            {item["id"] for _, item in core}.issubset(
+                reachability["automatic"]["garments"]
+            )
+        )
+        for seed in range(24):
+            template = app.Composer(
+                database, app.random.Random(seed)
+            ).choose_template("normal")
+            self.assertIn(template["id"], profile["normal_template_ids"])
+
+        broken = copy.deepcopy(database)
+        duplicate = copy.deepcopy(core[0][1])
+        duplicate["id"] = "top_validation_duplicate_fingerprint"
+        duplicate["prompt"] = "validation-only unique casual top wording"
+        broken["garments"][core[0][0]].append(duplicate)
+        with self.assertRaisesRegex(app.AppError, "diversity_fingerprint"):
+            app.validate_database(broken)
+
+    def test_direction_diversity_catalog_is_unique_and_content_gated(self):
+        database, _ = app.load_database()
+        poses = [
+            item for item in database["poses"]
+            if item["id"].startswith("pose_diversity_")
+        ]
+        actions = [
+            item for item in database["actions"]
+            if item["id"].startswith("action_diversity_")
+        ]
+        self.assertGreaterEqual(len(poses), 50)
+        self.assertGreaterEqual(len(actions), 55)
+        self.assertIn("sfw", {item["direction_mode"] for item in poses})
+        self.assertIn("nsfw", {item["direction_mode"] for item in poses})
+        self.assertIn("sfw", {item["direction_mode"] for item in actions})
+        self.assertIn("nsfw", {item["direction_mode"] for item in actions})
+        fingerprints = [
+            item["diversity_fingerprint"] for item in poses + actions
+        ]
+        self.assertEqual(len(fingerprints), len(set(fingerprints)))
+        self.assertTrue(all(
+            not app.tags(item) & app.SFW_BLOCKED_DIRECTION_TAGS
+            for item in poses + actions
+            if item["direction_mode"] == "sfw"
+        ))
+        self.assertTrue(all(
+            item["direction_mode"] == "nsfw"
+            for item in poses + actions
+            if item["id"].startswith((
+                "pose_diversity_explicit_", "action_diversity_explicit_"
+            ))
+        ))
+
+        broken = copy.deepcopy(database)
+        duplicate = copy.deepcopy(poses[0])
+        duplicate["id"] = "action_validation_duplicate_direction_fingerprint"
+        duplicate["prompt"] = "validation-only duplicate direction wording"
+        broken["actions"].append(duplicate)
+        with self.assertRaisesRegex(app.AppError, "diversity_fingerprint"):
+            app.validate_database(broken)
+
+        broken = copy.deepcopy(database)
+        broken["poses"].append({
+            "id": "pose_validation_sfw_adult_tag",
+            "prompt": "validation-only safe pose with an adult tag",
+            "tags": ["standing", "erotic_pose"],
+            "direction_mode": "sfw",
+            "diversity_fingerprint": "pose:validation:sfw-adult-tag",
+            "allowed_levels": ["covered"],
+        })
+        with self.assertRaisesRegex(app.AppError, "adult direction tag"):
+            app.validate_database(broken)
+
     def test_dressed_panties_reveal_is_probable_and_structurally_integrated(self):
         database, _ = app.load_database()
         rule = database["settings"]["dressed_panties_reveal"]
@@ -422,9 +510,20 @@ class CatalogQualityTests(unittest.TestCase):
         self.assertEqual(
             analysis["reachable"]["actions"], analysis["enabled"]["actions"]
         )
+        self.assertTrue({
+            item["id"] for item in database["poses"]
+            if item["id"].startswith("pose_diversity_")
+        }.issubset(analysis["automatic"]["poses"]))
+        self.assertTrue({
+            item["id"] for item in database["actions"]
+            if item["id"].startswith("action_diversity_")
+        }.issubset(analysis["automatic"]["actions"]))
         stats = app.catalog_statistics(database, analysis)
         self.assertEqual(stats["unreachable"], {})
-        self.assertEqual(stats["sections"]["garments"], 437)
+        self.assertEqual(
+            stats["sections"]["garments"],
+            sum(len(values) for values in database["garments"].values()),
+        )
         self.assertGreater(len(stats["pool_summaries"]["garment_slot"]["narrow"]), 0)
 
     def test_slavic_human_defaults_are_universal_except_explicit_constraints(self):
@@ -4832,12 +4931,26 @@ class WorkflowProfileTests(unittest.TestCase):
         comfy_operational = {
             "url", "workflows_dir", "http_timeout_seconds",
             "status_timeout_seconds", "status_refresh_seconds", "poll_interval_seconds",
-            "generation_timeout_seconds", "preview_max_edge", "profiles",
+            "generation_timeout_seconds", "preview_max_edge", "media_profiles",
         }
-        self.assertTrue(comfy_operational.issubset(config["comfy"]))
+        self.assertEqual(set(config["comfy"]), comfy_operational)
+        self.assertNotIn("workflow_source", config["comfy"])
+        self.assertNotIn("profiles", config["comfy"])
         self.assertTrue(comfy_operational.isdisjoint(database["settings"]))
         self.assertTrue(comfy_operational.isdisjoint(config))
         self.assertNotIn("comfy_url", config)
+
+    def test_legacy_workflow_config_is_rejected(self):
+        config, _ = app.load_config()
+        config["comfy"]["workflow_source"] = "profiles"
+        with tempfile.TemporaryDirectory() as temporary:
+            config_file = Path(temporary) / "config.json"
+            config_file.write_text(
+                app.json.dumps(config), encoding="utf-8"
+            )
+            with patch.object(app, "config_path", return_value=config_file):
+                with self.assertRaisesRegex(app.AppError, "are removed"):
+                    app.load_config()
 
     def test_server_address_defaults_come_from_root_config(self):
         config, path = app.load_config()
@@ -5002,7 +5115,14 @@ class WorkflowProfileTests(unittest.TestCase):
                     "poll_interval_seconds": 1,
                     "generation_timeout_seconds": 600,
                     "preview_max_edge": 512,
-                    "profiles": {"production": None, "preview": None},
+                    "media_profiles": {
+                        "image": {
+                            "source": "profiles",
+                            "production": None,
+                            "preview": None,
+                        },
+                        "video": {"source": "profiles", "production": None},
+                    },
                 },
                 "storage": {
                     "output_dir": "./outputs", "proofs_dir": [],

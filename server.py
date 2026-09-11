@@ -260,32 +260,27 @@ def load_config() -> tuple[dict[str, Any], Path]:
         raise AppError(
             "config.comfy.preview_max_edge must be a multiple of 64 from 256 to 2048"
         )
-    if comfy.get("workflow_source", "profiles") not in {"profiles", "live"}:
-        raise AppError("config.comfy.workflow_source must be 'profiles' or 'live'")
-    profiles = comfy.get("profiles")
-    if not isinstance(profiles, dict):
-        raise AppError("config.comfy.profiles must be an object")
-    for mode in ("production", "preview"):
-        if mode not in profiles:
-            raise AppError(f"config.comfy.profiles must contain '{mode}'")
-        if profiles.get(mode) is not None and not isinstance(profiles.get(mode), str):
-            raise AppError(f"config.comfy.profiles.{mode} must be a string or null")
+    legacy_workflow_keys = {"workflow_source", "profiles"} & set(comfy)
+    if legacy_workflow_keys:
+        raise AppError(
+            "config.comfy.workflow_source and config.comfy.profiles are removed; "
+            "use config.comfy.media_profiles"
+        )
     media_profiles = comfy.get("media_profiles")
-    if media_profiles is not None:
-        if not isinstance(media_profiles, dict):
-            raise AppError("config.comfy.media_profiles must be an object")
-        for media_type in ("image", "video"):
-            settings = media_profiles.get(media_type)
-            if not isinstance(settings, dict):
-                raise AppError(f"config.comfy.media_profiles.{media_type} must be an object")
-            if settings.get("source", "profiles") not in {"profiles", "live"}:
-                raise AppError(f"config.comfy.media_profiles.{media_type}.source must be profiles or live")
-            required_modes = ("production", "preview") if media_type == "image" else ("production",)
-            for mode in required_modes:
-                if mode not in settings:
-                    raise AppError(f"config.comfy.media_profiles.{media_type} must contain '{mode}'")
-                if settings.get(mode) is not None and not isinstance(settings.get(mode), str):
-                    raise AppError(f"config.comfy.media_profiles.{media_type}.{mode} must be a string or null")
+    if not isinstance(media_profiles, dict):
+        raise AppError("config.comfy.media_profiles must be an object")
+    for media_type in ("image", "video"):
+        settings = media_profiles.get(media_type)
+        if not isinstance(settings, dict):
+            raise AppError(f"config.comfy.media_profiles.{media_type} must be an object")
+        if settings.get("source", "profiles") not in {"profiles", "live"}:
+            raise AppError(f"config.comfy.media_profiles.{media_type}.source must be profiles or live")
+        required_modes = ("production", "preview") if media_type == "image" else ("production",)
+        for mode in required_modes:
+            if mode not in settings:
+                raise AppError(f"config.comfy.media_profiles.{media_type} must contain '{mode}'")
+            if settings.get(mode) is not None and not isinstance(settings.get(mode), str):
+                raise AppError(f"config.comfy.media_profiles.{media_type}.{mode} must be a string or null")
     return config, path
 
 
@@ -910,6 +905,65 @@ def validate_database(db: dict[str, Any]) -> None:
             )
         prompt_owners[normalized] = item["id"]
 
+    diversity_owners: dict[str, str] = {}
+    for section, values in db["garments"].items():
+        for item in values:
+            fingerprint = item.get("diversity_fingerprint")
+            if "casual_core" in tags(item) and (
+                not isinstance(fingerprint, str) or not fingerprint.strip()
+            ):
+                raise AppError(
+                    f"{section}.{item['id']} must declare diversity_fingerprint"
+                )
+            if fingerprint is None:
+                continue
+            if not isinstance(fingerprint, str) or not fingerprint.strip():
+                raise AppError(
+                    f"{section}.{item['id']}.diversity_fingerprint must be non-empty text"
+                )
+            normalized = re.sub(r"\s+", " ", fingerprint.strip().casefold())
+            owner = diversity_owners.get(normalized)
+            if owner is not None:
+                raise AppError(
+                    f"{section}.{item['id']} duplicates diversity_fingerprint of {owner}"
+                )
+            diversity_owners[normalized] = f"{section}.{item['id']}"
+
+    direction_fingerprint_owners: dict[str, str] = {}
+    for section in ("poses", "actions"):
+        for item in db[section]:
+            mode = item.get("direction_mode")
+            fingerprint = item.get("diversity_fingerprint")
+            if mode is not None and mode not in {"sfw", "nsfw"}:
+                raise AppError(
+                    f"{section}.{item['id']}.direction_mode must be 'sfw' or 'nsfw'"
+                )
+            if mode is not None and fingerprint is None:
+                raise AppError(
+                    f"{section}.{item['id']} with direction_mode must declare diversity_fingerprint"
+                )
+            if fingerprint is None:
+                continue
+            if not isinstance(fingerprint, str) or not fingerprint.strip():
+                raise AppError(
+                    f"{section}.{item['id']}.diversity_fingerprint must be non-empty text"
+                )
+            if mode is None:
+                raise AppError(
+                    f"{section}.{item['id']} with diversity_fingerprint must declare direction_mode"
+                )
+            if mode == "sfw" and tags(item) & SFW_BLOCKED_DIRECTION_TAGS:
+                raise AppError(
+                    f"{section}.{item['id']} marked sfw has an adult direction tag"
+                )
+            normalized = re.sub(r"\s+", " ", fingerprint.strip().casefold())
+            owner = direction_fingerprint_owners.get(normalized)
+            if owner is not None:
+                raise AppError(
+                    f"{section}.{item['id']} duplicates diversity_fingerprint of {owner}"
+                )
+            direction_fingerprint_owners[normalized] = f"{section}.{item['id']}"
+
     for template in db["outfit_templates"]:
         if template.get("catalog_category") not in CATALOG_CATEGORIES:
             raise AppError(
@@ -1056,6 +1110,71 @@ def validate_database(db: dict[str, Any]) -> None:
                 f"settings.scene_defaults.pools.{section} references unavailable items: "
                 f"{sorted(unavailable)}"
             )
+
+    curated_wardrobe = scene_defaults.get("curated_wardrobe")
+    if curated_wardrobe is not None:
+        if not isinstance(curated_wardrobe, dict):
+            raise AppError("settings.scene_defaults.curated_wardrobe must be an object")
+        default_profile = curated_wardrobe.get("default_profile")
+        profiles = curated_wardrobe.get("profiles")
+        if not isinstance(default_profile, str) or not default_profile.strip():
+            raise AppError(
+                "settings.scene_defaults.curated_wardrobe.default_profile must be text"
+            )
+        if not isinstance(profiles, dict) or not profiles:
+            raise AppError(
+                "settings.scene_defaults.curated_wardrobe.profiles must be a non-empty object"
+            )
+        if default_profile not in profiles:
+            raise AppError(
+                "settings.scene_defaults.curated_wardrobe.default_profile must reference a profile"
+            )
+        templates_by_id = {template["id"]: template for template in db["outfit_templates"]}
+        for profile_name, profile in profiles.items():
+            if not isinstance(profile_name, str) or not profile_name.strip():
+                raise AppError(
+                    "settings.scene_defaults.curated_wardrobe profile names must be text"
+                )
+            if not isinstance(profile, dict):
+                raise AppError(
+                    f"settings.scene_defaults.curated_wardrobe.profiles.{profile_name} must be an object"
+                )
+            for category in CATALOG_CATEGORIES:
+                field = f"{category}_template_ids"
+                values = profile.get(field, [])
+                if (
+                    not isinstance(values, list)
+                    or not all(isinstance(template_id, str) and template_id for template_id in values)
+                    or len(values) != len(set(values))
+                ):
+                    raise AppError(
+                        f"settings.scene_defaults.curated_wardrobe.profiles.{profile_name}.{field} "
+                        "must be a unique list of template IDs"
+                    )
+                unknown = set(values) - set(templates_by_id)
+                if unknown:
+                    raise AppError(
+                        f"settings.scene_defaults.curated_wardrobe.profiles.{profile_name}.{field} "
+                        f"references unknown templates: {sorted(unknown)}"
+                    )
+                disabled = {
+                    template_id for template_id in values
+                    if templates_by_id[template_id].get("disabled", False)
+                }
+                if disabled:
+                    raise AppError(
+                        f"settings.scene_defaults.curated_wardrobe.profiles.{profile_name}.{field} "
+                        f"references disabled templates: {sorted(disabled)}"
+                    )
+                wrong_category = {
+                    template_id for template_id in values
+                    if templates_by_id[template_id]["catalog_category"] != category
+                }
+                if wrong_category:
+                    raise AppError(
+                        f"settings.scene_defaults.curated_wardrobe.profiles.{profile_name}.{field} "
+                        f"references templates from another category: {sorted(wrong_category)}"
+                    )
 
 def detect_fast_mode_mapping(workflow: dict[str, Any]) -> dict[str, Any]:
     base_candidates = []
@@ -1350,6 +1469,23 @@ def prefer_catalog_category(
 ) -> list[dict[str, Any]]:
     preferred = [item for item in candidates if catalog_category(item) == category]
     return preferred or candidates
+
+
+def configured_curated_template_ids(
+    db: dict[str, Any], category: str
+) -> set[str] | None:
+    """Return the default profile's template pool, or None for legacy fallback."""
+    curated = db.get("settings", {}).get("scene_defaults", {}).get("curated_wardrobe")
+    if not isinstance(curated, dict):
+        return None
+    profiles = curated.get("profiles")
+    profile = profiles.get(curated.get("default_profile")) if isinstance(profiles, dict) else None
+    if not isinstance(profile, dict):
+        return None
+    template_ids = profile.get(f"{category}_template_ids")
+    if not template_ids:
+        return None
+    return set(template_ids)
 
 
 OPAQUE_LINGERIE_BLOCKED_TAGS = {
@@ -2193,6 +2329,13 @@ class Composer:
             )
             and (content_mode != "sfw" or template_supports_sfw(self.db, template))
         ]
+        if self.use_curated_defaults and selected_category:
+            curated_ids = configured_curated_template_ids(self.db, selected_category)
+            if curated_ids:
+                candidates = [
+                    template for template in candidates
+                    if template["id"] in curated_ids
+                ]
         return weighted_choice(self.rng, candidates)
 
     def _choose_outfit_once(
@@ -3893,16 +4036,10 @@ def workflow_model_name(workflow: dict[str, Any]) -> str:
 
 def media_workflow_settings(config: dict[str, Any], media_type: str = "image") -> dict[str, Any]:
     media_type = validate_media_type(media_type)
-    configured = config["comfy"].get("media_profiles", {}).get(media_type)
-    if isinstance(configured, dict):
-        return dict(configured)
-    # Existing installations keep their image settings at the old locations.
-    if media_type == "image":
-        return {
-            "source": config["comfy"].get("workflow_source", "profiles"),
-            **dict(config["comfy"]["profiles"]),
-        }
-    return {"source": "profiles", "production": None}
+    configured = config["comfy"]["media_profiles"].get(media_type)
+    if not isinstance(configured, dict):
+        raise AppError(f"config.comfy.media_profiles.{media_type} must be an object")
+    return dict(configured)
 
 
 def load_workflow_profile_registry(
@@ -3924,41 +4061,15 @@ def save_workflow_profile_registry(
 ) -> None:
     media_type = validate_media_type(media_type)
     config, _ = load_config()
-    legacy_config = "media_profiles" not in config["comfy"]
-    if legacy_config:
-        # Migrate legacy image settings on the first write while also creating
-        # the independent video registry.  Keep the old aliases for clients
-        # and exports that still read them.
-        config["comfy"]["media_profiles"] = {
-            "image": {
-                "source": config["comfy"].get("workflow_source", "profiles"),
-                "production": config["comfy"]["profiles"].get("production"),
-                "preview": config["comfy"]["profiles"].get("preview"),
-            },
-            "video": {"source": "profiles", "production": None},
-        }
-    if media_type == "image" and legacy_config:
-        config["comfy"]["profiles"] = {
-            "production": registry.get("production"),
-            "preview": registry.get("preview"),
-        }
-        config["comfy"]["media_profiles"]["image"]["production"] = registry.get("production")
-        config["comfy"]["media_profiles"]["image"]["preview"] = registry.get("preview")
-        if source is not None:
-            if source not in {"profiles", "live"}:
-                raise AppError("Workflow source must be profiles or live")
-            config["comfy"]["workflow_source"] = source
-            config["comfy"]["media_profiles"]["image"]["source"] = source
-    else:
-        media = dict(config["comfy"].setdefault("media_profiles", {}).get(media_type, {}))
-        media["production"] = registry.get("production")
-        if media_type == "image":
-            media["preview"] = registry.get("preview")
-        if source is not None:
-            if source not in {"profiles", "live"}:
-                raise AppError("Workflow source must be profiles or live")
-            media["source"] = source
-        config["comfy"]["media_profiles"][media_type] = media
+    media = dict(config["comfy"]["media_profiles"][media_type])
+    media["production"] = registry.get("production")
+    if media_type == "image":
+        media["preview"] = registry.get("preview")
+    if source is not None:
+        if source not in {"profiles", "live"}:
+            raise AppError("Workflow source must be profiles or live")
+        media["source"] = source
+    config["comfy"]["media_profiles"][media_type] = media
     save_config(config)
 
 
@@ -4955,7 +5066,14 @@ def catalog_reachability(db: dict[str, Any]) -> dict[str, Any]:
     wardrobe_categories = set(
         db["settings"]["scene_defaults"]["wardrobe_categories"]
     )
+    curated_template_ids_by_category = {
+        category: configured_curated_template_ids(db, category)
+        for category in CATALOG_CATEGORIES
+    }
     for template in enabled["outfit_templates"]:
+        category = catalog_category(template)
+        curated_ids = curated_template_ids_by_category.get(category)
+        is_curated_template = curated_ids is None or template["id"] in curated_ids
         template_has_required_candidates = True
         visible_tag_unions: dict[str, set[str]] = {}
         visible_id_unions: dict[str, set[str]] = {}
@@ -4976,7 +5094,7 @@ def catalog_reachability(db: dict[str, Any]) -> dict[str, Any]:
                 "manual_size": len(candidates),
             })
             garment_reachable.update(item["id"] for item in candidates)
-            if catalog_category(template) in wardrobe_categories:
+            if category in wardrobe_categories and is_curated_template:
                 garment_automatic.update(item["id"] for item in preferred)
             if rule.get("required", False) and not candidates:
                 template_has_required_candidates = False
@@ -4986,7 +5104,7 @@ def catalog_reachability(db: dict[str, Any]) -> dict[str, Any]:
             visible_id_unions[slot] = {item["id"] for item in candidates}
         if template_has_required_candidates:
             reachable["outfit_templates"].add(template["id"])
-            if catalog_category(template) in wardrobe_categories:
+            if category in wardrobe_categories and is_curated_template:
                 automatic["outfit_templates"].add(template["id"])
         for stage in effective_photoshoot_stages(template):
             garment_tags = set().union(*(
@@ -5406,7 +5524,11 @@ def validate_production_catalog(db: dict[str, Any]) -> dict[str, Any]:
 
     manual_garments: set[str] = set()
     automatic_garments: set[str] = set()
+    curated_garments: set[str] = set()
     for template in templates:
+        category = catalog_category(template)
+        curated_ids = configured_curated_template_ids(db, category)
+        is_curated_template = curated_ids is None or template["id"] in curated_ids
         for slot, rule in template["slots"].items():
             candidates = [
                 garment for garment in db["garments"][rule["catalog"]]
@@ -5419,6 +5541,8 @@ def validate_production_catalog(db: dict[str, Any]) -> dict[str, Any]:
                 candidates, catalog_category(template)
             )
             automatic_garments.update(item["id"] for item in preferred)
+            if is_curated_template:
+                curated_garments.update(item["id"] for item in preferred)
     unreachable = [
         f"{section}.{item['id']}"
         for section, item in garments if item["id"] not in manual_garments
@@ -5436,6 +5560,16 @@ def validate_production_catalog(db: dict[str, Any]) -> dict[str, Any]:
         raise AppError(
             "Enabled garments removed by automatic catalog-category preference: "
             + ", ".join(category_starved)
+        )
+    curated_unreachable = [
+        f"{section}.{item['id']}"
+        for section, item in garments
+        if "casual_core" in tags(item) and item["id"] not in curated_garments
+    ]
+    if curated_unreachable:
+        raise AppError(
+            "Casual-core garments unreachable from the default curated wardrobe: "
+            + ", ".join(curated_unreachable)
         )
 
     reachability = catalog_reachability(db)

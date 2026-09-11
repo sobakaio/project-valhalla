@@ -12,11 +12,6 @@
     "poll_interval_seconds": 1,
     "generation_timeout_seconds": 600,
     "preview_max_edge": 512,
-    "workflow_source": "profiles",
-    "profiles": {
-      "production": "cielbleu-v2-normal-detailslider",
-      "preview": "cielbleu-v2-normal-detailslider"
-    },
     "media_profiles": {
       "image": {
         "source": "profiles",

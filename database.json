@@ -107,6 +107,28 @@
           "photo_explicit_home_clear",
           "photo_explicit_handheld_close"
         ]
+      },
+      "curated_wardrobe": {
+        "default_profile": "casual_core",
+        "profiles": {
+          "casual_core": {
+            "normal_template_ids": [
+              "template_everyday_casual",
+              "template_sportswear_set",
+              "template_day_dress",
+              "template_cozy_home",
+              "template_casual_denim_weekend",
+              "template_casual_trouser_day",
+              "template_casual_skirt_skort",
+              "template_casual_layered_outdoor",
+              "template_casual_athleisure",
+              "template_casual_midi_dress",
+              "template_casual_onepiece_weekend",
+              "template_casual_home_lounge"
+            ],
+            "luxury_template_ids": []
+          }
+        }
       }
     },
     "garment_modifiers": {
@@ -154,7 +176,9 @@
           "color_champagne",
           "color_silver",
           "color_tan",
-          "color_coral"
+          "color_coral",
+          "color_sage",
+          "color_mustard"
         ],
         "dark": [
           "color_black",
@@ -169,7 +193,10 @@
           "color_teal",
           "color_purple",
           "color_chocolate",
-          "color_leopard"
+          "color_leopard",
+          "color_denim",
+          "color_olive",
+          "color_rust"
         ]
       },
       "visible_layer_rules": [
@@ -2331,6 +2358,26 @@
     {
       "id": "color_leopard",
       "prompt": "classic leopard print"
+    },
+    {
+      "id": "color_denim",
+      "prompt": "washed denim blue"
+    },
+    {
+      "id": "color_olive",
+      "prompt": "muted olive green"
+    },
+    {
+      "id": "color_sage",
+      "prompt": "soft sage green"
+    },
+    {
+      "id": "color_mustard",
+      "prompt": "warm mustard yellow"
+    },
+    {
+      "id": "color_rust",
+      "prompt": "burnt rust orange"
     }
   ],
   "patterns": [
@@ -5869,6 +5916,39 @@
         "outer_simple_07",
         "outer_simple_08"
       ]
+    },
+    {
+      "id": "texture_brushed_fleece",
+      "prompt": "soft brushed fleece texture",
+      "weight": 1,
+      "allowed_garment_ids": [
+        "top_quarterzip_fleece",
+        "outer_fleece_zip",
+        "dress_sweatshirt_maxi"
+      ]
+    },
+    {
+      "id": "texture_cotton_canvas",
+      "prompt": "durable woven cotton-canvas texture",
+      "weight": 1,
+      "allowed_garment_ids": [
+        "lower_carpenter_jeans",
+        "outer_field_jacket",
+        "outer_twill_shacket",
+        "accessory_canvas_tote",
+        "accessory_small_backpack",
+        "shoes_high_top_sneakers"
+      ]
+    },
+    {
+      "id": "texture_light_linen",
+      "prompt": "light airy linen texture",
+      "weight": 1,
+      "allowed_garment_ids": [
+        "top_linen_buttonup",
+        "lower_linen_drawstring_pants",
+        "dress_linen_buttonfront_midi"
+      ]
     }
   ],
   "garments": {
@@ -6854,6 +6934,265 @@
           "color_gray",
           "color_beige",
           "color_pink"
+        ]
+      },
+      {
+        "id": "top_pique_polo",
+        "catalog_category": "normal",
+        "prompt": "relaxed cotton piqué polo shirt",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "polo:relaxed:hip:pique",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "top_rugby_stripe",
+        "catalog_category": "normal",
+        "prompt": "relaxed striped rugby shirt with a sturdy collar",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "sporty",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "rugby:relaxed:hip:striped",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "top_raglan_jersey",
+        "catalog_category": "normal",
+        "prompt": "soft raglan-sleeve jersey top",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "sporty",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "raglan:relaxed:hip:jersey",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "top_linen_buttonup",
+        "catalog_category": "normal",
+        "prompt": "relaxed lightweight linen button-up shirt",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "buttonup:relaxed:hip:linen",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "top_turtleneck_knit",
+        "catalog_category": "normal",
+        "prompt": "soft ribbed long-sleeve turtleneck sweater",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "home",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "turtleneck:relaxed:hip:ribbed-knit",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "top_knit_vest",
+        "catalog_category": "normal",
+        "prompt": "simple sleeveless cotton-knit sweater vest",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "vest:relaxed:hip:cotton-knit",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "top_peplum_jersey",
+        "catalog_category": "normal",
+        "prompt": "casual peplum jersey top with a shaped hem",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "peplum:fitted:hip:jersey",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "top_tunic_jersey",
+        "catalog_category": "normal",
+        "prompt": "relaxed hip-length jersey tunic top",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "home",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "tunic:relaxed:hip:jersey",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "top_quarterzip_fleece",
+        "catalog_category": "normal",
+        "prompt": "casual quarter-zip fleece pullover",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "home",
+          "outdoor",
+          "sporty",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "quarterzip:relaxed:hip:fleece",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "top_performance_tee",
+        "catalog_category": "normal",
+        "prompt": "breathable short-sleeve performance T-shirt",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "sporty",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "performance-tee:relaxed:hip:technical-jersey",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
         ]
       },
       {
@@ -7957,6 +8296,315 @@
           "color_gray",
           "color_navy",
           "color_chocolate"
+        ]
+      },
+      {
+        "id": "lower_wide_leg_jeans",
+        "catalog_category": "normal",
+        "prompt": "high-waisted wide-leg denim jeans",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "jeans:wide-leg:full-length:denim",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "lower_carpenter_jeans",
+        "catalog_category": "normal",
+        "prompt": "relaxed carpenter-style denim jeans",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "jeans:relaxed:full-length:utility-denim",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "lower_relaxed_cargo_pants",
+        "catalog_category": "normal",
+        "prompt": "relaxed straight-leg cargo pants",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "cargo:relaxed:full-length:utility-cotton",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "lower_linen_drawstring_pants",
+        "catalog_category": "normal",
+        "prompt": "lightweight linen drawstring trousers",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "home",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "trousers:relaxed:full-length:drawstring-linen",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "lower_wide_leg_chinos",
+        "catalog_category": "normal",
+        "prompt": "wide-leg cotton chino trousers",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "chinos:wide-leg:full-length:cotton-twill",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "lower_track_pants_straight",
+        "catalog_category": "normal",
+        "prompt": "straight-leg lightweight track pants",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "home",
+          "sporty",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "track-pants:straight:full-length:technical-knit",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "lower_corduroy_straight_pants",
+        "catalog_category": "normal",
+        "prompt": "straight-leg cotton corduroy trousers",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "trousers:straight:full-length:corduroy",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "lower_knit_wide_leg_pants",
+        "catalog_category": "normal",
+        "prompt": "soft wide-leg knit lounge pants",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "home",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "lounge-pants:wide-leg:full-length:knit",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "lower_bermuda_shorts",
+        "catalog_category": "normal",
+        "prompt": "knee-length cotton Bermuda shorts",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "shorts:bermuda:knee-length:cotton",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "lower_tennis_skort",
+        "catalog_category": "normal",
+        "prompt": "casual pleated tennis skort",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "sporty",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "skort:pleated:mid-thigh:performance-knit",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "lower_pleated_midi_skirt",
+        "catalog_category": "normal",
+        "prompt": "knee-length pleated cotton midi skirt",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "skirt:pleated:knee-length:cotton",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "lower_denim_maxi_skirt",
+        "catalog_category": "normal",
+        "prompt": "ankle-length straight denim skirt",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "skirt:straight:ankle-length:denim",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
         ]
       },
       {
@@ -9291,6 +9939,271 @@
         ]
       },
       {
+        "id": "dress_fit_flare_midi",
+        "catalog_category": "normal",
+        "prompt": "casual fit-and-flare cotton midi dress",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "dress",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "dress:fit-and-flare:midi:cotton",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "dress_tiered_cotton_midi",
+        "catalog_category": "normal",
+        "prompt": "relaxed tiered cotton midi dress",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "dress",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "dress:tiered:midi:cotton",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "dress_linen_buttonfront_midi",
+        "catalog_category": "normal",
+        "prompt": "relaxed linen button-front midi dress",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "dress",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "dress:shirt:midi:linen",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "dress_utility_shirt_midi",
+        "catalog_category": "normal",
+        "prompt": "casual utility shirt midi dress",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "dress",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "dress:utility-shirt:midi:cotton-twill",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "dress_shift_midi",
+        "catalog_category": "normal",
+        "prompt": "clean-lined sleeveless shift midi dress",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "dress",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "dress:shift:midi:jersey",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "dress_polo_midi",
+        "catalog_category": "normal",
+        "prompt": "casual cotton polo midi dress",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "dress",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "dress:polo:midi:cotton-pique",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "dress_long_sleeve_jersey_midi",
+        "catalog_category": "normal",
+        "prompt": "comfortable long-sleeve jersey midi dress",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "home",
+          "dress",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "dress:long-sleeve:midi:jersey",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "dress_sweatshirt_maxi",
+        "catalog_category": "normal",
+        "prompt": "relaxed hooded sweatshirt maxi dress",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "home",
+          "dress",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "dress:sweatshirt:maxi:fleece",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "dress_denim_shirt_midi",
+        "catalog_category": "normal",
+        "prompt": "relaxed denim shirt midi dress",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "dress",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "dress:shirt:midi:denim",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "dress_pleated_day_midi",
+        "catalog_category": "normal",
+        "prompt": "simple pleated jersey day midi dress",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "dress",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "dress:pleated:midi:jersey",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
         "id": "dress_simple_01",
         "catalog_category": "normal",
         "prompt": "simple cotton T-shirt dress",
@@ -9645,6 +10558,216 @@
           "color_white",
           "color_teal",
           "color_coral"
+        ]
+      },
+      {
+        "id": "outer_quilted_jacket",
+        "catalog_category": "normal",
+        "prompt": "lightweight quilted everyday jacket",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "jacket:quilted:hip:nylon",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "outer_short_puffer",
+        "catalog_category": "normal",
+        "prompt": "short matte puffer jacket",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "jacket:puffer:hip:nylon",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "outer_fleece_zip",
+        "catalog_category": "normal",
+        "prompt": "soft full-zip fleece jacket",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "home",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "jacket:full-zip:hip:fleece",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "outer_field_jacket",
+        "catalog_category": "normal",
+        "prompt": "practical cotton field jacket",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "jacket:field:hip:cotton-twill",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "outer_peacoat",
+        "catalog_category": "normal",
+        "prompt": "classic short wool peacoat",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "coat:peacoat:thigh:wool",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "outer_twill_shacket",
+        "catalog_category": "normal",
+        "prompt": "relaxed cotton-twill overshirt jacket",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "jacket:shacket:hip:cotton-twill",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "outer_windbreaker",
+        "catalog_category": "normal",
+        "prompt": "lightweight hooded windbreaker jacket",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "sporty",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "jacket:windbreaker:hip:nylon",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "outer_longline_jersey_cardigan",
+        "catalog_category": "normal",
+        "prompt": "soft longline jersey cardigan",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "home",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "cardigan:longline:knee:jersey",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_navy",
+          "color_beige",
+          "color_chocolate",
+          "color_denim",
+          "color_olive",
+          "color_sage",
+          "color_mustard",
+          "color_rust"
         ]
       },
       {
@@ -10284,6 +11407,106 @@
           "color_pink",
           "color_purple",
           "color_teal"
+        ]
+      },
+      {
+        "id": "bra_wireless_full_coverage",
+        "catalog_category": "normal",
+        "prompt": "opaque wireless full-coverage bra",
+        "tags": [
+          "everyday",
+          "lingerie",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "bra:wireless:full-coverage:cotton",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "bra_cotton_full_cup",
+        "catalog_category": "normal",
+        "prompt": "opaque cotton full-cup bra",
+        "tags": [
+          "everyday",
+          "lingerie",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "bra:underwire:full-cup:cotton",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "bra_racerback_everyday",
+        "catalog_category": "normal",
+        "prompt": "opaque everyday racerback bra",
+        "tags": [
+          "everyday",
+          "lingerie",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "bra:racerback:full-coverage:microfiber",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "bra_front_smoothing",
+        "catalog_category": "normal",
+        "prompt": "opaque front-smoothing everyday bra",
+        "tags": [
+          "everyday",
+          "lingerie",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "bra:front-smoothing:full-coverage:microfiber",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "bra_soft_molded_cup",
+        "catalog_category": "normal",
+        "prompt": "opaque soft molded-cup bra",
+        "tags": [
+          "everyday",
+          "lingerie",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "bra:molded-cup:full-coverage:microfiber",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
         ]
       },
       {
@@ -11238,6 +12461,86 @@
         ]
       },
       {
+        "id": "panties_seamless_boyshort",
+        "catalog_category": "normal",
+        "prompt": "opaque seamless boyshort panties",
+        "tags": [
+          "everyday",
+          "lingerie",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "panties:boyshort:mid-rise:seamless",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "panties_modal_full_brief",
+        "catalog_category": "normal",
+        "prompt": "soft modal full-brief panties",
+        "tags": [
+          "everyday",
+          "home",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "panties:brief:full-coverage:modal",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "panties_cotton_lace_trim_bikini",
+        "catalog_category": "normal",
+        "prompt": "opaque cotton bikini panties with a narrow lace trim",
+        "tags": [
+          "everyday",
+          "lingerie",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "panties:bikini:mid-rise:cotton-lace-trim",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "panties_absorbent_cotton_brief",
+        "catalog_category": "normal",
+        "prompt": "opaque absorbent cotton full-brief panties",
+        "tags": [
+          "everyday",
+          "home",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "panties:brief:full-coverage:absorbent-cotton",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
         "id": "panties_simple_01",
         "catalog_category": "normal",
         "prompt": "plain cotton briefs",
@@ -11933,6 +13236,89 @@
         ]
       },
       {
+        "id": "legwear_no_show_socks",
+        "catalog_category": "normal",
+        "prompt": "low-cut no-show cotton socks",
+        "tags": [
+          "socks",
+          "everyday",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "legwear:no-show:ankle:cotton",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "legwear_sport_crew_socks",
+        "catalog_category": "normal",
+        "prompt": "cushioned athletic crew socks",
+        "tags": [
+          "socks",
+          "everyday",
+          "sporty",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "legwear:crew:mid-calf:athletic-cotton",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "legwear_thermal_tights",
+        "catalog_category": "normal",
+        "prompt": "opaque thermal tights",
+        "tags": [
+          "pantyhose",
+          "everyday",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "legwear:tights:full-length:thermal-knit",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ],
+        "support_mode": "waist_continuous"
+      },
+      {
+        "id": "legwear_cotton_ribbed_tights",
+        "catalog_category": "normal",
+        "prompt": "opaque cotton ribbed tights",
+        "tags": [
+          "pantyhose",
+          "everyday",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "legwear:tights:full-length:ribbed-cotton",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ],
+        "support_mode": "waist_continuous"
+      },
+      {
         "id": "legwear_simple_01",
         "catalog_category": "normal",
         "prompt": "plain ankle socks",
@@ -12543,6 +13929,140 @@
         ]
       },
       {
+        "id": "shoes_high_top_sneakers",
+        "catalog_category": "normal",
+        "prompt": "clean high-top canvas sneakers",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "sporty",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "shoes:sneakers:high-top:canvas",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "shoes_chunky_sneakers",
+        "catalog_category": "normal",
+        "prompt": "comfortable chunky everyday sneakers",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "sporty",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "shoes:sneakers:chunky:mesh",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "shoes_trail_sneakers",
+        "catalog_category": "normal",
+        "prompt": "practical low-profile trail sneakers",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "sporty",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "shoes:sneakers:trail:technical-mesh",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "shoes_chelsea_boots",
+        "catalog_category": "normal",
+        "prompt": "flat elastic-sided Chelsea boots",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "shoes:boots:chelsea:leather",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "shoes_rain_boots",
+        "catalog_category": "normal",
+        "prompt": "matte low-heeled rain boots",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "shoes:boots:rain:rubber",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "shoes_clogs",
+        "catalog_category": "normal",
+        "prompt": "comfortable low wooden clogs",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "home",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "shoes:clogs:low:wood-leather",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
         "id": "shoes_simple_01",
         "catalog_category": "normal",
         "prompt": "plain white canvas sneakers",
@@ -13131,6 +14651,183 @@
         ]
       },
       {
+        "id": "accessory_canvas_tote",
+        "catalog_category": "normal",
+        "prompt": "everyday canvas tote bag",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "accessory:bag:tote:canvas",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "accessory_crossbody_bag",
+        "catalog_category": "normal",
+        "prompt": "small practical crossbody bag",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "accessory:bag:crossbody:leather",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "accessory_small_backpack",
+        "catalog_category": "normal",
+        "prompt": "compact everyday canvas backpack",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "accessory:bag:backpack:canvas",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "accessory_belt_bag",
+        "catalog_category": "normal",
+        "prompt": "minimal everyday belt bag",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "accessory:bag:belt:nylon",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "accessory_baseball_cap",
+        "catalog_category": "normal",
+        "prompt": "plain cotton baseball cap",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "accessory:headwear:baseball:cotton",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "accessory_knit_beanie",
+        "catalog_category": "normal",
+        "prompt": "soft ribbed knit beanie",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "home",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "accessory:headwear:beanie:ribbed-knit",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "accessory_cotton_neckerchief",
+        "catalog_category": "normal",
+        "prompt": "small cotton neckerchief",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "accessory:neckwear:neckerchief:cotton",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "accessory_wool_scarf",
+        "catalog_category": "normal",
+        "prompt": "soft everyday wool scarf",
+        "tags": [
+          "casual",
+          "everyday",
+          "normal_clothes",
+          "outdoor",
+          "casual_core"
+        ],
+        "diversity_fingerprint": "accessory:neckwear:scarf:wool",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_gray",
+          "color_beige",
+          "color_navy",
+          "color_chocolate",
+          "color_sage"
+        ]
+      },
+      {
         "id": "accessory_simple_01",
         "catalog_category": "normal",
         "prompt": "small hoop earrings",
@@ -13280,7 +14977,8 @@
           "excludes_tags": [
             "explicit",
             "fetish",
-            "sheer"
+            "sheer",
+            "casual_core"
           ],
           "color_group": "main"
         },
@@ -13296,7 +14994,8 @@
           "excludes_tags": [
             "explicit",
             "fetish",
-            "sheer"
+            "sheer",
+            "casual_core"
           ]
         },
         "bra": {
@@ -13304,6 +15003,9 @@
           "required": true,
           "required_tags": [
             "everyday"
+          ],
+          "excludes_tags": [
+            "casual_core"
           ],
           "color_group": "lingerie"
         },
@@ -13318,7 +15020,8 @@
             "fetish",
             "explicit",
             "leather",
-            "luxury"
+            "luxury",
+            "casual_core"
           ],
           "color_group": "lingerie"
         },
@@ -13336,7 +15039,8 @@
             "fetish",
             "explicit",
             "leather",
-            "luxury"
+            "luxury",
+            "casual_core"
           ]
         },
         "footwear": {
@@ -13345,6 +15049,9 @@
           "required_tags": [
             "casual",
             "normal_clothes"
+          ],
+          "excludes_tags": [
+            "casual_core"
           ]
         },
         "outerwear": {
@@ -13362,7 +15069,8 @@
           ],
           "excludes_tags": [
             "explicit",
-            "fetish"
+            "fetish",
+            "casual_core"
           ]
         },
         "accessories": {
@@ -13379,7 +15087,8 @@
           "excludes_tags": [
             "explicit",
             "fetish",
-            "luxury"
+            "luxury",
+            "casual_core"
           ]
         }
       },
@@ -13419,27 +15128,27 @@
           "catalog": "upperwear",
           "required": true,
           "required_tags": ["sporty"],
-          "excludes_tags": ["explicit", "fetish", "sheer"],
+          "excludes_tags": ["explicit", "fetish", "sheer", "casual_core"],
           "color_group": "main"
         },
         "lowerwear": {
           "catalog": "lowerwear",
           "required": true,
           "required_tags": ["sporty"],
-          "excludes_tags": ["explicit", "fetish", "sheer"]
+          "excludes_tags": ["explicit", "fetish", "sheer", "casual_core"]
         },
         "bra": {
           "catalog": "bra",
           "required": true,
           "required_any_tags": ["sporty", "everyday"],
-          "excludes_tags": ["luxury", "fetish", "explicit"],
+          "excludes_tags": ["luxury", "fetish", "explicit", "casual_core"],
           "color_group": "lingerie"
         },
         "panties": {
           "catalog": "panties",
           "required": true,
           "required_any_tags": ["sporty", "everyday"],
-          "excludes_tags": ["luxury", "fetish", "explicit"],
+          "excludes_tags": ["luxury", "fetish", "explicit", "casual_core"],
           "color_group": "lingerie"
         },
         "legwear": {
@@ -13447,12 +15156,13 @@
           "required": false,
           "chance": 0.65,
           "required_any_tags": ["sporty", "socks"],
-          "excludes_tags": ["luxury", "fetish", "explicit"]
+          "excludes_tags": ["luxury", "fetish", "explicit", "casual_core"]
         },
         "footwear": {
           "catalog": "footwear",
           "required": true,
-          "required_tags": ["sporty"]
+          "required_tags": ["sporty"],
+          "excludes_tags": ["casual_core"]
         }
       },
       "stages": [
@@ -13699,7 +15409,8 @@
           "excludes_tags": [
             "explicit",
             "sheer",
-            "fetish"
+            "fetish",
+            "casual_core"
           ],
           "color_group": "lingerie"
         },
@@ -13712,7 +15423,8 @@
           "excludes_tags": [
             "explicit",
             "sheer",
-            "fetish"
+            "fetish",
+            "casual_core"
           ],
           "color_group": "lingerie"
         },
@@ -13724,6 +15436,9 @@
             "stockings",
             "pantyhose",
             "fishnet"
+          ],
+          "excludes_tags": [
+            "casual_core"
           ]
         },
         "footwear": {
@@ -15717,6 +17432,1540 @@
             "breasts",
             "nipples"
           ]
+        }
+      ]
+    },
+    {
+      "id": "template_casual_denim_weekend",
+      "catalog_category": "normal",
+      "weight": 1.8,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "top_pique_polo",
+            "top_rugby_stripe",
+            "top_raglan_jersey",
+            "top_linen_buttonup",
+            "top_turtleneck_knit",
+            "top_knit_vest",
+            "top_peplum_jersey",
+            "top_tunic_jersey",
+            "top_quarterzip_fleece",
+            "top_performance_tee"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ],
+          "color_group": "main"
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "lower_wide_leg_jeans",
+            "lower_carpenter_jeans",
+            "lower_relaxed_cargo_pants",
+            "lower_denim_maxi_skirt"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_tags": [
+            "everyday",
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "bra_wireless_full_coverage",
+            "bra_cotton_full_cup",
+            "bra_racerback_everyday",
+            "bra_front_smoothing",
+            "bra_soft_molded_cup"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_tags": [
+            "everyday",
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "panties_seamless_boyshort",
+            "panties_modal_full_brief",
+            "panties_cotton_lace_trim_bikini",
+            "panties_absorbent_cotton_brief"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer",
+            "luxury"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "shoes_high_top_sneakers",
+            "shoes_chunky_sneakers",
+            "shoes_trail_sneakers",
+            "shoes_chelsea_boots"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.65,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "legwear_no_show_socks",
+            "legwear_sport_crew_socks",
+            "legwear_thermal_tights",
+            "legwear_cotton_ribbed_tights"
+          ],
+          "required_any_tags": [
+            "socks",
+            "pantyhose"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "leather",
+            "luxury"
+          ]
+        },
+        "outerwear": {
+          "catalog": "outerwear",
+          "required": false,
+          "chance": 0.5,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "outer_quilted_jacket",
+            "outer_short_puffer",
+            "outer_fleece_zip",
+            "outer_field_jacket",
+            "outer_peacoat",
+            "outer_twill_shacket",
+            "outer_windbreaker",
+            "outer_longline_jersey_cardigan"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.55,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "accessory_canvas_tote",
+            "accessory_crossbody_bag",
+            "accessory_small_backpack",
+            "accessory_belt_bag",
+            "accessory_baseball_cap",
+            "accessory_knit_beanie",
+            "accessory_cotton_neckerchief",
+            "accessory_wool_scarf"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "luxury"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "casual_denim_weekend_dressed",
+          "level": "covered",
+          "visible_slots": [
+            "upperwear",
+            "lowerwear",
+            "legwear",
+            "footwear",
+            "outerwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "casual_denim_weekend_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "legwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        }
+      ]
+    },
+    {
+      "id": "template_casual_trouser_day",
+      "catalog_category": "normal",
+      "weight": 1.8,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "top_pique_polo",
+            "top_rugby_stripe",
+            "top_raglan_jersey",
+            "top_linen_buttonup",
+            "top_turtleneck_knit",
+            "top_knit_vest",
+            "top_peplum_jersey",
+            "top_tunic_jersey",
+            "top_quarterzip_fleece",
+            "top_performance_tee"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ],
+          "color_group": "main"
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "lower_linen_drawstring_pants",
+            "lower_wide_leg_chinos",
+            "lower_track_pants_straight",
+            "lower_corduroy_straight_pants",
+            "lower_knit_wide_leg_pants",
+            "lower_bermuda_shorts"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_tags": [
+            "everyday",
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "bra_wireless_full_coverage",
+            "bra_cotton_full_cup",
+            "bra_racerback_everyday",
+            "bra_front_smoothing",
+            "bra_soft_molded_cup"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_tags": [
+            "everyday",
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "panties_seamless_boyshort",
+            "panties_modal_full_brief",
+            "panties_cotton_lace_trim_bikini",
+            "panties_absorbent_cotton_brief"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer",
+            "luxury"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "shoes_high_top_sneakers",
+            "shoes_chunky_sneakers",
+            "shoes_trail_sneakers",
+            "shoes_chelsea_boots",
+            "shoes_rain_boots",
+            "shoes_clogs"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.65,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "legwear_no_show_socks",
+            "legwear_sport_crew_socks",
+            "legwear_thermal_tights",
+            "legwear_cotton_ribbed_tights"
+          ],
+          "required_any_tags": [
+            "socks",
+            "pantyhose"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "leather",
+            "luxury"
+          ]
+        },
+        "outerwear": {
+          "catalog": "outerwear",
+          "required": false,
+          "chance": 0.5,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "outer_quilted_jacket",
+            "outer_short_puffer",
+            "outer_fleece_zip",
+            "outer_field_jacket",
+            "outer_peacoat",
+            "outer_twill_shacket",
+            "outer_windbreaker",
+            "outer_longline_jersey_cardigan"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.55,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "accessory_canvas_tote",
+            "accessory_crossbody_bag",
+            "accessory_small_backpack",
+            "accessory_belt_bag",
+            "accessory_baseball_cap",
+            "accessory_knit_beanie",
+            "accessory_cotton_neckerchief",
+            "accessory_wool_scarf"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "luxury"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "casual_trouser_day_dressed",
+          "level": "covered",
+          "visible_slots": [
+            "upperwear",
+            "lowerwear",
+            "legwear",
+            "footwear",
+            "outerwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "casual_trouser_day_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "legwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        }
+      ]
+    },
+    {
+      "id": "template_casual_skirt_skort",
+      "catalog_category": "normal",
+      "weight": 1.4,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "top_pique_polo",
+            "top_rugby_stripe",
+            "top_raglan_jersey",
+            "top_linen_buttonup",
+            "top_turtleneck_knit",
+            "top_knit_vest",
+            "top_peplum_jersey",
+            "top_tunic_jersey",
+            "top_quarterzip_fleece",
+            "top_performance_tee"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ],
+          "color_group": "main"
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "lower_tennis_skort",
+            "lower_pleated_midi_skirt",
+            "lower_denim_maxi_skirt"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_tags": [
+            "everyday",
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "bra_wireless_full_coverage",
+            "bra_cotton_full_cup",
+            "bra_racerback_everyday",
+            "bra_front_smoothing",
+            "bra_soft_molded_cup"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_tags": [
+            "everyday",
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "panties_seamless_boyshort",
+            "panties_modal_full_brief",
+            "panties_cotton_lace_trim_bikini",
+            "panties_absorbent_cotton_brief"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer",
+            "luxury"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "shoes_high_top_sneakers",
+            "shoes_chunky_sneakers",
+            "shoes_trail_sneakers",
+            "shoes_chelsea_boots",
+            "shoes_rain_boots",
+            "shoes_clogs"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.75,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "legwear_no_show_socks",
+            "legwear_sport_crew_socks",
+            "legwear_thermal_tights",
+            "legwear_cotton_ribbed_tights"
+          ],
+          "required_any_tags": [
+            "socks",
+            "pantyhose"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "leather",
+            "luxury"
+          ]
+        },
+        "outerwear": {
+          "catalog": "outerwear",
+          "required": false,
+          "chance": 0.5,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "outer_quilted_jacket",
+            "outer_short_puffer",
+            "outer_fleece_zip",
+            "outer_field_jacket",
+            "outer_peacoat",
+            "outer_twill_shacket",
+            "outer_windbreaker",
+            "outer_longline_jersey_cardigan"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.55,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "accessory_canvas_tote",
+            "accessory_crossbody_bag",
+            "accessory_small_backpack",
+            "accessory_belt_bag",
+            "accessory_baseball_cap",
+            "accessory_knit_beanie",
+            "accessory_cotton_neckerchief",
+            "accessory_wool_scarf"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "luxury"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "casual_skirt_skort_dressed",
+          "level": "covered",
+          "visible_slots": [
+            "upperwear",
+            "lowerwear",
+            "legwear",
+            "footwear",
+            "outerwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "casual_skirt_skort_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "legwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        }
+      ]
+    },
+    {
+      "id": "template_casual_layered_outdoor",
+      "catalog_category": "normal",
+      "weight": 1.4,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "top_pique_polo",
+            "top_rugby_stripe",
+            "top_raglan_jersey",
+            "top_linen_buttonup",
+            "top_turtleneck_knit",
+            "top_knit_vest",
+            "top_peplum_jersey",
+            "top_tunic_jersey",
+            "top_quarterzip_fleece",
+            "top_performance_tee"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ],
+          "color_group": "main"
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "lower_wide_leg_jeans",
+            "lower_carpenter_jeans",
+            "lower_relaxed_cargo_pants",
+            "lower_linen_drawstring_pants",
+            "lower_wide_leg_chinos",
+            "lower_track_pants_straight",
+            "lower_corduroy_straight_pants",
+            "lower_knit_wide_leg_pants",
+            "lower_bermuda_shorts",
+            "lower_tennis_skort",
+            "lower_pleated_midi_skirt",
+            "lower_denim_maxi_skirt"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_tags": [
+            "everyday",
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "bra_wireless_full_coverage",
+            "bra_cotton_full_cup",
+            "bra_racerback_everyday",
+            "bra_front_smoothing",
+            "bra_soft_molded_cup"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_tags": [
+            "everyday",
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "panties_seamless_boyshort",
+            "panties_modal_full_brief",
+            "panties_cotton_lace_trim_bikini",
+            "panties_absorbent_cotton_brief"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer",
+            "luxury"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "shoes_high_top_sneakers",
+            "shoes_chunky_sneakers",
+            "shoes_trail_sneakers",
+            "shoes_chelsea_boots",
+            "shoes_rain_boots",
+            "shoes_clogs"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.65,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "legwear_no_show_socks",
+            "legwear_sport_crew_socks",
+            "legwear_thermal_tights",
+            "legwear_cotton_ribbed_tights"
+          ],
+          "required_any_tags": [
+            "socks",
+            "pantyhose"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "leather",
+            "luxury"
+          ]
+        },
+        "outerwear": {
+          "catalog": "outerwear",
+          "required": false,
+          "chance": 1,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "outer_quilted_jacket",
+            "outer_short_puffer",
+            "outer_fleece_zip",
+            "outer_field_jacket",
+            "outer_peacoat",
+            "outer_twill_shacket",
+            "outer_windbreaker",
+            "outer_longline_jersey_cardigan"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.7,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "accessory_canvas_tote",
+            "accessory_crossbody_bag",
+            "accessory_small_backpack",
+            "accessory_belt_bag",
+            "accessory_baseball_cap",
+            "accessory_knit_beanie",
+            "accessory_cotton_neckerchief",
+            "accessory_wool_scarf"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "luxury"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "casual_layered_outdoor_dressed",
+          "level": "covered",
+          "visible_slots": [
+            "upperwear",
+            "lowerwear",
+            "legwear",
+            "footwear",
+            "outerwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "casual_layered_outdoor_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "legwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        }
+      ]
+    },
+    {
+      "id": "template_casual_athleisure",
+      "catalog_category": "normal",
+      "weight": 1.2,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_tags": [
+            "casual_core",
+            "sporty"
+          ],
+          "allowed_ids": [
+            "top_rugby_stripe",
+            "top_raglan_jersey",
+            "top_quarterzip_fleece",
+            "top_performance_tee"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ],
+          "color_group": "main"
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_tags": [
+            "casual_core",
+            "sporty"
+          ],
+          "allowed_ids": [
+            "lower_track_pants_straight",
+            "lower_tennis_skort"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_tags": [
+            "everyday",
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "bra_wireless_full_coverage",
+            "bra_cotton_full_cup",
+            "bra_racerback_everyday",
+            "bra_front_smoothing",
+            "bra_soft_molded_cup"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_tags": [
+            "everyday",
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "panties_seamless_boyshort",
+            "panties_modal_full_brief",
+            "panties_cotton_lace_trim_bikini",
+            "panties_absorbent_cotton_brief"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer",
+            "luxury"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_tags": [
+            "casual_core",
+            "sporty"
+          ],
+          "allowed_ids": [
+            "shoes_high_top_sneakers",
+            "shoes_chunky_sneakers",
+            "shoes_trail_sneakers"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.9,
+          "required_tags": [
+            "casual_core",
+            "sporty"
+          ],
+          "allowed_ids": [
+            "legwear_sport_crew_socks"
+          ],
+          "required_any_tags": [
+            "socks",
+            "pantyhose"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "leather",
+            "luxury"
+          ]
+        },
+        "outerwear": {
+          "catalog": "outerwear",
+          "required": false,
+          "chance": 0.5,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "outer_windbreaker"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.35,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "accessory_canvas_tote",
+            "accessory_crossbody_bag",
+            "accessory_small_backpack",
+            "accessory_belt_bag",
+            "accessory_baseball_cap",
+            "accessory_knit_beanie",
+            "accessory_cotton_neckerchief",
+            "accessory_wool_scarf"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "luxury"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "casual_athleisure_dressed",
+          "level": "covered",
+          "visible_slots": [
+            "upperwear",
+            "lowerwear",
+            "legwear",
+            "footwear",
+            "outerwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "casual_athleisure_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "legwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        }
+      ]
+    },
+    {
+      "id": "template_casual_midi_dress",
+      "catalog_category": "normal",
+      "weight": 1.8,
+      "slots": {
+        "full_body": {
+          "catalog": "full_body",
+          "required": true,
+          "required_tags": [
+            "casual_core",
+            "normal_clothes"
+          ],
+          "allowed_ids": [
+            "dress_fit_flare_midi",
+            "dress_tiered_cotton_midi",
+            "dress_linen_buttonfront_midi",
+            "dress_utility_shirt_midi",
+            "dress_shift_midi",
+            "dress_polo_midi",
+            "dress_long_sleeve_jersey_midi",
+            "dress_sweatshirt_maxi",
+            "dress_denim_shirt_midi",
+            "dress_pleated_day_midi"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_tags": [
+            "everyday",
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "bra_wireless_full_coverage",
+            "bra_cotton_full_cup",
+            "bra_racerback_everyday",
+            "bra_front_smoothing",
+            "bra_soft_molded_cup"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_tags": [
+            "everyday",
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "panties_seamless_boyshort",
+            "panties_modal_full_brief",
+            "panties_cotton_lace_trim_bikini",
+            "panties_absorbent_cotton_brief"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer",
+            "luxury"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "shoes_high_top_sneakers",
+            "shoes_chunky_sneakers",
+            "shoes_trail_sneakers",
+            "shoes_chelsea_boots",
+            "shoes_rain_boots",
+            "shoes_clogs"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "outerwear": {
+          "catalog": "outerwear",
+          "required": false,
+          "chance": 0.5,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "outer_quilted_jacket",
+            "outer_short_puffer",
+            "outer_fleece_zip",
+            "outer_field_jacket",
+            "outer_peacoat",
+            "outer_twill_shacket",
+            "outer_windbreaker",
+            "outer_longline_jersey_cardigan"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.55,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "accessory_canvas_tote",
+            "accessory_crossbody_bag",
+            "accessory_small_backpack",
+            "accessory_belt_bag",
+            "accessory_baseball_cap",
+            "accessory_knit_beanie",
+            "accessory_cotton_neckerchief",
+            "accessory_wool_scarf"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "luxury"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "casual_midi_dress_dressed",
+          "level": "covered",
+          "visible_slots": [
+            "full_body",
+            "footwear",
+            "outerwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "casual_midi_dress_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "accessories"
+          ],
+          "body_visibility": []
+        }
+      ]
+    },
+    {
+      "id": "template_casual_onepiece_weekend",
+      "catalog_category": "normal",
+      "weight": 1.6,
+      "slots": {
+        "full_body": {
+          "catalog": "full_body",
+          "required": true,
+          "required_tags": [
+            "casual_core",
+            "normal_clothes"
+          ],
+          "allowed_ids": [
+            "dress_fit_flare_midi",
+            "dress_tiered_cotton_midi",
+            "dress_utility_shirt_midi",
+            "dress_shift_midi",
+            "dress_polo_midi",
+            "dress_denim_shirt_midi"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_tags": [
+            "everyday",
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "bra_wireless_full_coverage",
+            "bra_cotton_full_cup",
+            "bra_racerback_everyday",
+            "bra_front_smoothing",
+            "bra_soft_molded_cup"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_tags": [
+            "everyday",
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "panties_seamless_boyshort",
+            "panties_modal_full_brief",
+            "panties_cotton_lace_trim_bikini",
+            "panties_absorbent_cotton_brief"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer",
+            "luxury"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "shoes_high_top_sneakers",
+            "shoes_chunky_sneakers",
+            "shoes_chelsea_boots",
+            "shoes_clogs"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "outerwear": {
+          "catalog": "outerwear",
+          "required": false,
+          "chance": 0.5,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "outer_quilted_jacket",
+            "outer_short_puffer",
+            "outer_fleece_zip",
+            "outer_field_jacket",
+            "outer_peacoat",
+            "outer_twill_shacket",
+            "outer_windbreaker",
+            "outer_longline_jersey_cardigan"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.55,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "accessory_canvas_tote",
+            "accessory_crossbody_bag",
+            "accessory_small_backpack",
+            "accessory_belt_bag",
+            "accessory_baseball_cap",
+            "accessory_knit_beanie",
+            "accessory_cotton_neckerchief",
+            "accessory_wool_scarf"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "luxury"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "casual_onepiece_weekend_dressed",
+          "level": "covered",
+          "visible_slots": [
+            "full_body",
+            "footwear",
+            "outerwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "casual_onepiece_weekend_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "accessories"
+          ],
+          "body_visibility": []
+        }
+      ]
+    },
+    {
+      "id": "template_casual_home_lounge",
+      "catalog_category": "normal",
+      "weight": 1.2,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "top_raglan_jersey",
+            "top_turtleneck_knit",
+            "top_knit_vest",
+            "top_tunic_jersey",
+            "top_quarterzip_fleece"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ],
+          "color_group": "main"
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "lower_linen_drawstring_pants",
+            "lower_track_pants_straight",
+            "lower_knit_wide_leg_pants",
+            "lower_bermuda_shorts"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_tags": [
+            "everyday",
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "bra_wireless_full_coverage",
+            "bra_cotton_full_cup",
+            "bra_racerback_everyday",
+            "bra_front_smoothing",
+            "bra_soft_molded_cup"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_tags": [
+            "everyday",
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "panties_seamless_boyshort",
+            "panties_modal_full_brief",
+            "panties_cotton_lace_trim_bikini",
+            "panties_absorbent_cotton_brief"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer",
+            "luxury"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "shoes_high_top_sneakers",
+            "shoes_chunky_sneakers",
+            "shoes_clogs"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.8,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "legwear_no_show_socks",
+            "legwear_sport_crew_socks",
+            "legwear_thermal_tights",
+            "legwear_cotton_ribbed_tights"
+          ],
+          "required_any_tags": [
+            "socks",
+            "pantyhose"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "leather",
+            "luxury"
+          ]
+        },
+        "outerwear": {
+          "catalog": "outerwear",
+          "required": false,
+          "chance": 0.5,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "outer_quilted_jacket",
+            "outer_short_puffer",
+            "outer_fleece_zip",
+            "outer_field_jacket",
+            "outer_peacoat",
+            "outer_twill_shacket",
+            "outer_windbreaker",
+            "outer_longline_jersey_cardigan"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.35,
+          "required_tags": [
+            "casual_core"
+          ],
+          "allowed_ids": [
+            "accessory_canvas_tote",
+            "accessory_crossbody_bag",
+            "accessory_small_backpack",
+            "accessory_belt_bag",
+            "accessory_baseball_cap",
+            "accessory_knit_beanie",
+            "accessory_cotton_neckerchief",
+            "accessory_wool_scarf"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "luxury"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "casual_home_lounge_dressed",
+          "level": "covered",
+          "visible_slots": [
+            "upperwear",
+            "lowerwear",
+            "legwear",
+            "footwear",
+            "outerwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "casual_home_lounge_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "legwear",
+            "accessories"
+          ],
+          "body_visibility": []
         }
       ]
     }
@@ -18061,7 +21310,1005 @@
       "allowed_levels": [
         "explicit"
       ]
-    }
+    },
+      {
+        "id": "pose_diversity_sfw_01",
+        "prompt": "standing at a relaxed three-quarter angle with her shoulders easy",
+        "tags": [
+          "standing",
+          "fashion"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_01",
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_02",
+        "prompt": "standing naturally with both hands loosely clasped behind her back",
+        "tags": [
+          "standing",
+          "fashion"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_02",
+        "hands_required": 2,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_03",
+        "prompt": "standing casually with both hands resting near her hips",
+        "tags": [
+          "standing",
+          "fashion"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_03",
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_04",
+        "prompt": "standing with one foot placed slightly forward and the toes turned outward",
+        "tags": [
+          "standing",
+          "fashion"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_04",
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_05",
+        "prompt": "standing in a soft side profile with her gaze directed just past the camera",
+        "tags": [
+          "standing",
+          "side_pose",
+          "fashion"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_05",
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_06",
+        "prompt": "taking a small natural step toward the camera with her arms relaxed",
+        "tags": [
+          "standing",
+          "walking",
+          "fashion"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_06",
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_07",
+        "prompt": "mid-step in a gentle side walk with her shoulders turned toward the camera",
+        "tags": [
+          "standing",
+          "walking",
+          "side_pose",
+          "fashion"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_07",
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_08",
+        "prompt": "turning over one shoulder as if responding to someone behind her",
+        "tags": [
+          "standing",
+          "side_pose",
+          "fashion"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_08",
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_09",
+        "prompt": "standing with one arm resting loosely across her waist",
+        "tags": [
+          "standing",
+          "fashion"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_09",
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_10",
+        "prompt": "standing with her fingertips lightly touching the opposite forearm",
+        "tags": [
+          "standing",
+          "fashion"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_10",
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_11",
+        "prompt": "sitting on the edge of a seat with ankles crossed and hands resting in her lap",
+        "tags": [
+          "sitting",
+          "fashion"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_11",
+        "requires_tags": [
+          "sitting_surface"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_12",
+        "prompt": "sitting upright with both feet grounded and her shoulders relaxed",
+        "tags": [
+          "sitting"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_12",
+        "requires_tags": [
+          "sitting_surface"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_13",
+        "prompt": "sitting sideways with one arm resting along the back of the seat",
+        "tags": [
+          "sitting",
+          "side_pose",
+          "fashion"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_13",
+        "requires_tags": [
+          "sitting_surface"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_14",
+        "prompt": "sitting cross-legged on a clean floor with an easy relaxed posture",
+        "tags": [
+          "sitting",
+          "floor_pose"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_14",
+        "requires_tags": [
+          "floor"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_15",
+        "prompt": "sitting on the floor with both legs folded neatly to one side",
+        "tags": [
+          "sitting",
+          "side_pose",
+          "floor_pose"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_15",
+        "requires_tags": [
+          "floor"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_16",
+        "prompt": "kneeling upright with her hands resting comfortably on her thighs",
+        "tags": [
+          "kneeling",
+          "home_pose"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_16",
+        "requires_tags": [
+          "floor"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_17",
+        "prompt": "reclining comfortably along a sofa with her legs together",
+        "tags": [
+          "lying",
+          "home_pose"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_17",
+        "requires_tags": [
+          "sofa"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_18",
+        "prompt": "sitting near the bed edge with both feet on the floor and her shoulders relaxed",
+        "tags": [
+          "sitting",
+          "home_pose"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_18",
+        "requires_tags": [
+          "sitting_surface",
+          "bed"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_19",
+        "prompt": "standing with both arms raised in a gentle side stretch",
+        "tags": [
+          "standing",
+          "fashion"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_19",
+        "hands_required": 2,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_20",
+        "prompt": "reclining on her side with her cheek resting against her upper palm",
+        "tags": [
+          "lying",
+          "side_pose",
+          "home_pose"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_20",
+        "requires_tags": [
+          "lying_surface"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_21",
+        "prompt": "standing beside the window with one shoulder angled toward the light",
+        "tags": [
+          "standing",
+          "fashion"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_21",
+        "requires_tags": [
+          "window"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_sfw_22",
+        "prompt": "standing with one shoulder near the wall and her feet comfortably crossed",
+        "tags": [
+          "standing",
+          "wall",
+          "fashion"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "pose:sfw_22",
+        "requires_tags": [
+          "wall"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "pose_diversity_nsfw_01",
+        "prompt": "standing at a slow three-quarter angle with one shoulder turned toward the camera",
+        "tags": [
+          "standing",
+          "side_pose",
+          "erotic_pose"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:nsfw_01",
+        "weight": 1.15,
+        "allowed_levels": [
+          "lingerie",
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "pose_diversity_nsfw_02",
+        "prompt": "standing against the wall with one hip eased forward and her gaze steady",
+        "tags": [
+          "standing",
+          "wall",
+          "erotic_pose"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:nsfw_02",
+        "requires_tags": [
+          "wall"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "lingerie",
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "pose_diversity_nsfw_03",
+        "prompt": "sitting at the edge of a seat with one knee raised and her torso gently reclined",
+        "tags": [
+          "sitting",
+          "erotic_pose"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:nsfw_03",
+        "requires_tags": [
+          "sitting_surface"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "lingerie",
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "pose_diversity_nsfw_04",
+        "prompt": "reclining on her side with the upper knee drawn high and opened outward",
+        "tags": [
+          "lying",
+          "side_pose",
+          "erotic_pose"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:nsfw_04",
+        "requires_tags": [
+          "lying_surface"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "lingerie",
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "pose_diversity_nsfw_05",
+        "prompt": "lying on her back with her ankles apart and her shoulders softly supported",
+        "tags": [
+          "lying",
+          "erotic_pose"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:nsfw_05",
+        "requires_tags": [
+          "lying_surface"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "lingerie",
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "pose_diversity_nsfw_06",
+        "prompt": "kneeling upright with her hips settled above her heels and her back elongated",
+        "tags": [
+          "kneeling",
+          "erotic_pose"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:nsfw_06",
+        "requires_tags": [
+          "floor"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "lingerie",
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "pose_diversity_nsfw_07",
+        "prompt": "standing with one arm above her head and her torso elongated toward the light",
+        "tags": [
+          "standing",
+          "topless_pose",
+          "erotic_pose"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:nsfw_07",
+        "hands_required": 2,
+        "weight": 1.15,
+        "allowed_levels": [
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "pose_diversity_nsfw_08",
+        "prompt": "standing with both arms lifting her hair as her chest opens toward the camera",
+        "tags": [
+          "standing",
+          "topless_pose",
+          "erotic_pose"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:nsfw_08",
+        "hands_required": 2,
+        "weight": 1.15,
+        "allowed_levels": [
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "pose_diversity_nsfw_09",
+        "prompt": "seated with her knees gently apart and her torso angled toward the camera",
+        "tags": [
+          "sitting",
+          "open_legs",
+          "erotic_pose"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:nsfw_09",
+        "requires_tags": [
+          "sitting_surface"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "pose_diversity_nsfw_10",
+        "prompt": "reclining diagonally with one leg draped over the other and her hips turned toward camera",
+        "tags": [
+          "lying",
+          "side_pose",
+          "erotic_pose"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:nsfw_10",
+        "requires_tags": [
+          "lying_surface"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "lingerie",
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "pose_diversity_nsfw_11",
+        "prompt": "bent forward with one knee softened and her torso turned in profile",
+        "tags": [
+          "standing",
+          "bent_over",
+          "erotic_pose"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:nsfw_11",
+        "weight": 1.15,
+        "allowed_levels": [
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "pose_diversity_nsfw_12",
+        "prompt": "reclining in a bathtub with her shoulders raised above the rim",
+        "tags": [
+          "lying",
+          "wet_pose",
+          "erotic_pose"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:nsfw_12",
+        "requires_tags": [
+          "bathtub"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "lingerie",
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "pose_diversity_explicit_01",
+        "prompt": "standing rear-facing with one shoulder turned back toward the camera",
+        "tags": [
+          "explicit_pose",
+          "provocative_rear",
+          "standing",
+          "side_pose"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:explicit_01",
+        "requires_tags": [
+          "genitals"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "pose_diversity_explicit_02",
+        "prompt": "standing rear-facing with one hand resting along her hip and her weight shifted to one leg",
+        "tags": [
+          "explicit_pose",
+          "provocative_rear",
+          "standing"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:explicit_02",
+        "requires_tags": [
+          "genitals"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "pose_diversity_explicit_03",
+        "prompt": "bent forward with softly bent knees in a deliberate rear-facing pose",
+        "tags": [
+          "explicit_pose",
+          "provocative_rear",
+          "bent_over",
+          "standing"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:explicit_03",
+        "requires_tags": [
+          "genitals"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "pose_diversity_explicit_04",
+        "prompt": "rear-facing with her torso bent diagonally across the frame and her legs apart",
+        "tags": [
+          "explicit_pose",
+          "provocative_rear",
+          "standing",
+          "side_pose"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:explicit_04",
+        "requires_tags": [
+          "genitals"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "pose_diversity_explicit_05",
+        "prompt": "kneeling rear-facing with her spine elongated and hips raised",
+        "tags": [
+          "explicit_pose",
+          "provocative_rear",
+          "kneeling"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:explicit_05",
+        "requires_tags": [
+          "floor",
+          "genitals"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "pose_diversity_explicit_06",
+        "prompt": "on all fours with a low back curve and her hips angled toward the camera",
+        "tags": [
+          "explicit_pose",
+          "provocative_rear",
+          "all_fours"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:explicit_06",
+        "requires_tags": [
+          "lying_surface",
+          "genitals"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "pose_diversity_explicit_07",
+        "prompt": "balanced in a deep rear-facing squat with her knees wide",
+        "tags": [
+          "explicit_pose",
+          "provocative_rear",
+          "squatting"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:explicit_07",
+        "requires_tags": [
+          "floor",
+          "genitals"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "pose_diversity_explicit_08",
+        "prompt": "rear-facing with one foot lifted onto the posing surface and her legs apart",
+        "tags": [
+          "explicit_pose",
+          "provocative_rear",
+          "standing",
+          "open_legs"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:explicit_08",
+        "requires_tags": [
+          "genitals"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "pose_diversity_explicit_09",
+        "prompt": "lying back with one straight leg raised and the other opened outward",
+        "tags": [
+          "explicit_pose",
+          "masturbation_pose",
+          "open_legs",
+          "lying",
+          "legs_up"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:explicit_09",
+        "requires_tags": [
+          "lying_surface",
+          "genitals"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "pose_diversity_explicit_10",
+        "prompt": "lying back with both soles together and knees opened symmetrically",
+        "tags": [
+          "explicit_pose",
+          "masturbation_pose",
+          "open_legs",
+          "lying",
+          "legs_up"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:explicit_10",
+        "requires_tags": [
+          "lying_surface",
+          "genitals"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "pose_diversity_explicit_11",
+        "prompt": "reclining on one side with the upper knee high and the pelvis angled toward camera",
+        "tags": [
+          "explicit_pose",
+          "masturbation_pose",
+          "open_legs",
+          "lying",
+          "side_pose"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:explicit_11",
+        "requires_tags": [
+          "lying_surface",
+          "genitals"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "pose_diversity_explicit_12",
+        "prompt": "reclining on the floor with knees wide and her pelvis gently lifted",
+        "tags": [
+          "explicit_pose",
+          "masturbation_pose",
+          "open_legs",
+          "lying"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:explicit_12",
+        "requires_tags": [
+          "floor",
+          "genitals"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "pose_diversity_explicit_13",
+        "prompt": "sitting at the edge with her hips forward and her knees opened toward the camera",
+        "tags": [
+          "explicit_pose",
+          "masturbation_pose",
+          "open_legs",
+          "sitting"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:explicit_13",
+        "requires_tags": [
+          "sitting_surface",
+          "genitals"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "pose_diversity_explicit_14",
+        "prompt": "kneeling with her knees spread and her torso held upright toward the camera",
+        "tags": [
+          "explicit_pose",
+          "masturbation_pose",
+          "open_legs",
+          "kneeling"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:explicit_14",
+        "requires_tags": [
+          "floor",
+          "genitals"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "pose_diversity_explicit_15",
+        "prompt": "balancing on one straight leg while the other leg opens high beside her torso",
+        "tags": [
+          "explicit_pose",
+          "masturbation_pose",
+          "open_legs",
+          "standing",
+          "one_leg_balance"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:explicit_15",
+        "requires_tags": [
+          "standing",
+          "genitals"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "pose_diversity_explicit_16",
+        "prompt": "tight three-quarter torso close-up emphasizing both exposed breasts",
+        "tags": [
+          "explicit_pose",
+          "intimate_closeup",
+          "breast_focus",
+          "closeup"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:explicit_16",
+        "requires_tags": [
+          "breasts",
+          "nipples"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "pose_diversity_explicit_17",
+        "prompt": "tight overhead torso crop with her exposed breasts turned slightly toward the lens",
+        "tags": [
+          "explicit_pose",
+          "intimate_closeup",
+          "breast_focus",
+          "closeup"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:explicit_17",
+        "requires_tags": [
+          "breasts",
+          "nipples"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "pose_diversity_explicit_18",
+        "prompt": "tight frontal intimate close-up with her legs opened beyond the lower frame",
+        "tags": [
+          "explicit_pose",
+          "intimate_closeup",
+          "open_legs",
+          "closeup"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:explicit_18",
+        "requires_tags": [
+          "genitals"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "pose_diversity_explicit_19",
+        "prompt": "cropped side intimate view with one knee lifted beyond the frame",
+        "tags": [
+          "explicit_pose",
+          "intimate_closeup",
+          "open_legs",
+          "closeup",
+          "side_pose"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:explicit_19",
+        "requires_tags": [
+          "genitals"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "pose_diversity_explicit_20",
+        "prompt": "reclining with her legs open in a hands-only intimate pose",
+        "tags": [
+          "explicit_pose",
+          "masturbation_pose",
+          "open_legs",
+          "lying"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "pose:explicit_20",
+        "requires_tags": [
+          "lying_surface",
+          "genitals"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      }
   ],
   "actions": [
     {
@@ -19754,7 +24001,1147 @@
       "allowed_levels": [
         "covered"
       ]
-    }
+    },
+      {
+        "id": "action_diversity_sfw_01",
+        "prompt": "brushing the back of her hair over one shoulder with a relaxed gesture",
+        "menu_label": "Brushing the back of her hair over one shoulder with a relaxed gesture",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_01",
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_02",
+        "prompt": "smoothing one sleeve from wrist toward the elbow",
+        "menu_label": "Smoothing one sleeve from wrist toward the elbow",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_02",
+        "requires_tags": [
+          "upperwear"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_03",
+        "prompt": "straightening the collar of her top with one hand",
+        "menu_label": "Straightening the collar of her top with one hand",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_03",
+        "requires_any_tags": [
+          "upperwear",
+          "full_body"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_04",
+        "prompt": "settling the hem of her everyday outfit with a light touch",
+        "menu_label": "Settling the hem of her everyday outfit with a light touch",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_04",
+        "requires_any_tags": [
+          "upperwear",
+          "lowerwear",
+          "full_body"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_05",
+        "prompt": "adjusting the strap of a shoulder bag as she settles into the pose",
+        "menu_label": "Adjusting the strap of a shoulder bag as she settles into the pose",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_05",
+        "requires_tags": [
+          "accessories"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_06",
+        "prompt": "letting one hand rest loosely at her side while she looks toward the light",
+        "menu_label": "Letting one hand rest loosely at her side while she looks toward the light",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_06",
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_07",
+        "prompt": "glancing toward the window as if noticing a change in the weather",
+        "menu_label": "Glancing toward the window as if noticing a change in the weather",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_07",
+        "requires_tags": [
+          "window"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_08",
+        "prompt": "turning her shoulders slightly toward the room behind her",
+        "menu_label": "Turning her shoulders slightly toward the room behind her",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_08",
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_09",
+        "prompt": "taking a small step while letting the hem of her outfit move naturally",
+        "menu_label": "Taking a small step while letting the hem of her outfit move naturally",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_09",
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_10",
+        "prompt": "settling into a comfortable stance with her weight on one heel",
+        "menu_label": "Settling into a comfortable stance with her weight on one heel",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_10",
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_11",
+        "prompt": "laughing softly while looking just away from the camera",
+        "menu_label": "Laughing softly while looking just away from the camera",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_11",
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_12",
+        "prompt": "checking the fit of one cuff with a quick downward glance",
+        "menu_label": "Checking the fit of one cuff with a quick downward glance",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_12",
+        "requires_tags": [
+          "upperwear"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_13",
+        "prompt": "brushing a little lint from the front of her shoulder",
+        "menu_label": "Brushing a little lint from the front of her shoulder",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_13",
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_14",
+        "prompt": "resting one hand lightly on the back of a nearby seat",
+        "menu_label": "Resting one hand lightly on the back of a nearby seat",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_14",
+        "requires_any_tags": [
+          "sitting_surface",
+          "chair",
+          "sofa"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_15",
+        "prompt": "reaching toward a windowsill without leaving her relaxed stance",
+        "menu_label": "Reaching toward a windowsill without leaving her relaxed stance",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_15",
+        "requires_tags": [
+          "window"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_16",
+        "prompt": "folding one arm comfortably across her waist",
+        "menu_label": "Folding one arm comfortably across her waist",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_16",
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_17",
+        "prompt": "lifting her chin slightly toward the daylight",
+        "menu_label": "Lifting her chin slightly toward the daylight",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_17",
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_18",
+        "prompt": "adjusting a loose strand near her ear with a small precise gesture",
+        "menu_label": "Adjusting a loose strand near her ear with a small precise gesture",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_18",
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_19",
+        "prompt": "placing both hands behind her back as she listens",
+        "menu_label": "Placing both hands behind her back as she listens",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_19",
+        "hands_required": 2,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_20",
+        "prompt": "brushing her fingertips over the side seam of her trousers",
+        "menu_label": "Brushing her fingertips over the side seam of her trousers",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_20",
+        "requires_any_tags": [
+          "lowerwear",
+          "full_body"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_21",
+        "prompt": "touching the edge of an outer layer as she settles it on her shoulders",
+        "menu_label": "Touching the edge of an outer layer as she settles it on her shoulders",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_21",
+        "requires_tags": [
+          "outerwear"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_sfw_22",
+        "prompt": "looking down briefly while smoothing the front of her skirt",
+        "menu_label": "Looking down briefly while smoothing the front of her skirt",
+        "tags": [
+          "fashion_action"
+        ],
+        "direction_mode": "sfw",
+        "diversity_fingerprint": "action:sfw_22",
+        "requires_any_tags": [
+          "lowerwear",
+          "full_body"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "covered",
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_nsfw_01",
+        "prompt": "tracing one hand slowly from her waist to her hip",
+        "menu_label": "Tracing one hand slowly from her waist to her hip",
+        "tags": [
+          "sensual_action",
+          "erotic_action"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:nsfw_01",
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "lingerie",
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "action_diversity_nsfw_02",
+        "prompt": "tilting her hips toward the camera while holding a steady gaze",
+        "menu_label": "Tilting her hips toward the camera while holding a steady gaze",
+        "tags": [
+          "erotic_action"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:nsfw_02",
+        "weight": 1.15,
+        "allowed_levels": [
+          "lingerie",
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "action_diversity_nsfw_03",
+        "prompt": "sliding one shoulder of her top slightly lower while keeping the lingerie covered",
+        "menu_label": "Sliding one shoulder of her top slightly lower while keeping the lingerie covered",
+        "tags": [
+          "undressing_action",
+          "erotic_action"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:nsfw_03",
+        "requires_tags": [
+          "upperwear"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "lingerie"
+        ]
+      },
+      {
+        "id": "action_diversity_nsfw_04",
+        "prompt": "drawing one finger along the edge of her bra band",
+        "menu_label": "Drawing one finger along the edge of her bra band",
+        "tags": [
+          "erotic_action"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:nsfw_04",
+        "requires_tags": [
+          "bra"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "lingerie",
+          "topless"
+        ]
+      },
+      {
+        "id": "action_diversity_nsfw_05",
+        "prompt": "resting one palm just below a bare breast",
+        "menu_label": "Resting one palm just below a bare breast",
+        "tags": [
+          "erotic_action"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:nsfw_05",
+        "requires_tags": [
+          "breasts"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "action_diversity_nsfw_06",
+        "prompt": "lifting one bare breast slightly with an open palm",
+        "menu_label": "Lifting one bare breast slightly with an open palm",
+        "tags": [
+          "erotic_action"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:nsfw_06",
+        "requires_tags": [
+          "breasts"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "action_diversity_nsfw_07",
+        "prompt": "tracing one hand down her inner thigh while keeping her knees together",
+        "menu_label": "Tracing one hand down her inner thigh while keeping her knees together",
+        "tags": [
+          "erotic_action"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:nsfw_07",
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "lingerie",
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "action_diversity_nsfw_08",
+        "prompt": "parting her knees a little while maintaining a calm gaze",
+        "menu_label": "Parting her knees a little while maintaining a calm gaze",
+        "tags": [
+          "erotic_action"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:nsfw_08",
+        "weight": 1.15,
+        "allowed_levels": [
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "action_diversity_nsfw_09",
+        "prompt": "arching her back gently as she looks over one shoulder",
+        "menu_label": "Arching her back gently as she looks over one shoulder",
+        "tags": [
+          "erotic_action"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:nsfw_09",
+        "weight": 1.15,
+        "allowed_levels": [
+          "lingerie",
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "action_diversity_nsfw_10",
+        "prompt": "turning her torso to show a slow rear-facing curve",
+        "menu_label": "Turning her torso to show a slow rear-facing curve",
+        "tags": [
+          "erotic_action"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:nsfw_10",
+        "weight": 1.15,
+        "allowed_levels": [
+          "lingerie",
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "action_diversity_nsfw_11",
+        "prompt": "unfastening one closure of her everyday top",
+        "menu_label": "Unfastening one closure of her everyday top",
+        "tags": [
+          "undressing_action",
+          "erotic_action"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:nsfw_11",
+        "requires_tags": [
+          "upperwear"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "lingerie",
+          "topless"
+        ]
+      },
+      {
+        "id": "action_diversity_nsfw_12",
+        "prompt": "sliding the waistband of her lower layer slightly down her hip",
+        "menu_label": "Sliding the waistband of her lower layer slightly down her hip",
+        "tags": [
+          "undressing_action",
+          "erotic_action"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:nsfw_12",
+        "requires_any_tags": [
+          "lowerwear",
+          "panties"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "topless"
+        ]
+      },
+      {
+        "id": "action_diversity_nsfw_13",
+        "prompt": "drawing a soft sheet around her lower body",
+        "menu_label": "Drawing a soft sheet around her lower body",
+        "tags": [
+          "erotic_action"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:nsfw_13",
+        "requires_tags": [
+          "lying_surface"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "action_diversity_nsfw_14",
+        "prompt": "holding one thigh up with both hands while keeping her torso open to the camera",
+        "menu_label": "Holding one thigh up with both hands while keeping her torso open to the camera",
+        "tags": [
+          "erotic_action"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:nsfw_14",
+        "hands_required": 2,
+        "weight": 1.15,
+        "allowed_levels": [
+          "topless",
+          "nude"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_01",
+        "prompt": "placing one hand along her hip while holding a direct rear-facing arch",
+        "menu_label": "Placing one hand along her hip while holding a direct rear-facing arch",
+        "tags": [
+          "explicit_action",
+          "provocative_action",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_01",
+        "requires_tags": [
+          "provocative_rear"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_02",
+        "prompt": "looking back over her shoulder while shifting her weight from one leg to the other in a rear display",
+        "menu_label": "Looking back over her shoulder while shifting her weight from one leg to the other in a rear display",
+        "tags": [
+          "explicit_action",
+          "provocative_action",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_02",
+        "requires_tags": [
+          "provocative_rear"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_03",
+        "prompt": "drawing one arm across her waist during a rear-facing presentation",
+        "menu_label": "Drawing one arm across her waist during a rear-facing presentation",
+        "tags": [
+          "explicit_action",
+          "provocative_action",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_03",
+        "requires_tags": [
+          "provocative_rear"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_04",
+        "prompt": "lifting one heel and deepening the rear-facing arch",
+        "menu_label": "Lifting one heel and deepening the rear-facing arch",
+        "tags": [
+          "explicit_action",
+          "provocative_action",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_04",
+        "requires_tags": [
+          "provocative_rear"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_05",
+        "prompt": "settling into a low rear-facing kneel with her hips raised",
+        "menu_label": "Settling into a low rear-facing kneel with her hips raised",
+        "tags": [
+          "explicit_action",
+          "provocative_action",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_05",
+        "requires_tags": [
+          "provocative_rear"
+        ],
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_06",
+        "prompt": "holding one exposed breast from below while turning her torso toward the lens",
+        "menu_label": "Holding one exposed breast from below while turning her torso toward the lens",
+        "tags": [
+          "explicit_action",
+          "closeup_action",
+          "breast_focus",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_06",
+        "requires_tags": [
+          "breasts",
+          "nipples"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_07",
+        "prompt": "framing the upper edge of both exposed breasts with her hands for the close-up",
+        "menu_label": "Framing the upper edge of both exposed breasts with her hands for the close-up",
+        "tags": [
+          "explicit_action",
+          "closeup_action",
+          "breast_focus",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_07",
+        "requires_tags": [
+          "breasts",
+          "nipples"
+        ],
+        "hands_required": 2,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_08",
+        "prompt": "drawing a fingertip around one exposed nipple while facing the camera",
+        "menu_label": "Drawing a fingertip around one exposed nipple while facing the camera",
+        "tags": [
+          "explicit_action",
+          "closeup_action",
+          "breast_focus",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_08",
+        "requires_tags": [
+          "breasts",
+          "nipples"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_09",
+        "prompt": "compressing the lower curves of both exposed breasts inward for a tight crop",
+        "menu_label": "Compressing the lower curves of both exposed breasts inward for a tight crop",
+        "tags": [
+          "explicit_action",
+          "closeup_action",
+          "breast_focus",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_09",
+        "requires_tags": [
+          "breasts",
+          "nipples"
+        ],
+        "hands_required": 2,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_10",
+        "prompt": "turning one bare breast toward the side camera with her shoulder lowered",
+        "menu_label": "Turning one bare breast toward the side camera with her shoulder lowered",
+        "tags": [
+          "explicit_action",
+          "closeup_action",
+          "breast_focus",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_10",
+        "requires_tags": [
+          "breasts",
+          "nipples"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_11",
+        "prompt": "holding her inner thighs open with a steady nonpenetrative pose for the close-up",
+        "menu_label": "Holding her inner thighs open with a steady nonpenetrative pose for the close-up",
+        "tags": [
+          "explicit_action",
+          "closeup_action",
+          "explicit",
+          "nonpenetrative"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_11",
+        "requires_tags": [
+          "genitals",
+          "open_legs"
+        ],
+        "hands_required": 2,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_12",
+        "prompt": "placing both hands along her inner thighs to frame the exposed anatomy",
+        "menu_label": "Placing both hands along her inner thighs to frame the exposed anatomy",
+        "tags": [
+          "explicit_action",
+          "closeup_action",
+          "explicit",
+          "nonpenetrative"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_12",
+        "requires_tags": [
+          "genitals",
+          "open_legs"
+        ],
+        "hands_required": 2,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_13",
+        "prompt": "tracing a fingertip around the outer edge of her exposed vulva for the camera",
+        "menu_label": "Tracing a fingertip around the outer edge of her exposed vulva for the camera",
+        "tags": [
+          "explicit_action",
+          "closeup_action",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_13",
+        "requires_tags": [
+          "genitals",
+          "open_legs"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_14",
+        "prompt": "holding the exposed vulva open with one hand for a steady detail frame",
+        "menu_label": "Holding the exposed vulva open with one hand for a steady detail frame",
+        "tags": [
+          "explicit_action",
+          "closeup_action",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_14",
+        "requires_tags": [
+          "genitals",
+          "open_legs"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_15",
+        "prompt": "rubbing her exposed clitoris with one fingertip while keeping her thighs spread",
+        "menu_label": "Rubbing her exposed clitoris with one fingertip while keeping her thighs spread",
+        "tags": [
+          "explicit_action",
+          "masturbation_action",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_15",
+        "requires_tags": [
+          "genitals",
+          "open_legs"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_16",
+        "prompt": "using two fingers in a slow vertical motion over her exposed clitoris",
+        "menu_label": "Using two fingers in a slow vertical motion over her exposed clitoris",
+        "tags": [
+          "explicit_action",
+          "masturbation_action",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_16",
+        "requires_tags": [
+          "genitals",
+          "open_legs"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_17",
+        "prompt": "pressing her palm over her exposed vulva while her pelvis lifts",
+        "menu_label": "Pressing her palm over her exposed vulva while her pelvis lifts",
+        "tags": [
+          "explicit_action",
+          "masturbation_action",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_17",
+        "requires_tags": [
+          "genitals",
+          "open_legs"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_18",
+        "prompt": "alternating between a slow circular rub and a pause for the camera",
+        "menu_label": "Alternating between a slow circular rub and a pause for the camera",
+        "tags": [
+          "explicit_action",
+          "masturbation_action",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_18",
+        "requires_tags": [
+          "genitals",
+          "open_legs"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_19",
+        "prompt": "reaching between her thighs from a reclined side position and continuing one-handed stimulation",
+        "menu_label": "Reaching between her thighs from a reclined side position and continuing one-handed stimulation",
+        "tags": [
+          "explicit_action",
+          "masturbation_action",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_19",
+        "requires_tags": [
+          "genitals",
+          "open_legs"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_20",
+        "prompt": "holding one knee outward while the other hand continues visible stimulation",
+        "menu_label": "Holding one knee outward while the other hand continues visible stimulation",
+        "tags": [
+          "explicit_action",
+          "masturbation_action",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_20",
+        "requires_tags": [
+          "genitals",
+          "open_legs"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_21",
+        "prompt": "slowly inserting two fingers while maintaining the open-leg pose",
+        "menu_label": "Slowly inserting two fingers while maintaining the open-leg pose",
+        "tags": [
+          "explicit_action",
+          "masturbation_action",
+          "insertion_action",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_21",
+        "requires_tags": [
+          "genitals",
+          "open_legs"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_22",
+        "prompt": "withdrawing and reinserting two fingers in a deliberate steady rhythm",
+        "menu_label": "Withdrawing and reinserting two fingers in a deliberate steady rhythm",
+        "tags": [
+          "explicit_action",
+          "masturbation_action",
+          "insertion_action",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_22",
+        "requires_tags": [
+          "genitals",
+          "open_legs"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_23",
+        "prompt": "drawing the front of her panties aside with two fingers to expose her vulva",
+        "menu_label": "Drawing the front of her panties aside with two fingers to expose her vulva",
+        "tags": [
+          "explicit_action",
+          "panties_aside_action",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_23",
+        "requires_tags": [
+          "panties",
+          "genitals",
+          "open_legs"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      },
+      {
+        "id": "action_diversity_explicit_24",
+        "prompt": "holding the side of her panties away while turning her hips toward the close camera",
+        "menu_label": "Holding the side of her panties away while turning her hips toward the close camera",
+        "tags": [
+          "explicit_action",
+          "panties_aside_action",
+          "explicit"
+        ],
+        "direction_mode": "nsfw",
+        "diversity_fingerprint": "action:explicit_24",
+        "requires_tags": [
+          "panties",
+          "genitals",
+          "open_legs"
+        ],
+        "hands_required": 1,
+        "weight": 1.15,
+        "allowed_levels": [
+          "explicit"
+        ]
+      }
   ],
   "props": [
     {
