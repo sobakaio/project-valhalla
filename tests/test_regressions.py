@@ -3221,6 +3221,7 @@ class FrontendContractTests(unittest.TestCase):
         root = Path(app.__file__).parent
         html = (root / "client" / "client.html").read_text(encoding="utf-8")
         js = (root / "client" / "client.js").read_text(encoding="utf-8")
+        css = (root / "client" / "client.css").read_text(encoding="utf-8")
         self.assertIn('id="image-true-fullscreen"', html)
         self.assertIn('id="image-viewer-shell"', html)
         self.assertIn('id="image-slideshow-toggle"', html)
@@ -3246,6 +3247,12 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("setFallbackFullscreen(true)", js)
         self.assertIn("event.code === 'Space' && !event.repeat && !isEditing", js)
         self.assertIn("toggleSlideshow();", js)
+        self.assertIn("function fitPreviewMedia()", js)
+        self.assertIn("video.videoWidth", js)
+        self.assertIn("video.style.removeProperty('height')", js)
+        self.assertIn(".image-stage video { position: absolute; left: 50%; top: 50%;", css)
+        self.assertIn("width: auto; height: auto; max-width: none; max-height: none;", css)
+        self.assertIn("background: transparent", css)
 
     def test_lightbox_supports_touch_pinch_zoom(self):
         root = Path(app.__file__).parent
@@ -3377,7 +3384,7 @@ class FrontendContractTests(unittest.TestCase):
         js = (Path(app.__file__).parent / "client" / "client.js").read_text(encoding="utf-8")
         self.assertIn("sessionStorage.getItem('valhalla-preview-fit') !== 'false'", js)
         self.assertIn("(max-width: 560px) and (orientation: portrait)", js)
-        self.assertIn("stageHeight / image.naturalHeight", js)
+        self.assertIn("stageHeight / mediaHeight", js)
 
     def test_output_gallery_virtualizes_rows_with_bounded_overscan(self):
         root = Path(app.__file__).parent

@@ -2101,23 +2101,34 @@ function unloadViewerVideo() {
   video.removeAttribute('src');
   video.load();
   video.removeAttribute('data-output-key');
+  video.style.removeProperty('width');
+  video.style.removeProperty('height');
 }
 
 state.previewZoom = Math.min(300, Math.max(25, Number(state.previewZoom) || 100));
-function fitPreviewImage() {
+function fitPreviewMedia() {
   const image = $('#image-viewer-image');
+  const video = $('#image-viewer-video');
   const stage = $('.image-stage');
   const stageWidth = stage.clientWidth;
   const stageHeight = stage.clientHeight;
-  if (!image.naturalWidth || !image.naturalHeight || !stageWidth || !stageHeight) return;
+  const videoActive = !video.classList.contains('hidden') && video.videoWidth && video.videoHeight;
+  const mediaWidth = videoActive ? video.videoWidth : image.naturalWidth;
+  const mediaHeight = videoActive ? video.videoHeight : image.naturalHeight;
+  if (!mediaWidth || !mediaHeight || !stageWidth || !stageHeight) return;
   const mobilePortrait = window.matchMedia('(max-width: 560px) and (orientation: portrait)').matches;
   const scale = state.previewFit
     ? (mobilePortrait
-      ? stageHeight / image.naturalHeight
-      : Math.min(stageWidth / image.naturalWidth, stageHeight / image.naturalHeight))
+      ? stageHeight / mediaHeight
+      : Math.min(stageWidth / mediaWidth, stageHeight / mediaHeight))
     : state.previewZoom / 100;
-  image.style.width = `${Math.round(image.naturalWidth * scale)}px`;
-  image.style.height = `${Math.round(image.naturalHeight * scale)}px`;
+  const media = videoActive ? video : image;
+  media.style.width = `${Math.round(mediaWidth * scale)}px`;
+  media.style.height = `${Math.round(mediaHeight * scale)}px`;
+  if (videoActive) {
+    stage.classList.remove('pannable');
+    return;
+  }
   applyPreviewPan();
 }
 
@@ -2126,7 +2137,7 @@ function setPreviewZoom(value) {
   state.previewFit = false;
   persistPreviewScale();
   syncPreviewScaleControls();
-  fitPreviewImage();
+  fitPreviewMedia();
 }
 
 function setPreviewFit(value) {
@@ -2134,7 +2145,7 @@ function setPreviewFit(value) {
   if (!state.previewFit) state.previewZoom = 100;
   persistPreviewScale();
   syncPreviewScaleControls();
-  fitPreviewImage();
+  fitPreviewMedia();
 }
 
 function showPreview(index) {
@@ -2173,6 +2184,7 @@ function showPreview(index) {
   video.style.display = videoOutput && !state.privacyCovered ? '' : 'none';
   if (videoOutput) video.dataset.outputKey = outputIdentity(item);
   video.onloadedmetadata = () => {
+    fitPreviewMedia();
     if (videoOutput && !state.privacyCovered) video.play().catch(() => {});
   };
   if (videoOutput && !state.privacyCovered) video.play().catch(() => {});
@@ -2192,7 +2204,7 @@ function openPreview(index) {
   showPreview(index);
   if (!imageDialog.open) imageDialog.showModal();
   syncJobDockLayer();
-  requestAnimationFrame(fitPreviewImage);
+  requestAnimationFrame(fitPreviewMedia);
 }
 
 function savedVideoDuration() {
@@ -2352,7 +2364,7 @@ function setFallbackFullscreen(active) {
   syncTrueFullscreenControl();
   if (active) showFullscreenControls();
   else showFullscreenControls({ autoHide: false });
-  requestAnimationFrame(fitPreviewImage);
+  requestAnimationFrame(fitPreviewMedia);
 }
 
 function hideFullscreenControls() {
@@ -2509,7 +2521,7 @@ document.addEventListener('fullscreenchange', () => {
   syncTrueFullscreenControl();
   if (document.fullscreenElement === $('#image-viewer-shell')) showFullscreenControls();
   else showFullscreenControls({ autoHide: false });
-  if (imageDialog.open) requestAnimationFrame(fitPreviewImage);
+  if (imageDialog.open) requestAnimationFrame(fitPreviewMedia);
 });
 syncTrueFullscreenControl();
 $('#image-viewer-shell').addEventListener('pointermove', (event) => {
@@ -2519,9 +2531,9 @@ $('#image-viewer-shell').addEventListener('pointermove', (event) => {
 $('.image-viewer-bar').addEventListener('pointermove', () => {
   if (isViewerFullscreen()) showFullscreenControls();
 });
-$('#image-viewer-image').addEventListener('load', fitPreviewImage);
+$('#image-viewer-image').addEventListener('load', fitPreviewMedia);
 window.addEventListener('resize', () => {
-  if (imageDialog.open) fitPreviewImage();
+  if (imageDialog.open) fitPreviewMedia();
 });
 
 outputGrid.addEventListener('keydown', (event) => {

@@ -2,7 +2,7 @@
   "UNETLoader": {
     "class_type": "UNETLoader",
     "inputs": {
-      "unet_name": "cielbleuZIT_v2.safetensors",
+      "unet_name": "cielbleuZIT_v2_pruned_bf16.safetensors",
       "weight_dtype": "default"
     }
   },
