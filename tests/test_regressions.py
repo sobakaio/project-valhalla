@@ -3079,9 +3079,9 @@ class FrontendContractTests(unittest.TestCase):
         html = (Path(app.__file__).parent / "client" / "client.html").read_text(
             encoding="utf-8"
         )
-        self.assertEqual(app.APP_VERSION, "1.5.3")
-        self.assertEqual(app.ValhallaHandler.server_version, "Valhalla/1.5.3")
-        self.assertIn('<span class="version">v1.5.3</span>', html)
+        self.assertEqual(app.APP_VERSION, "1.6.0")
+        self.assertEqual(app.ValhallaHandler.server_version, "Valhalla/1.6.0")
+        self.assertIn('<span class="version">v1.6.0</span>', html)
 
     def test_primary_workspace_names_and_headers_use_photography_terms(self):
         root = Path(app.__file__).parent

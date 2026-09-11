@@ -67,6 +67,7 @@ const state = {
     ? 'preview'
     : 'production',
   previewIndex: 0,
+  previewOutputIndexes: null,
   previewZoom: Number(sessionStorage.getItem('valhalla-preview-zoom')) || 100,
   previewFit: sessionStorage.getItem('valhalla-preview-fit') !== 'false',
   previewPanX: 0,
@@ -310,12 +311,7 @@ function videoGroups() {
     groups.get(key).items.push(entry);
   });
   state.pendingGroups.filter((group) => group.generation_mode === 'video').forEach((pendingGroup) => {
-    const key = pendingGroup.source_key || pendingGroup.group_key;
-    const existing = groups.get(key);
-    if (existing) {
-      existing.pendingGroup = pendingGroup;
-      return;
-    }
+    const key = `pending:${pendingGroup.group_key}`;
     groups.set(key, {
       key,
       identity: {
@@ -488,6 +484,11 @@ function displayedOutputs() {
 }
 
 function previewOutputs() {
+  if (Array.isArray(state.previewOutputIndexes)) {
+    return state.previewOutputIndexes
+      .map((outputIndex) => ({ item: state.outputs[outputIndex], outputIndex }))
+      .filter(({ item }) => item && !item.pending);
+  }
   const items = activePhotoshootGroup()?.items || galleryMediaItems();
   return items.filter(({ item }) => !item.pending);
 }
@@ -1241,11 +1242,19 @@ function renderLoggerImage(prompt) {
   if (url) {
     if (isVideo) {
       image.removeAttribute('src');
-      if (video.getAttribute('src') !== url) video.src = url;
-      video.load();
+      const output = state.outputs.find((item) => item.url === url);
+      video.poster = output?.thumbnail_url || '';
+      if (video.getAttribute('src') !== url) {
+        video.src = url;
+        video.load();
+      }
     } else {
       video.pause();
-      video.removeAttribute('src');
+      if (video.hasAttribute('src')) {
+        video.removeAttribute('src');
+        video.load();
+      }
+      video.removeAttribute('poster');
       if (image.getAttribute('src') !== url) image.src = url;
       image.alt = `Rendered shot ${prompt.shot || ''}`.trim();
     }
@@ -1638,6 +1647,7 @@ function resolveDeletion(value) {
 async function deleteOutput(index) {
   const item = state.outputs[index];
   if (!item || item.pending) return;
+  const isolatedPreview = Array.isArray(state.previewOutputIndexes);
   const previewScope = imageDialog.open ? previewOutputs() : [];
   const previewPosition = previewScope.findIndex((entry) => entry.outputIndex === index);
   const confirmed = await confirmDeletion(
@@ -1654,7 +1664,7 @@ async function deleteOutput(index) {
     renderOutputs();
     if (imageDialog.open) {
       const remainingScope = previewOutputs();
-      if (!remainingScope.length || (state.galleryView === 'photoshoots' && !state.galleryGroup)) {
+      if (!remainingScope.length || isolatedPreview || (state.galleryView === 'photoshoots' && !state.galleryGroup)) {
         imageDialog.close();
       } else {
         const next = remainingScope[Math.min(Math.max(0, previewPosition), remainingScope.length - 1)];
@@ -1926,15 +1936,19 @@ setInterval(refreshPendingCountdowns, 1000);
 function photoshootCardHtml(group, index) {
   const representative = group.items[0]?.item
     || pendingOutput(group.pendingGroup, 0);
+  const videoGroup = group.identity?.kind === 'video';
   const title = group.identity?.kind === 'photoshoot'
     ? `Photoshoot ${group.displayNumber}`
     : (group.identity?.kind === 'random'
       ? `Random ${group.displayNumber}`
-      : (group.identity?.kind === 'video' ? `From ${group.identity.run}` : 'Ungrouped'));
+      : (videoGroup ? 'Motion' : 'Ungrouped'));
   const tier = tierTitle(group.identity?.tier || representative.render_tier);
-  const run = group.identity?.kind === 'video'
-    ? 'Linked video renders' : (group.identity ? formatOutputRun(group.identity.run) : 'Files without photoshoot naming');
-  const runTitle = group.identity ? `Render ID: ${group.identity.run}` : '';
+  const run = videoGroup
+    ? `From ${group.identity.source_image || 'source image'}`
+    : (group.identity ? formatOutputRun(group.identity.run) : 'Files without photoshoot naming');
+  const runTitle = videoGroup
+    ? `Source image: ${group.identity.source_image || 'unknown'}`
+    : (group.identity ? `Render ID: ${group.identity.run}` : '');
   const pendingGroup = group.pendingGroup;
   const completionDeadline = pendingGroup?.group_eta_seconds != null
     ? new Date(pendingGroup.observed_at).getTime() + Number(pendingGroup.group_eta_seconds) * 1000
@@ -1948,10 +1962,12 @@ function photoshootCardHtml(group, index) {
   const visual = representative.pending
     ? `<div class="render-placeholder"><span>${escapeHtml(title)}</span><em>${escapeHtml(tier)}</em><small${pendingDeadlineAttribute}>${escapeHtml(pendingStatus)}</small></div>`
     : state.privacyCovered
-    ? '<div class="privacy-placeholder" aria-label="Image hidden by privacy cover"></div>'
-    : `<img src="${encodeURI(representative.thumbnail_url || representative.url)}" alt="${escapeHtml(title)} representative frame" loading="lazy" decoding="async">`;
+    ? '<div class="privacy-placeholder" aria-label="Media hidden by privacy cover"></div>'
+    : videoGroup
+      ? `<div class="video-thumb"><img src="${encodeURI(representative.thumbnail_url || representative.url)}" alt="${escapeHtml(title)} thumbnail" loading="lazy" decoding="async"><span aria-hidden="true">▶</span></div>`
+      : `<img src="${encodeURI(representative.thumbnail_url || representative.url)}" alt="${escapeHtml(title)} representative frame" loading="lazy" decoding="async">`;
   const footer = representative.pending
-    ? `<footer><span>${groupEntryCount(group)} frames</span></footer>`
+    ? `<footer><span>${groupEntryCount(group)} ${videoGroup ? 'videos' : 'frames'}</span></footer>`
     : `<footer><span title="${escapeHtml(runTitle)}"><strong>${escapeHtml(title)}</strong><br>${escapeHtml(tier)} · ${pendingGroup ? `<span${pendingDeadlineAttribute}>${escapeHtml(pendingStatus)}</span>` : escapeHtml(run)}</span><span class="photoshoot-count">${groupEntryCount(group)}</span></footer>`;
   return `<article class="output-card photoshoot-card" data-group-key="${escapeHtml(group.key)}" data-group-index="${index}" tabindex="0" role="button"
     aria-label="Open ${escapeHtml(title)}, ${groupEntryCount(group)} ${group.identity?.kind === 'video' ? 'videos' : 'images'}">
@@ -2247,6 +2263,7 @@ function showPreview(index) {
 }
 
 function openPreview(index) {
+  state.previewOutputIndexes = null;
   showPreview(index);
   if (!imageDialog.open) imageDialog.showModal();
   syncJobDockLayer();
@@ -2606,7 +2623,11 @@ outputGrid.addEventListener('keydown', (event) => {
   }[event.key];
   if (movement == null) return;
   event.preventDefault();
-  focusOutputCard(Math.max(0, Math.min(state.outputs.length - 1, index + movement)));
+  const entries = displayedOutputs().filter((entry) => !entry.item.pending);
+  const position = entries.findIndex((entry) => entry.outputIndex === index);
+  if (position < 0) return;
+  const next = entries[Math.max(0, Math.min(entries.length - 1, position + movement))];
+  if (next) focusOutputCard(next.outputIndex);
 });
 
 $$('#gallery-view-toggle button').forEach((button) => {
@@ -2619,8 +2640,8 @@ $('#gallery-size-larger').addEventListener('click', () => setGalleryCardSize(sta
 $('#gallery-size-reset').addEventListener('click', () => setGalleryCardSize(GALLERY_CARD_DEFAULT));
 window.addEventListener('wheel', (event) => {
   if (!(event.ctrlKey || event.metaKey)) return;
-  event.preventDefault();
   if (!outputGrid.contains(event.target)) return;
+  event.preventDefault();
   const direction = event.deltaY < 0 ? 10 : -10;
   pendingGalleryCardSize = (pendingGalleryCardSize ?? state.galleryCardSize) + direction;
   if (gallerySizeFrame != null) return;
@@ -2647,6 +2668,7 @@ imageDialog.addEventListener('close', () => {
   stopSlideshow();
   unloadViewerVideo();
   state.videoSource = null;
+  state.previewOutputIndexes = null;
   showFullscreenControls({ autoHide: false });
   if (document.fullscreenElement === $('#image-viewer-shell')) document.exitFullscreen().catch(() => {});
   setFallbackFullscreen(false);
@@ -3236,7 +3258,11 @@ function openLogbookImagePreview(prompt) {
   const mediaUrl = prompt.video_url || prompt.image_url;
   const outputIndex = state.outputs.findIndex((item) => item.url === mediaUrl);
   if (outputIndex >= 0) {
-    openPreview(outputIndex);
+    state.previewOutputIndexes = [outputIndex];
+    showPreview(outputIndex);
+    if (!imageDialog.open) imageDialog.showModal();
+    syncJobDockLayer();
+    requestAnimationFrame(fitPreviewMedia);
     return;
   }
   if (!prompt.image_url) return;
@@ -3473,16 +3499,23 @@ function setProfileMedia(media) {
   else loadWorkflowProfileMedia(next, { candidate: true });
 }
 
+const workflowProfileRequest = { image: 0, video: 0 };
 async function loadWorkflowProfileMedia(media, { candidate = false } = {}) {
   const next = media === 'video' ? 'video' : 'image';
+  const request = ++workflowProfileRequest[next];
   try {
     const profiles = await api(`/api/workflow/profiles?media=${next}`);
+    if (request !== workflowProfileRequest[next]) return;
     renderWorkflowProfiles(profiles, next);
   } catch (error) {
-    if (next === state.profileMedia) $('#capture-candidate-status').textContent = error.message;
+    if (request === workflowProfileRequest[next] && next === state.profileMedia) {
+      $('#capture-candidate-status').textContent = error.message;
+    }
     return;
   }
-  if (candidate && next === state.profileMedia) await loadWorkflowCaptureCandidate(next);
+  if (candidate && request === workflowProfileRequest[next] && next === state.profileMedia) {
+    await loadWorkflowCaptureCandidate(next);
+  }
 }
 
 let captureCandidateRequest = 0;
@@ -3538,6 +3571,7 @@ async function manageWorkflowProfile(button) {
         ? { method: 'POST', body: JSON.stringify({ name }) }
         : { method: 'DELETE' },
     );
+    workflowProfileRequest[media] += 1;
     renderWorkflowProfiles(profiles, media);
     refreshStatus();
   } catch (error) {
@@ -3558,13 +3592,13 @@ async function openWorkflowProfiles() {
   await loadWorkflowCaptureCandidate(state.profileMedia);
 }
 
-let workflowSettingsSaving = false;
+const workflowSettingsSaving = new Set();
 
 async function saveWorkflowProfileSelection(media = state.profileMedia) {
   const next = typeof media === 'string' ? media : state.profileMedia;
   const controls = profileControls(next);
-  if (workflowSettingsSaving) return;
-  workflowSettingsSaving = true;
+  if (workflowSettingsSaving.has(next)) return;
+  workflowSettingsSaving.add(next);
   [controls.source, controls.production, controls.preview].filter(Boolean)
     .forEach((control) => { control.disabled = true; });
   try {
@@ -3582,17 +3616,16 @@ async function saveWorkflowProfileSelection(media = state.profileMedia) {
         media: 'image',
       }),
     });
+    workflowProfileRequest[next] += 1;
     renderWorkflowProfiles(profiles, next);
     refreshStatus();
   } catch (error) {
     toast('Could not select profiles', error.message, 'error');
     try {
-      renderWorkflowProfiles(
-        await api(`/api/workflow/profiles?media=${next}`), next,
-      );
+      await loadWorkflowProfileMedia(next);
     } catch { /* keep original error */ }
   } finally {
-    workflowSettingsSaving = false;
+    workflowSettingsSaving.delete(next);
     syncProfileControls(next);
   }
 }

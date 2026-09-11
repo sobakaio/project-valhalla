@@ -456,6 +456,8 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: .42; }
 .output-card footer { position: absolute; inset: auto 0 0; padding: 35px 11px 10px; display: flex; justify-content: space-between; align-items: end; color: white; background: linear-gradient(transparent, rgb(0 0 0 / 70%)); font-size: 0.625rem; }
 .output-card a { text-decoration: none; }
 .source-image { display: block; max-width: 132px; overflow: hidden; color: rgb(255 255 255 / 72%); text-overflow: ellipsis; white-space: nowrap; }
+.photoshoot-card footer > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.photoshoot-card footer strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .output-card.photoshoot-card { cursor: pointer; }
 .output-card.pending-output { cursor: default; border-color: color-mix(in srgb, var(--line-strong) 70%, transparent); }
 .render-placeholder { width: 100%; height: 100%; display: grid; place-content: center; justify-items: center; gap: 7px; padding: 18px; text-align: center; color: var(--muted); background: linear-gradient(155deg, color-mix(in srgb, var(--surface-3) 92%, var(--brand-soft)), var(--surface-2)); }

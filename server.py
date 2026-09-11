@@ -31,7 +31,7 @@ class AppError(RuntimeError):
     """An expected, user-facing application error."""
 
 
-APP_VERSION = "1.5.3"
+APP_VERSION = "1.6.0"
 MEDIA_TYPES = {"image", "video"}
 
 
@@ -7912,8 +7912,8 @@ class WebState:
             shot_outputs = []
             for path in paths:
                 published = output_payload(path)
-                source_key = published.get("source_key") or source.get("source_key")
-                source_image = published.get("source_image") or source.get("source_image") or source["name"]
+                source_key = source.get("source_key") or published.get("source_key")
+                source_image = source.get("name") or source.get("source_image") or published.get("source_image")
                 published.update(
                     prompt_id=prompt_id, media_type="video", generation_mode="video",
                     render_tier="production", group_index=1,
