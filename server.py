@@ -31,7 +31,7 @@ class AppError(RuntimeError):
     """An expected, user-facing application error."""
 
 
-APP_VERSION = "1.6.0"
+APP_VERSION = "1.6.1"
 MEDIA_TYPES = {"image", "video"}
 UI_SEED_MIN = 100_000_000_000_000
 UI_SEED_MAX = 999_999_999_999_999
@@ -3507,16 +3507,43 @@ def prompt_lint(scene: dict[str, Any], positive: str) -> list[str]:
         warnings.append("Prompt claims cross-frame model memory")
     if scene["stage"]["level"] == "covered" and any(term in folded for term in ("fully nude", "exposed genitals")):
         warnings.append("Covered stage contains exposed-content wording")
-    coverage_anchors = {"covered": "fully opaque"}
-    if (
+    expected_anchors: tuple[str, ...] = ()
+    if scene["stage"].get("visual_category") == "dressed_panties_reveal":
+        expected_anchors = (
+            "fully dressed in the coordinated outer outfit",
+            "fully opaque",
+            "complete chest-covering layer",
+        )
+    elif scene["stage"]["level"] == "covered":
+        expected_anchors = ("fully opaque", "complete chest-covering layer")
+    elif (
         scene["stage"]["level"] == "lingerie"
         and not ({"breasts", "nipples"} & set(
             scene["stage"].get("body_visibility", [])
         ))
     ):
-        coverage_anchors["lingerie"] = "one fully opaque chest-covering lingerie garment"
-    expected_anchor = coverage_anchors.get(scene["stage"]["level"])
-    if expected_anchor and expected_anchor not in folded:
+        visible_outer_chest = [
+            scene["outfit"]["garments"][slot]
+            for slot in ("upperwear", "full_body", "outerwear")
+            if slot in scene["stage"].get("visible_slots", [])
+            and slot in scene["outfit"]["garments"]
+        ]
+        layered_sheer_chest = any(
+            tags(item) & {"sheer", "transparent"}
+            for item in visible_outer_chest
+        )
+        if visible_outer_chest:
+            expected_anchors = (
+                "one sheer upper-body garment worn as the outer layer over one coordinated distinct bra underneath"
+                if layered_sheer_chest else
+                "one fully opaque upper-body garment as the visible chest layer",
+            )
+        else:
+            expected_anchors = (
+                "one intact sheer chest-covering lingerie garment",
+                "one fully opaque chest-covering lingerie garment",
+            )
+    if expected_anchors and not any(anchor in folded for anchor in expected_anchors):
         warnings.append("Clothing coverage contract is missing")
     for slot in scene["stage"].get("visible_slots", []):
         garment = scene["outfit"]["garments"].get(slot)

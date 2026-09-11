@@ -13,12 +13,12 @@
   <div class="app-shell">
     <aside class="sidebar">
       <a class="brand" href="/" aria-label="Valhalla Photo Studio home">
-        <span><strong>Valhalla</strong><small>Photo Studio</small></span>
+        <span><strong>Valhalla</strong><small>Photo Studio <span class="brand-version">1.6.1</span></small></span>
       </a>
 
       <nav class="primary-nav" aria-label="Primary navigation">
-        <button class="nav-item active" data-view="studio"><span class="nav-icon">✦</span><span>Studio</span></button>
-        <button class="nav-item" data-view="director"><span class="nav-icon">⌘</span><span>Director</span></button>
+        <button class="nav-item active" data-view="studio"><span class="nav-icon">✦</span><span>Studio</span><span class="nav-count" id="studio-count">0</span></button>
+        <button class="nav-item" data-view="director"><span class="nav-icon">⌘</span><span>Director</span><span class="nav-count" id="director-count">0</span></button>
         <button class="nav-item" data-view="outputs"><span class="nav-icon">▦</span><span>Proofs</span><span class="nav-count" id="output-count">0</span></button>
         <button class="nav-item" data-view="logger"><span class="nav-icon">≡</span><span>Logbook</span><span class="nav-count" id="log-count">0</span></button>
       </nav>
@@ -78,7 +78,6 @@
           </div>
         </details>
       </section>
-      <div class="sidebar-footer"><span>Local workspace</span><span class="version">v1.6.0</span></div>
     </aside>
 
     <main class="main-area">
@@ -233,15 +232,6 @@
               <div>
                 <p class="eyebrow">Shot direction</p>
                 <h2 id="director-title">Selected shot</h2>
-                <div class="director-quick-actions">
-                  <button class="randomize" data-director-remix="shot">↻ Reroll shot</button>
-                  <button class="variation-action" id="director-randomize-seed">⤨ New variation</button>
-                  <button class="preview-action" id="director-preview-shot">◉ Preview shot</button>
-                  <span class="director-action-divider" aria-hidden="true"></span>
-                  <button class="randomize" data-director-remix="subject">↻ Remix subject</button>
-                  <button class="randomize" data-director-remix="wardrobe">↻ Remix wardrobe</button>
-                  <button class="randomize" data-director-remix="scene">↻ Remix scene</button>
-                </div>
               </div>
               <div class="director-editor-tools">
                 <label class="director-search"><span>⌕</span><input id="director-search" type="search" placeholder="Find a setting or preset…"></label>
@@ -259,6 +249,18 @@
               </div>
             </header>
             <div class="director-summary" id="director-summary"></div>
+            <div class="director-quick-actions">
+              <div class="director-action-group">
+                <button class="randomize" data-director-remix="shot">Reroll shot</button>
+                <button class="variation-action" id="director-randomize-seed">New variation</button>
+                <button class="preview-action" id="director-preview-shot">Preview shot</button>
+              </div>
+              <div class="director-action-group">
+                <button class="randomize" data-director-remix="subject">Remix subject</button>
+                <button class="randomize" data-director-remix="wardrobe">Remix wardrobe</button>
+                <button class="randomize" data-director-remix="scene">Remix scene</button>
+              </div>
+            </div>
             <div class="director-loading hidden" id="director-loading"><div class="spinner"></div><strong>Checking compatible choices…</strong></div>
             <div class="director-groups" id="director-groups"></div>
           </section>

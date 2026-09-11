@@ -38,6 +38,7 @@ const state = {
   storyboardOpenSet: 0,
   director: null,
   directorShot: 1,
+  directorOpenSet: 0,
   directorOpenGroup: null,
   directorCustomField: null,
   previewJob: null,
@@ -1020,7 +1021,6 @@ function shotCard(shot) {
       ? `<span class="card-status warning" title="${escapeHtml(shot.prompt_warnings.join('; '))}">Warning</span>`
       : '',
   ].join('');
-  const fixed = photoshoot ? '<i class="detail-status fixed">Fixed</i>' : '';
   return `
     <article class="shot-card" data-shot="${shot.number}">
       <div class="shot-top">
@@ -1028,8 +1028,8 @@ function shotCard(shot) {
         <div class="shot-top-meta">${statuses}<span class="stage-badge ${explicit} ${shot.stage.manual ? 'manual' : ''}">${escapeHtml(displayValue(stage.replaceAll('_', ' ')))}</span></div>
       </div>
       <div class="shot-body">
-        <div class="shot-detail shot-subject" title="${escapeHtml(shot.subject)}"><span>Subject ${fixed}</span><strong>${escapeHtml(displayValue(shot.subject))}</strong></div>
-        <div class="shot-detail shot-wardrobe" title="${escapeHtml(displayCatalogLabel(shot.wardrobe))}"><span>Wardrobe ${fixed}</span><strong>${escapeHtml(displayCatalogLabel(shot.wardrobe))}</strong></div>
+        <div class="shot-detail shot-subject" title="${escapeHtml(shot.subject)}"><span>Subject</span><strong>${escapeHtml(displayValue(shot.subject))}</strong></div>
+        <div class="shot-detail shot-wardrobe" title="${escapeHtml(displayCatalogLabel(shot.wardrobe))}"><span>Wardrobe</span><strong>${escapeHtml(displayCatalogLabel(shot.wardrobe))}</strong></div>
         <div class="shot-detail"><span>Pose</span><strong title="${escapeHtml(shot.pose.prompt)}">${escapeHtml(displayValue(shot.pose.prompt))}</strong></div>
         <div class="shot-detail"><span>Action</span><strong title="${escapeHtml(shot.action.prompt)}">${escapeHtml(displayValue(shot.action.prompt))}</strong></div>
         <div class="shot-detail"><span>Role</span><strong title="${escapeHtml(shot.editorial_role.prompt)}">${escapeHtml(displayValue(shot.editorial_role.prompt))}</strong></div>
@@ -1068,6 +1068,11 @@ function storyboardCards(shots) {
 function renderStoryboard() {
   const board = state.storyboard;
   if (!board) return;
+  const navigationSetCount = board.config.mode === 'photoshoot'
+    ? new Set(board.shots.map((shot) => shot.photoshoot_index)).size
+    : (board.shots.length ? 1 : 0);
+  $('#studio-count').textContent = navigationSetCount;
+  $('#director-count').textContent = board.shots.length;
   storyboardPanel.classList.add('resolved');
   $('#export-storyboard').disabled = false;
   if (state.director?.storyboard_id !== board.id) {
@@ -2956,14 +2961,20 @@ function directorShotButton(shot) {
 }
 
 function directorShotList(shots) {
-  let previousSet = -1;
-  return shots.map((shot) => {
-    const heading = shot.photoshoot_index === previousSet
-      ? ''
-      : `<div class="director-set-heading">Set ${shot.photoshoot_index + 1}</div>`;
-    previousSet = shot.photoshoot_index;
-    return heading + directorShotButton(shot);
-  }).join('');
+  const sets = new Map();
+  shots.forEach((shot) => {
+    if (!sets.has(shot.photoshoot_index)) sets.set(shot.photoshoot_index, []);
+    sets.get(shot.photoshoot_index).push(shot);
+  });
+  if (state.directorOpenSet !== null && !sets.has(state.directorOpenSet)) {
+    state.directorOpenSet = sets.keys().next().value;
+  }
+  return [...sets.entries()].map(([setIndex, setShots]) => `
+    <details class="director-set" data-director-set="${setIndex}" ${setIndex === state.directorOpenSet ? 'open' : ''}>
+      <summary><span class="director-set-title">Set ${setIndex + 1}</span><small>${setShots.length} shots <i aria-hidden="true">⌄</i></small></summary>
+      <div class="director-set-shots">${setShots.map(directorShotButton).join('')}</div>
+    </details>
+  `).join('');
 }
 
 function directorField(field) {
@@ -3007,7 +3018,7 @@ function renderDirector() {
     ['Location', shot.location], ['Treatment', shot.photography],
     ['Variation', `${shot.seed_manual ? 'Custom · ' : ''}${shot.inference_seed}`],
   ].map(([label, value]) => {
-    const display = displayValue(value);
+    const display = label === 'Wardrobe' ? displayCatalogLabel(value) : displayValue(value);
     return `<div class="director-summary-${label.toLowerCase()}"><span>${label}</span><strong title="${escapeHtml(display)}">${escapeHtml(display)}</strong></div>`;
   }).join('');
   $('#director-groups').innerHTML = data.groups.map((group, groupIndex) => `
@@ -3828,7 +3839,34 @@ $('.director-quick-actions').addEventListener('click', (event) => {
 });
 $('#director-shot-list').addEventListener('click', (event) => {
   const button = event.target.closest('[data-director-shot]');
-  if (button) loadDirector(Number(button.dataset.directorShot));
+  if (button) {
+    loadDirector(Number(button.dataset.directorShot));
+    return;
+  }
+  const summary = event.target.closest('details.director-set > summary');
+  if (!summary) return;
+  const selected = summary.parentElement;
+  if (selected.open) {
+    state.directorOpenSet = null;
+    return;
+  }
+  state.directorOpenSet = Number(selected.dataset.directorSet);
+  $$('.director-set', $('#director-shot-list')).forEach((set) => {
+    if (set !== selected) set.open = false;
+  });
+});
+$('#director-shot-list').addEventListener('toggle', (event) => {
+  const opened = event.target;
+  if (!opened.matches('details.director-set')) return;
+  const setIndex = Number(opened.dataset.directorSet);
+  if (!opened.open) {
+    if (state.directorOpenSet === setIndex) state.directorOpenSet = null;
+    return;
+  }
+  state.directorOpenSet = setIndex;
+  $$('.director-set', $('#director-shot-list')).forEach((set) => {
+    if (set !== opened) set.open = false;
+  });
 });
 $("#director-groups").addEventListener("click", (event) => {
   const customButton = event.target.closest("[data-director-custom]");

@@ -87,6 +87,41 @@ class StudioGenerationLimitTests(unittest.TestCase):
 
 
 class CatalogQualityTests(unittest.TestCase):
+    def test_prompt_lint_accepts_opaque_outerwear_at_lingerie_stage(self):
+        state = app.WebState()
+        board = state.create_storyboard({
+            "mode": "photoshoot",
+            "count": 12,
+            "photoshoots": 1,
+            "prompt_seed": 2,
+        })
+        affected = [
+            shot for shot in board["shots"]
+            if shot["stage"]["level"] == "lingerie"
+            and shot["wardrobe"] == "template_office_elegant"
+        ]
+        self.assertTrue(affected)
+        self.assertFalse(any(
+            "Clothing coverage contract is missing" in warning
+            for shot in affected
+            for warning in shot["prompt_warnings"]
+        ))
+
+    def test_prompt_lint_accepts_dressed_panties_reveal_contract(self):
+        state = app.WebState()
+        board = state.create_storyboard({
+            "mode": "photoshoot",
+            "count": 12,
+            "photoshoots": 2,
+            "prompt_seed": 1,
+        })
+        warnings = [
+            warning
+            for shot in board["shots"]
+            for warning in shot["prompt_warnings"]
+        ]
+        self.assertNotIn("Clothing coverage contract is missing", warnings)
+
     def test_clothing_actions_require_the_garment_they_describe(self):
         database, _ = app.load_database()
         actions = {item["id"]: item for item in database["actions"]}
@@ -3280,15 +3315,55 @@ class FrontendContractTests(unittest.TestCase):
             css,
         )
 
+    def test_director_quick_actions_use_neutral_labels_and_controls(self):
+        root = Path(app.__file__).parent
+        html = (root / "client" / "client.html").read_text(encoding="utf-8")
+        css = (root / "client" / "client.css").read_text(encoding="utf-8")
+        for label in ("Reroll shot", "New variation", "Preview shot", "Remix subject", "Remix wardrobe", "Remix scene"):
+            self.assertIn(f">{label}</button>", html)
+        self.assertLess(
+            html.index('id="director-summary"'),
+            html.index('class="director-quick-actions"'),
+        )
+        self.assertIn('class="director-action-group"', html)
+        self.assertNotIn('director-action-divider', html)
+        self.assertIn(
+            ".director-quick-actions { padding: 10px 20px; display: flex; flex-wrap: wrap; gap: 14px; border-bottom: 1px solid var(--line); background: var(--surface-2); }",
+            css,
+        )
+        self.assertIn(".director-action-group { display: flex; flex: 0 0 auto; gap: 6px; }", css)
+        self.assertNotIn("director-quick-actions button.randomize {", css)
+        self.assertNotIn("director-quick-actions button.preview-action {", css)
+        self.assertIn(
+            ".director-quick-actions button, .shot-footer button { border: 0; background: var(--surface-2); color: var(--muted); }",
+            css,
+        )
+        self.assertIn(
+            ".director-quick-actions button:hover, .shot-footer button:hover { background: var(--surface-3); color: var(--text); }",
+            css,
+        )
+        self.assertIn(
+            ".director-quick-actions button, .shot-footer button { border: 0; background: var(--surface-2); color: var(--muted); }",
+            css,
+        )
+        self.assertIn(".director-quick-actions button { background: var(--surface); }", css)
+        self.assertIn(".director-quick-actions button:hover { background: var(--surface-3); }", css)
+        self.assertNotIn("director-quick-actions button.variation-action {", css)
+
     def test_storyboard_cards_show_subject_before_set_details(self):
         root = Path(app.__file__).parent
+        html = (root / "client" / "client.html").read_text(encoding="utf-8")
         js = (root / "client" / "client.js").read_text(encoding="utf-8")
+        self.assertIn('id="studio-count"', html)
+        self.assertIn('id="director-count"', html)
         subject = js.index('class="shot-detail shot-subject"')
         wardrobe = js.index('class="shot-detail shot-wardrobe"')
         self.assertLess(subject, wardrobe)
-        self.assertIn('<span>Subject ${fixed}</span>', js)
-        self.assertIn('<span>Wardrobe ${fixed}</span>', js)
+        self.assertIn('<span>Subject</span>', js)
+        self.assertIn('<span>Wardrobe</span>', js)
+        self.assertNotIn("detail-status fixed", js)
         self.assertIn("function displayCatalogLabel(value)", js)
+        self.assertIn("label === 'Wardrobe' ? displayCatalogLabel(value) : displayValue(value)", js)
         self.assertIn("function storyboardCards(shots)", js)
         self.assertIn('<button type="button" data-action="inspect">Prompt</button>', js)
         self.assertIn("const button = event.target.closest('button[data-action]');", js)
@@ -3299,6 +3374,12 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('class="director-group storyboard-set"', js)
         self.assertIn('class="storyboard-set-shots"', js)
         self.assertIn("state.storyboardOpenSet", js)
+        self.assertIn("$('#studio-count').textContent = navigationSetCount", js)
+        self.assertIn("$('#director-count').textContent = board.shots.length", js)
+        self.assertIn('class="director-set"', js)
+        self.assertIn("state.directorOpenSet", js)
+        self.assertIn("details.director-set", js)
+        self.assertIn("details.director-set > summary", js)
         self.assertIn("storyboardPanel.classList.add('resolved')", js)
         self.assertIn(".storyboard-panel.resolved", (root / "client" / "client.css").read_text(encoding="utf-8"))
         self.assertIn("const displayShotNumber = photoshoot ? shot.shot_index + 1 : shot.number;", js)
@@ -3306,6 +3387,17 @@ class FrontendContractTests(unittest.TestCase):
         self.assertNotIn('class="shot-number"><i>', js)
         self.assertIn('class="card-status manual"', js)
         self.assertIn('class="card-status warning"', js)
+        css = (root / "client" / "client.css").read_text(encoding="utf-8")
+        self.assertIn(".shot-footer button {", css)
+        self.assertIn(".shot-footer button:hover { background: var(--surface-3); color: var(--text); }", css)
+        self.assertNotIn(".shot-footer button.direct {", css)
+        self.assertNotIn(".shot-footer button.reroll {", css)
+        self.assertIn(".shot-footer { padding: 5px;", css)
+        self.assertIn(".shot-footer button { min-width: 0; margin: 1px; padding: 3px 4px;", css)
+        self.assertIn(".shot-footer { padding: 5px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; border-top: 1px solid var(--line); background: var(--surface-2); }", css)
+        self.assertIn(".shot-footer button { background: var(--surface); }", css)
+        self.assertIn('.director-set > summary::-webkit-details-marker { display: none; }', css)
+        self.assertIn('.director-set[open] > summary small i { transform: rotate(180deg); }', css)
 
     def test_storyboard_summary_does_not_render_missing_content_percentages(self):
         root = Path(app.__file__).parent
@@ -3323,9 +3415,10 @@ class FrontendContractTests(unittest.TestCase):
         html = (Path(app.__file__).parent / "client" / "client.html").read_text(
             encoding="utf-8"
         )
-        self.assertEqual(app.APP_VERSION, "1.6.0")
-        self.assertEqual(app.ValhallaHandler.server_version, "Valhalla/1.6.0")
-        self.assertIn('<span class="version">v1.6.0</span>', html)
+        self.assertEqual(app.APP_VERSION, "1.6.1")
+        self.assertEqual(app.ValhallaHandler.server_version, "Valhalla/1.6.1")
+        self.assertIn('Photo Studio <span class="brand-version">1.6.1</span>', html)
+        self.assertNotIn('Local workspace', html)
 
     def test_primary_workspace_names_and_headers_use_photography_terms(self):
         root = Path(app.__file__).parent
@@ -3335,6 +3428,11 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('<span>Logbook</span>', html)
         self.assertIn('<title>Valhalla Photo Studio</title>', html)
         self.assertIn("studio: 'Photo Studio'", js)
+        self.assertIn(".brand strong { font-size: 1.25rem;", (root / "client" / "client.css").read_text(encoding="utf-8"))
+        self.assertIn("text-transform: uppercase;", (root / "client" / "client.css").read_text(encoding="utf-8")[
+            (root / "client" / "client.css").read_text(encoding="utf-8").index(".brand strong {"):
+            (root / "client" / "client.css").read_text(encoding="utf-8").index(".brand strong {") + 140
+        ])
         self.assertIn("outputs: 'Proof Gallery'", js)
         self.assertIn("logger: 'Production Logbook'", js)
         self.assertIn('id="view-eyebrow"', html)
