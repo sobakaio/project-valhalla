@@ -3079,9 +3079,9 @@ class FrontendContractTests(unittest.TestCase):
         html = (Path(app.__file__).parent / "client" / "client.html").read_text(
             encoding="utf-8"
         )
-        self.assertEqual(app.APP_VERSION, "1.5.2")
-        self.assertEqual(app.ValhallaHandler.server_version, "Valhalla/1.5.2")
-        self.assertIn('<span class="version">v1.5.2</span>', html)
+        self.assertEqual(app.APP_VERSION, "1.5.3")
+        self.assertEqual(app.ValhallaHandler.server_version, "Valhalla/1.5.3")
+        self.assertIn('<span class="version">v1.5.3</span>', html)
 
     def test_primary_workspace_names_and_headers_use_photography_terms(self):
         root = Path(app.__file__).parent
@@ -3157,6 +3157,7 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('id="logger-shot-label"', html)
         self.assertIn('id="logger-rendered-open"', html)
         self.assertIn('id="logger-rendered-image"', html)
+        self.assertIn('id="logger-rendered-video"', html)
         self.assertIn('id="logger-positive"', html)
         self.assertIn('id="logger-negative"', html)
         self.assertIn("function inspectedJobPrompt(job)", js)
@@ -3164,7 +3165,8 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("renderLoggerImage(inspectedPrompt)", js)
         self.assertIn("loggerRenderedFrame.addEventListener('click'", js)
         self.assertIn("function sizeLoggerImageColumn()", js)
-        self.assertIn("imageHeight * image.naturalWidth / image.naturalHeight", js)
+        self.assertIn("const naturalWidth = image.hasAttribute('src') ? image.naturalWidth : video.videoWidth", js)
+        self.assertIn("imageHeight * naturalWidth / naturalHeight", js)
         self.assertIn("new ResizeObserver(sizeLoggerImageColumn).observe($('.logger-prompt-grid'))", js)
         self.assertIn("function openLogbookImagePreview(prompt)", js)
         self.assertIn("persistent: true", js)
@@ -3188,7 +3190,7 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("function inspectLoggerEvent(element)", js)
         self.assertIn("displayedLoggerPrompt()", js)
         self.assertIn("grid-template-columns: repeat(3, minmax(0, 1fr))", css)
-        self.assertIn(".logger-rendered-frame.has-image", css)
+        self.assertIn(".logger-rendered-frame.has-media", css)
         self.assertIn("object-fit: contain", css)
         self.assertIn("var(--logger-image-column) repeat(2, minmax(0, 1fr))", css)
         self.assertIn(".logger-event.inspectable.selected", css)
@@ -3368,7 +3370,7 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("window.addEventListener('pointermove', notePrivacyActivity", js)
         self.assertIn("if (promptDialog.open) promptDialog.close()", js)
         self.assertIn("$('#image-viewer-title').textContent = 'Preview'", js)
-        self.assertIn("state.privacyCovered ? 'Preview' : item.name", js)
+        self.assertIn("previewTitle.textContent = state.privacyCovered ? 'Preview' : displayName", js)
         self.assertIn("state.privacyCovered", js)
         self.assertIn(".privacy-covered img", css)
         self.assertIn(".privacy-placeholder", css)

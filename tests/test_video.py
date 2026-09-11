@@ -1,4 +1,5 @@
 import copy
+import io
 import json
 import tempfile
 import unittest
@@ -175,18 +176,22 @@ class VideoWorkflowTests(unittest.TestCase):
             self.assertEqual(paths[0].read_bytes(), b"fake mp4 bytes")
             self.assertEqual(
                 paths[0].name,
-                "run-1_video_from_6909363532413516788_image_01_123_video_01.mp4",
+                "run-1_video_from_6909363532413516788_image_01~"
+                f"{app.source_identity_digest('output', source.name)}_123_video_01.mp4",
             )
             payload = app.output_payload(paths[0])
             self.assertEqual(payload["media_type"], "video")
             self.assertEqual(payload["source_media_id"], "6909363532413516788")
             self.assertEqual(payload["source_media_ref"], "6909363532413516788_image_01")
             self.assertEqual(payload["source_key"], "output:6909363532413516788_image_01")
-            self.assertEqual(payload["source_image"], "6909363532413516788_image_01")
+            self.assertEqual(
+                payload["source_image"],
+                app.source_media_token("output", source.name, source.name),
+            )
             self.assertIsNone(payload["video_prompt"])
             self.assertIsNone(payload["video_duration"])
 
-    def test_video_gallery_lists_and_deletes_video_without_sidecar(self):
+    def test_video_gallery_keeps_an_unresolved_legacy_video_independent(self):
         with tempfile.TemporaryDirectory() as temporary:
             output_dir = Path(temporary)
             video = output_dir / (
@@ -201,11 +206,59 @@ class VideoWorkflowTests(unittest.TestCase):
                 outputs = app.list_output_images()
                 self.assertEqual(outputs[0]["media_type"], "video")
                 self.assertEqual(outputs[0]["source_media_id"], "6909363532413516788")
-                self.assertEqual(outputs[0]["source_key"], "output:6909363532413516788_image_01")
+                self.assertIsNone(outputs[0]["source_key"])
                 result = app.delete_output_image(video.name)
 
             self.assertEqual(result["deleted"], video.name)
             self.assertFalse(video.exists())
+
+    def test_video_gallery_resolves_each_video_to_its_exact_source_identity(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output_dir = Path(temporary)
+            first = output_dir / (
+                "20260911_160243_066977_random_001_production_shot_010_"
+                "6909363532413516788_image_01.png"
+            )
+            second = output_dir / (
+                "20260911_160244_066978_random_002_production_shot_010_"
+                "6909363532413516788_image_01.png"
+            )
+            first.write_bytes(b"first")
+            second.write_bytes(b"second")
+            for index, source in enumerate((first, second), 1):
+                token = app.source_media_token("output", source.name, source.name)
+                (output_dir / f"run_video_from_{token}_{index}_video_01.mp4").write_bytes(b"video")
+            with (
+                patch.object(app, "proof_directories", return_value=[("output", output_dir)]),
+                patch.object(app, "output_directory", return_value=output_dir),
+                patch.object(app.WEB_STATE, "jobs", {}),
+            ):
+                videos = [item for item in app.list_output_images() if item["media_type"] == "video"]
+
+            self.assertEqual(len(videos), 2)
+            self.assertEqual(
+                {item["source_key"] for item in videos},
+                {f"output:{first.name}", f"output:{second.name}"},
+            )
+
+    def test_video_output_range_response_streams_only_the_requested_bytes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            video = Path(temporary) / "clip.mp4"
+            video.write_bytes(b"0123456789")
+            handler = app.ValhallaHandler.__new__(app.ValhallaHandler)
+            handler.headers = {"Range": "bytes=2-5"}
+            handler.wfile = io.BytesIO()
+            responses, headers = [], {}
+            handler.send_response = responses.append
+            handler.send_header = headers.__setitem__
+            handler.end_headers = lambda: None
+            with patch.object(app, "proof_image_path", return_value=video):
+                handler.serve_output(video.name)
+
+            self.assertEqual(responses, [app.HTTPStatus.PARTIAL_CONTENT])
+            self.assertEqual(headers["Content-Length"], "4")
+            self.assertEqual(headers["Content-Range"], "bytes 2-5/10")
+            self.assertEqual(handler.wfile.getvalue(), b"2345")
 
     def test_video_job_uses_video_registry_and_enters_shared_fifo_queue(self):
         with tempfile.TemporaryDirectory() as temporary:

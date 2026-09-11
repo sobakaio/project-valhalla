@@ -81,7 +81,7 @@ html, body { min-height: 100%; }
 body { margin: 0; background: var(--bg); color: var(--text); font-size: 0.9375rem; line-height: 1.5; }
 button, input, select { font: inherit; }
 button { color: inherit; }
-button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+button:focus-visible, input:focus-visible, summary:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .hidden { display: none !important; }
 
 .app-shell { min-height: 100vh; display: grid; grid-template-columns: 232px minmax(0, 1fr); }
@@ -269,13 +269,13 @@ h3 { margin-bottom: 6px; font-size: 1rem; }
 .logger-prompt header button { margin-left: auto; border: 0; background: transparent; color: var(--brand); cursor: pointer; font-size: 0.6875rem; font-weight: 700; }
 .prompt-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
 .prompt-dot.rendered { background: var(--brand); }
-.prompt-dot.negative { background: var(--danger); }
+.prompt-dot.negative { background: var(--muted); }
 .logger-rendered-frame { width: 100%; min-height: 0; flex: 1; padding: 0; position: relative; display: grid; place-items: center; overflow: hidden; border: 0; border-radius: 0; background: var(--surface-2); color: inherit; cursor: default; font: inherit; }
-.logger-rendered-frame.has-image { cursor: zoom-in; }
-.logger-rendered-frame img { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; }
-.logger-rendered-frame:not(.has-image) img { display: none; }
+.logger-rendered-frame.has-media { cursor: zoom-in; }
+.logger-rendered-frame img, .logger-rendered-frame video { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; }
+.logger-rendered-frame:not(.has-media) img, .logger-rendered-frame:not(.has-media) video { display: none; }
 .logger-rendered-frame span { padding: 20px; color: var(--faint); font-size: 0.75rem; text-align: center; }
-.logger-rendered-frame.has-image > span { display: none; }
+.logger-rendered-frame.has-media > span { display: none; }
 .logger-prompt pre { min-height: 0; flex: 1; margin: 0; padding: 16px; overflow: auto; border: 0; border-radius: 0; background: var(--surface-2); color: var(--text); font: 0.75rem/1.65 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
 .privacy-covered .logger-prompt pre { visibility: hidden; user-select: none; }
 .privacy-covered .logger-prompt header button { visibility: hidden; pointer-events: none; }
@@ -402,7 +402,7 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: .42; }
 .stage-badge { padding: 3px 7px; border-radius: 99px; background: var(--brand-soft); color: var(--brand); font-size: 0.5rem; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; }
 .stage-badge i { margin-right: 5px; padding-right: 5px; border-right: 1px solid currentColor; font-style: normal; }
 .stage-badge.manual { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning) 45%, transparent); }
-.stage-badge.explicit { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
+.stage-badge.explicit { background: var(--brand-soft); color: var(--brand); }
 .shot-body { padding: 12px; }
 .shot-set { margin-bottom: 10px; color: var(--faint); font-size: 0.5625rem; text-transform: uppercase; letter-spacing: .07em; }
 .shot-detail { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 7px; margin: 7px 0; font-size: 0.6875rem; }
@@ -451,10 +451,11 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: .42; }
 .privacy-covered img { visibility: hidden !important; }
 .output-card:hover img { transform: scale(1.05); }
 .output-actions { display: flex; align-items: center; gap: 9px; }
-.output-delete { padding: 0; border: 0; background: transparent; color: rgb(255 255 255 / 82%); cursor: pointer; font-size: 0.625rem; font-weight: 700; }
+.output-actions a, .output-delete { padding: 0; border: 0; background: transparent; color: rgb(255 255 255 / 82%); cursor: pointer; font-size: 0.625rem; font-weight: 700; }
 .output-delete:hover { color: color-mix(in srgb, var(--danger) 72%, white); }
 .output-card footer { position: absolute; inset: auto 0 0; padding: 35px 11px 10px; display: flex; justify-content: space-between; align-items: end; color: white; background: linear-gradient(transparent, rgb(0 0 0 / 70%)); font-size: 0.625rem; }
-.output-card a { color: white; text-decoration: none; font-weight: 700; }
+.output-card a { text-decoration: none; }
+.source-image { display: block; max-width: 132px; overflow: hidden; color: rgb(255 255 255 / 72%); text-overflow: ellipsis; white-space: nowrap; }
 .output-card.photoshoot-card { cursor: pointer; }
 .output-card.pending-output { cursor: default; border-color: color-mix(in srgb, var(--line-strong) 70%, transparent); }
 .render-placeholder { width: 100%; height: 100%; display: grid; place-content: center; justify-items: center; gap: 7px; padding: 18px; text-align: center; color: var(--muted); background: linear-gradient(155deg, color-mix(in srgb, var(--surface-3) 92%, var(--brand-soft)), var(--surface-2)); }
@@ -501,7 +502,7 @@ dialog.image-viewer::backdrop { background: #050608; backdrop-filter: none; }
 .viewer-tool:disabled { opacity: .4; cursor: default; }
 .viewer-tool strong { font-size: 0.625rem; font-weight: 700; }
 .viewer-slideshow-controls .slideshow-toggle { border: 0; border-radius: 0; background: transparent; }
-.slideshow-toggle.active { background: color-mix(in srgb, var(--danger) 18%, transparent); color: color-mix(in srgb, var(--danger) 68%, white); }
+.slideshow-toggle.active { background: var(--brand-soft); color: var(--brand); }
 .viewer-delay-menu { position: relative; width: 38px; height: 34px; border-left: 1px solid rgb(255 255 255 / 16%); }
 .viewer-delay-menu > summary { height: 100%; display: grid; place-items: center; list-style: none; cursor: pointer; }
 .viewer-delay-menu > summary::-webkit-details-marker { display: none; }

@@ -31,7 +31,7 @@ class AppError(RuntimeError):
     """An expected, user-facing application error."""
 
 
-APP_VERSION = "1.5.2"
+APP_VERSION = "1.5.3"
 MEDIA_TYPES = {"image", "video"}
 
 
@@ -4442,9 +4442,11 @@ def generate_video_one(
     config, config_file = load_config()
     output_dir = resolve_path(config_file.parent, config["storage"]["output_dir"])
     output_dir.mkdir(parents=True, exist_ok=True)
-    source_name = re.sub(r"[^A-Za-z0-9._-]+", "-", source_path.stem).strip("-._")[:120] or "source"
-    source_ref = image_media_ref(source_path.name)
-    source_token = source_ref["ref"] if source_ref else source_name
+    source_token = source_media_token(
+        str(source_item.get("source", "output")),
+        str(source_item.get("relative_path", source_path.name)),
+        source_path.name,
+    )
     saved: list[Path] = []
     number = 0
     for node_id, node_output in outputs.items():
@@ -7713,6 +7715,13 @@ class WebState:
                 "group_eta_seconds": round(group_eta, 1) if group_eta is not None else None,
                 "observed_at": observed_at,
             })
+            if job["generation_mode"] == "video":
+                source = job.get("_video_source") or {}
+                groups[-1].update(
+                    source_key=source.get("source_key")
+                    or f"{source.get('source', 'output')}:{source.get('relative_path', '')}",
+                    source_image=source.get("name"),
+                )
         return groups
 
     def job_payload(self, job: dict[str, Any]) -> dict[str, Any]:
@@ -8086,9 +8095,10 @@ VIDEO_SUFFIXES = {".mp4", ".webm", ".mov", ".mkv", ".avi"}
 MEDIA_SUFFIXES = IMAGE_SUFFIXES | VIDEO_SUFFIXES
 IMAGE_MEDIA_REF_RE = re.compile(r"(?:^|_)(?P<media_id>-?\d+)_image_(?P<image_number>\d+)$", re.IGNORECASE)
 VIDEO_SOURCE_RE = re.compile(
-    r"_video_from_(?P<source_ref>.+)_(?P<video_seed>-?\d+)_video_\d+\.[^.]+$",
+    r"_video_from_(?P<source_token>.+)_(?P<video_seed>-?\d+)_video_\d+\.[^.]+$",
     re.IGNORECASE,
 )
+SOURCE_TOKEN_DIGEST_RE = re.compile(r"^(?P<base>.+)~(?P<digest>[0-9a-f]{16})$", re.IGNORECASE)
 GALLERY_BENCHMARK_COUNT = 0
 GALLERY_BENCHMARK_SOURCES = 10
 
@@ -8102,6 +8112,26 @@ def image_media_ref(name: str) -> dict[str, str] | None:
         "media_id": match.group("media_id"),
         "ref": f"{match.group('media_id')}_image_{match.group('image_number')}",
     }
+
+
+def source_identity_digest(source: str, relative_path: str) -> str:
+    """Return a stable short identity for one configured proof file."""
+    value = f"{source}:{Path(relative_path).as_posix()}"
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()[:16]
+
+
+def source_media_token(source: str, relative_path: str, name: str) -> str:
+    """Encode a visible media reference plus its collision-resistant source identity."""
+    ref = image_media_ref(name)
+    base = ref["ref"] if ref else re.sub(
+        r"[^A-Za-z0-9._-]+", "-", Path(name).stem
+    ).strip("-._")[:120] or "source"
+    return f"{base}~{source_identity_digest(source, relative_path)}"
+
+
+def video_source_token(name: str) -> str | None:
+    match = VIDEO_SOURCE_RE.search(name)
+    return match.group("source_token") if match else None
 
 
 def output_directory() -> Path:
@@ -8194,14 +8224,14 @@ def output_payload(path: Path, source: str = "output", root: Path | None = None)
     source_key = None
     if is_video:
         source_match = VIDEO_SOURCE_RE.search(path.name)
-        source_image = source_match.group("source_ref") if source_match else None
-        parsed_source = image_media_ref(source_image or "")
+        source_image = source_match.group("source_token") if source_match else None
+        parsed_source = image_media_ref((source_image or "").split("~", 1)[0])
         if parsed_source:
             source_media_id = parsed_source["media_id"]
             source_media_ref = parsed_source["ref"]
+            # This is a provisional key for direct job polling. The filesystem
+            # listing replaces it with the actual image key after resolution.
             source_key = f"{source}:{source_media_ref}"
-        elif source_image:
-            source_key = f"{source}:{source_image}"
     payload = {
         "name": path.name,
         "relative_path": relative_path,
@@ -8364,7 +8394,66 @@ def list_output_images() -> list[dict[str, Any]]:
             payload["shot"] = index + 1
             outputs.append(payload)
         return outputs
-    return [output_payload(path, source, root) for source, root, path in paths]
+    outputs = [output_payload(path, source, root) for source, root, path in paths]
+    images = [item for item in outputs if item["media_type"] == "image"]
+    by_token: dict[str, list[dict[str, Any]]] = {}
+
+    def add_index_token(token: str | None, item: dict[str, Any]) -> None:
+        if not token:
+            return
+        bucket = by_token.setdefault(token, [])
+        if item not in bucket:
+            bucket.append(item)
+
+    for item in images:
+        ref = image_media_ref(item["name"])
+        add_index_token(item["key"], item)
+        add_index_token(
+            source_identity_digest(item["source"], item["relative_path"]), item
+        )
+        add_index_token(Path(item["name"]).stem, item)
+        add_index_token(
+            re.sub(r"[^A-Za-z0-9._-]+", "-", Path(item["name"]).stem)
+            .strip("-._")[:120] or "source",
+            item,
+        )
+        if ref:
+            add_index_token(ref["ref"], item)
+            add_index_token(ref["media_id"], item)
+            add_index_token(
+                source_media_token(item["source"], item["relative_path"], item["name"]),
+                item,
+            )
+
+    for item in outputs:
+        if item["media_type"] != "video":
+            continue
+        token = video_source_token(item["name"])
+        if not token:
+            continue
+        candidates = by_token.get(token, [])
+        if len(candidates) != 1:
+            digest_match = SOURCE_TOKEN_DIGEST_RE.fullmatch(token)
+            if digest_match:
+                candidates = by_token.get(digest_match.group("digest"), [])
+            elif token.isdigit() or (token.startswith("-") and token[1:].isdigit()):
+                candidates = by_token.get(token, [])
+        if len(candidates) == 1:
+            original = candidates[0]
+            item.update(
+                source_key=original["key"],
+                source_image=original["name"],
+                source_relative_path=original["relative_path"],
+                source_generation_mode=original.get("generation_mode"),
+                source_render_tier=original.get("render_tier"),
+                source_group_index=original.get("group_index"),
+                source_shot=original["shot"],
+            )
+        else:
+            # Keep an orphan video independent. A seed-only legacy token may
+            # refer to several images, so never bind it to an arbitrary one.
+            item["source_key"] = None
+    return outputs
 
 
 def ensure_outputs_idle() -> None:
@@ -8731,8 +8820,7 @@ class ValhallaHandler(BaseHTTPRequestHandler):
         if not target.is_file():
             self.send_json({"error": "Output not found"}, HTTPStatus.NOT_FOUND)
             return
-        body = target.read_bytes()
-        total_size = len(body)
+        total_size = target.stat().st_size
         start, end = 0, total_size - 1
         status = HTTPStatus.OK
         range_header = self.headers.get("Range", "")
@@ -8756,17 +8844,24 @@ class ValhallaHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 return
             end = min(end, total_size - 1)
-            body = body[start:end + 1]
             status = HTTPStatus.PARTIAL_CONTENT
         self.send_response(status)
         self.send_header("Content-Type", mimetypes.guess_type(target.name)[0] or "application/octet-stream")
-        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Content-Length", str(end - start + 1))
         self.send_header("Cache-Control", "private, max-age=3600")
         self.send_header("Accept-Ranges", "bytes")
         if status == HTTPStatus.PARTIAL_CONTENT:
             self.send_header("Content-Range", f"bytes {start}-{end}/{total_size}")
         self.end_headers()
-        self.wfile.write(body)
+        with target.open('rb') as stream:
+            stream.seek(start)
+            remaining = end - start + 1
+            while remaining > 0:
+                chunk = stream.read(min(1024 * 1024, remaining))
+                if not chunk:
+                    break
+                self.wfile.write(chunk)
+                remaining -= len(chunk)
 
     def serve_thumbnail(self, name: str, source: str = "output") -> None:
         body = output_thumbnail(name, source)
