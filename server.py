@@ -31,7 +31,7 @@ class AppError(RuntimeError):
     """An expected, user-facing application error."""
 
 
-APP_VERSION = "1.5.1"
+APP_VERSION = "1.5.2"
 MEDIA_TYPES = {"image", "video"}
 
 
@@ -4443,6 +4443,8 @@ def generate_video_one(
     output_dir = resolve_path(config_file.parent, config["storage"]["output_dir"])
     output_dir.mkdir(parents=True, exist_ok=True)
     source_name = re.sub(r"[^A-Za-z0-9._-]+", "-", source_path.stem).strip("-._")[:120] or "source"
+    source_ref = image_media_ref(source_path.name)
+    source_token = source_ref["ref"] if source_ref else source_name
     saved: list[Path] = []
     number = 0
     for node_id, node_output in outputs.items():
@@ -4477,29 +4479,10 @@ def generate_video_one(
                 timeout=timeout,
             )
             response.raise_for_status()
-            destination = output_dir / f"{run_id}_video_from_{source_name}_{seed}_video_{number:02d}{suffix}"
+            destination = output_dir / f"{run_id}_video_from_{source_token}_{seed}_video_{number:02d}{suffix}"
             temporary = output_dir / f".{destination.name}.{uuid.uuid4().hex}.tmp"
             temporary.write_bytes(response.content)
             temporary.replace(destination)
-            source_key = source_item.get("source_key") or source_item.get("key")
-            if not isinstance(source_key, str) or not source_key:
-                source_key = f"{source_item.get('source', 'output')}:{source_item.get('relative_path', source_path.name)}"
-            try:
-                write_output_metadata(destination, {
-                    "media_type": "video",
-                    "source_key": source_key,
-                    "source_relative_path": source_item.get("relative_path", source_path.name),
-                    "source_image": source_item.get("source_image") or source_item.get("name") or source_path.name,
-                    "source_generation_mode": source_item.get("source_generation_mode") or source_item.get("generation_mode"),
-                    "source_render_tier": source_item.get("source_render_tier") or source_item.get("render_tier"),
-                    "source_group_index": source_item.get("source_group_index") or source_item.get("group_index"),
-                    "source_shot": source_item.get("source_shot") or source_item.get("shot"),
-                    "video_prompt": prompt,
-                    "video_duration": duration,
-                })
-            except Exception:
-                destination.unlink(missing_ok=True)
-                raise
             saved.append(destination)
     if not saved:
         raise AppError(f"ComfyUI completed video prompt_id {prompt_id} but returned no video files")
@@ -8101,8 +8084,24 @@ WEB_STATE = WebState()
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
 VIDEO_SUFFIXES = {".mp4", ".webm", ".mov", ".mkv", ".avi"}
 MEDIA_SUFFIXES = IMAGE_SUFFIXES | VIDEO_SUFFIXES
+IMAGE_MEDIA_REF_RE = re.compile(r"(?:^|_)(?P<media_id>-?\d+)_image_(?P<image_number>\d+)$", re.IGNORECASE)
+VIDEO_SOURCE_RE = re.compile(
+    r"_video_from_(?P<source_ref>.+)_(?P<video_seed>-?\d+)_video_\d+\.[^.]+$",
+    re.IGNORECASE,
+)
 GALLERY_BENCHMARK_COUNT = 0
 GALLERY_BENCHMARK_SOURCES = 10
+
+
+def image_media_ref(name: str) -> dict[str, str] | None:
+    """Extract the source media ID and output number from a generated image name."""
+    match = IMAGE_MEDIA_REF_RE.search(Path(name).stem)
+    if not match:
+        return None
+    return {
+        "media_id": match.group("media_id"),
+        "ref": f"{match.group('media_id')}_image_{match.group('image_number')}",
+    }
 
 
 def output_directory() -> Path:
@@ -8111,30 +8110,8 @@ def output_directory() -> Path:
 
 
 def output_metadata_path(path: Path) -> Path:
-    """Return the private sidecar used for restart-safe media relationships."""
+    """Return the legacy sidecar path so old files are cleaned up on deletion."""
     return path.with_name(f".{path.name}.meta.json")
-
-
-def write_output_metadata(path: Path, metadata: dict[str, Any]) -> None:
-    sidecar = output_metadata_path(path)
-    temporary = sidecar.with_name(f".{sidecar.name}.{uuid.uuid4().hex}.tmp")
-    try:
-        temporary.write_text(
-            json.dumps(metadata, ensure_ascii=False, sort_keys=True) + "\n",
-            encoding="utf-8",
-        )
-        temporary.replace(sidecar)
-    except OSError as exc:
-        temporary.unlink(missing_ok=True)
-        raise AppError(f"Could not save media metadata: {exc}") from exc
-
-
-def read_output_metadata(path: Path) -> dict[str, Any]:
-    try:
-        metadata = json.loads(output_metadata_path(path).read_text(encoding="utf-8"))
-    except (FileNotFoundError, OSError, json.JSONDecodeError):
-        return {}
-    return metadata if isinstance(metadata, dict) else {}
 
 
 def proof_directories() -> list[tuple[str, Path]]:
@@ -8212,12 +8189,19 @@ def output_payload(path: Path, source: str = "output", root: Path | None = None)
     encoded_path = quote(relative_path, safe="")
     is_video = path.suffix.lower() in VIDEO_SUFFIXES
     source_image = None
-    metadata: dict[str, Any] = {}
+    source_media_id = None
+    source_media_ref = None
+    source_key = None
     if is_video:
-        source_match = re.search(r"_video_from_(.+)_(-?\d+)_video_\d+\.[^.]+$", path.name)
-        source_image = source_match.group(1) if source_match else None
-        metadata = read_output_metadata(path)
-        source_image = metadata.get("source_image") or source_image
+        source_match = VIDEO_SOURCE_RE.search(path.name)
+        source_image = source_match.group("source_ref") if source_match else None
+        parsed_source = image_media_ref(source_image or "")
+        if parsed_source:
+            source_media_id = parsed_source["media_id"]
+            source_media_ref = parsed_source["ref"]
+            source_key = f"{source}:{source_media_ref}"
+        elif source_image:
+            source_key = f"{source}:{source_image}"
     payload = {
         "name": path.name,
         "relative_path": relative_path,
@@ -8232,14 +8216,16 @@ def output_payload(path: Path, source: str = "output", root: Path | None = None)
         payload.update({
             "media_type": "video",
             "source_image": source_image,
-            "source_key": metadata.get("source_key"),
-            "source_relative_path": metadata.get("source_relative_path"),
-            "source_generation_mode": metadata.get("source_generation_mode"),
-            "source_render_tier": metadata.get("source_render_tier"),
-            "source_group_index": metadata.get("source_group_index"),
-            "source_shot": metadata.get("source_shot"),
-            "video_prompt": metadata.get("video_prompt"),
-            "video_duration": metadata.get("video_duration"),
+            "source_media_id": source_media_id,
+            "source_media_ref": source_media_ref,
+            "source_key": source_key,
+            "source_relative_path": None,
+            "source_generation_mode": None,
+            "source_render_tier": None,
+            "source_group_index": None,
+            "source_shot": None,
+            "video_prompt": None,
+            "video_duration": None,
         })
     else:
         payload["media_type"] = "image"

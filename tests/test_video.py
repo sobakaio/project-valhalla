@@ -126,7 +126,7 @@ class VideoWorkflowTests(unittest.TestCase):
         self.assertEqual(workflow["398:338"]["inputs"]["noise_seed"], 99)
         self.assertEqual(workflow["398:362"]["inputs"]["value"], 8)
 
-    def test_video_generation_accepts_mp4_returned_in_images_and_writes_metadata(self):
+    def test_video_generation_links_output_to_source_media_id_in_filename(self):
         class Response:
             content = b"fake mp4 bytes"
 
@@ -145,7 +145,10 @@ class VideoWorkflowTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            source = root / "source.png"
+            source = root / (
+                "20260911_160243_066977_random_001_production_shot_010_"
+                "6909363532413516788_image_01.png"
+            )
             source.write_bytes(b"source image")
             config_file = root / "config.json"
             config = {"storage": {"output_dir": "./outputs"}}
@@ -159,8 +162,8 @@ class VideoWorkflowTests(unittest.TestCase):
                 prompt_id, paths = app.generate_video_one(
                     {"settings": {}}, source,
                     {
-                        "source": "output", "relative_path": "source.png", "name": "source.png",
-                        "source_key": "output:source.png", "generation_mode": "photoshoot",
+                        "source": "output", "relative_path": source.name, "name": source.name,
+                        "source_key": f"output:{source.name}", "generation_mode": "photoshoot",
                         "render_tier": "production", "group_index": 1, "shot": 4,
                     },
                     "camera moves", 123, 6, VIDEO_WORKFLOW,
@@ -170,23 +173,26 @@ class VideoWorkflowTests(unittest.TestCase):
             self.assertEqual(prompt_id, "video-prompt")
             self.assertEqual(len(paths), 1)
             self.assertEqual(paths[0].read_bytes(), b"fake mp4 bytes")
+            self.assertEqual(
+                paths[0].name,
+                "run-1_video_from_6909363532413516788_image_01_123_video_01.mp4",
+            )
             payload = app.output_payload(paths[0])
             self.assertEqual(payload["media_type"], "video")
-            self.assertEqual(payload["source_key"], "output:source.png")
-            self.assertEqual(payload["source_generation_mode"], "photoshoot")
-            self.assertEqual(payload["source_shot"], 4)
-            self.assertEqual(payload["video_prompt"], "camera moves")
-            self.assertEqual(payload["video_duration"], 6)
+            self.assertEqual(payload["source_media_id"], "6909363532413516788")
+            self.assertEqual(payload["source_media_ref"], "6909363532413516788_image_01")
+            self.assertEqual(payload["source_key"], "output:6909363532413516788_image_01")
+            self.assertEqual(payload["source_image"], "6909363532413516788_image_01")
+            self.assertIsNone(payload["video_prompt"])
+            self.assertIsNone(payload["video_duration"])
 
-    def test_video_gallery_lists_and_deletes_video_and_its_sidecar(self):
+    def test_video_gallery_lists_and_deletes_video_without_sidecar(self):
         with tempfile.TemporaryDirectory() as temporary:
             output_dir = Path(temporary)
-            video = output_dir / "run_video_from_source_123_video_01.mp4"
+            video = output_dir / (
+                "run_video_from_6909363532413516788_image_01_123_video_01.mp4"
+            )
             video.write_bytes(b"video")
-            app.write_output_metadata(video, {
-                "media_type": "video", "source_key": "output:frame.png",
-                "source_image": "frame.png", "video_duration": 5,
-            })
             with (
                 patch.object(app, "proof_directories", return_value=[("output", output_dir)]),
                 patch.object(app, "output_directory", return_value=output_dir),
@@ -194,13 +200,12 @@ class VideoWorkflowTests(unittest.TestCase):
             ):
                 outputs = app.list_output_images()
                 self.assertEqual(outputs[0]["media_type"], "video")
-                self.assertEqual(outputs[0]["source_image"], "frame.png")
-                self.assertEqual(outputs[0]["video_duration"], 5)
+                self.assertEqual(outputs[0]["source_media_id"], "6909363532413516788")
+                self.assertEqual(outputs[0]["source_key"], "output:6909363532413516788_image_01")
                 result = app.delete_output_image(video.name)
 
             self.assertEqual(result["deleted"], video.name)
             self.assertFalse(video.exists())
-            self.assertFalse(app.output_metadata_path(video).exists())
 
     def test_video_job_uses_video_registry_and_enters_shared_fifo_queue(self):
         with tempfile.TemporaryDirectory() as temporary:

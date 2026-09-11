@@ -1,6 +1,6 @@
 # Valhalla Photo Studio
 
-Valhalla Photo Studio 1.5.1 is a local production workspace for generating coherent SFW and NSFW photoshoots of adult women with your own ComfyUI instance. It turns creative direction into complete, automatically composed prompts, keeps the subject and visual story consistent across a set, and sends the approved shots to ComfyUI for image inference and Motion proofs.
+Valhalla Photo Studio 1.5.2 is a local production workspace for generating coherent SFW and NSFW photoshoots of adult women with your own ComfyUI instance. It turns creative direction into complete, automatically composed prompts, keeps the subject and visual story consistent across a set, and sends the approved shots to ComfyUI for image inference and Motion proofs.
 
 The browser interface brings the full workflow together: storyboard planning, prompt automation, compatible scene and wardrobe selection, shot-level direction, Preview and Production rendering, progress tracking, and a built-in Proofs gallery for organizing and reviewing generated images and Motion outputs. Every rule-compatible storyboard is resolved before GPU work begins, so poses, wardrobe, scene geometry, camera direction, content progression, prompts, and seeds can be inspected or edited before an expensive render.
 
@@ -8,9 +8,9 @@ The application is designed for a private workstation or trusted LAN. It has no 
 
 > **Adult-content notice:** the production catalog supports SFW, progressive adult, and explicit solo-adult modes. All configured subjects are adults aged 21–23. Use the application only where its content is lawful and appropriate.
 
-## Version 1.5.1
+## Version 1.5.2
 
-This release adds LTX 2.5 Motion rendering from generated proofs, independent Image and Video workflow profiles, a mixed **All proofs** gallery, shared top-level workflow storage, and an in-lightbox progress panel while Motion jobs are queued or rendering.
+This release links Motion outputs to their source proof by the source media ID encoded in the filename, so generated videos no longer need private metadata sidecars. Video prompts and render details continue to be recorded in the opt-in debug log.
 
 ## Highlights
 
@@ -228,8 +228,9 @@ queue as image renders, and appears in the **Motion** gallery view when ready. W
 the source lightbox remains open, the shared job dock is shown inside it immediately
 after queueing and continues to report progress.
 ComfyUI video outputs are copied without re-encoding, so audio tracks returned
-by the workflow remain embedded. A private sidecar next to each generated
-video preserves its source proof relationship across server restarts.
+by the workflow remain embedded. Each generated video filename includes the
+source proof media ID, for example `..._video_from_6909363532413516788_image_01_...`;
+this keeps the source relationship filesystem-native across server restarts.
 
 ## Configuration
 
@@ -298,6 +299,6 @@ tests/          deterministic regression and stress tests
 
 - Everything runs locally unless `config.json` points to another trusted ComfyUI host.
 - The privacy cover hides images and prompts in the UI; it is not encryption or access control.
-- Server and storyboard state is held in memory; generated media files and video relationship sidecars remain on disk.
+- Server and storyboard state is held in memory; generated media files remain on disk. Video prompts and render mappings are retained in the optional prompt debug log.
 - Valhalla does not include an image-quality detector or identity/reference-image pipeline.
 - ComfyUI errors and invalid workflows are reported before or during the affected job without silently skipping failed frames.
