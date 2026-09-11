@@ -3376,6 +3376,8 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn(".privacy-covered .system-settings > summary", css)
         self.assertIn(".privacy-covered .logger-prompt pre", css)
         self.assertIn(".privacy-covered .logger-prompt::after", css)
+        self.assertIn(".privacy-covered .image-stage video", css)
+        self.assertIn("visibility: hidden !important", css)
         self.assertIn("!button || !prompt || state.privacyCovered", js)
         self.assertGreaterEqual(css.count('content: "⊝"'), 3)
         self.assertNotIn('content: "Image covered"', css)
