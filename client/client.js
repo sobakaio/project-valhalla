@@ -35,6 +35,7 @@ const storedGalleryCardSize = localStorage.getItem('valhalla-gallery-thumbnail-s
 
 const state = {
   storyboard: null,
+  storyboardOpenSet: 0,
   director: null,
   directorShot: 1,
   directorOpenGroup: null,
@@ -111,6 +112,7 @@ const form = $('#run-form');
 const emptyState = $('#empty-state');
 const loadingState = $('#loading-state');
 const shotGrid = $('#shot-grid');
+const storyboardPanel = $('.storyboard-panel');
 const storyboardActions = $('#storyboard-actions');
 const storyboardMeta = $('#storyboard-meta');
 const imageDialog = $('#image-dialog');
@@ -859,6 +861,7 @@ async function resolveStoryboard(event, options = {}) {
   const version = ++state.resolveVersion;
   const button = $('#resolve-button');
   setBusy(button, true, 'Resolving…');
+  storyboardPanel.classList.remove('resolved');
   emptyState.classList.add('hidden');
   shotGrid.classList.add('hidden');
   storyboardActions.classList.add('hidden');
@@ -910,9 +913,13 @@ function scheduleSeedResolve(event) {
 }
 
 function generateUiSeed() {
+  const minimum = 100000000000000;
+  const span = 900000000000000;
   const words = new Uint32Array(2);
   crypto.getRandomValues(words);
-  return (words[0] & 0x1fffff) * 0x100000000 + words[1];
+  const safeRandom = (words[0] & 0x1fffff) * 0x100000000 + words[1];
+  const seed = minimum + (safeRandom % span);
+  return seed % 10 ? seed : seed + 1;
 }
 
 function randomizeSeedField(name) {
@@ -1030,40 +1037,42 @@ function shotCard(shot) {
         <div class="shot-detail"><span>Variation</span><strong title="Inference seed ${shot.inference_seed}">${shot.seed_manual ? 'Custom · ' : ''}${escapeHtml(shot.inference_seed)}</strong></div>
       </div>
       <div class="shot-footer">
-        <button class="direct" data-action="director">Director</button>
-        <button class="reroll" data-action="reroll">Reroll</button>
-        <button data-action="inspect">Prompt</button>
-        <button class="variation" data-action="variation">Variation</button>
-        <button class="preview" data-action="preview">Preview</button>
-        <button class="render-one" data-action="render">Render</button>
+        <button type="button" class="direct" data-action="director">Director</button>
+        <button type="button" class="reroll" data-action="reroll">Reroll</button>
+        <button type="button" data-action="inspect">Prompt</button>
+        <button type="button" class="variation" data-action="variation">Variation</button>
+        <button type="button" class="preview" data-action="preview">Preview</button>
+        <button type="button" class="render-one" data-action="render">Render</button>
       </div>
     </article>`;
 }
 
 function storyboardCards(shots) {
   if (state.storyboard?.config.mode !== 'photoshoot') return shots.map(shotCard).join('');
-  const setCounts = new Map();
-  shots.forEach((shot) => setCounts.set(
-    shot.photoshoot_index,
-    (setCounts.get(shot.photoshoot_index) || 0) + 1,
-  ));
-  let previousSet = -1;
-  return shots.map((shot) => {
-    const heading = shot.photoshoot_index === previousSet
-      ? ''
-      : `<div class="storyboard-set-heading"><strong>Set ${shot.photoshoot_index + 1}</strong><small>${setCounts.get(shot.photoshoot_index)} shots</small></div>`;
-    previousSet = shot.photoshoot_index;
-    return heading + shotCard(shot);
-  }).join('');
+  const sets = new Map();
+  shots.forEach((shot) => {
+    if (!sets.has(shot.photoshoot_index)) sets.set(shot.photoshoot_index, []);
+    sets.get(shot.photoshoot_index).push(shot);
+  });
+  if (state.storyboardOpenSet !== null && !sets.has(state.storyboardOpenSet)) {
+    state.storyboardOpenSet = sets.keys().next().value;
+  }
+  return [...sets.entries()].map(([setIndex, setShots]) => `
+    <details class="director-group storyboard-set" data-storyboard-set="${setIndex}" ${setIndex === state.storyboardOpenSet ? 'open' : ''}>
+      <summary><span class="director-group-title">Set ${setIndex + 1}</span><small>${setShots.length} shots · set</small></summary>
+      <div class="storyboard-set-shots">${setShots.map(shotCard).join('')}</div>
+    </details>
+  `).join('');
 }
 
 function renderStoryboard() {
   const board = state.storyboard;
   if (!board) return;
+  storyboardPanel.classList.add('resolved');
   $('#export-storyboard').disabled = false;
   if (state.director?.storyboard_id !== board.id) {
     state.director = null;
-    state.directorOpenGroup = null;
+    state.directorOpenGroup = 'identity';
   }
   shotGrid.innerHTML = storyboardCards(board.shots);
   const sets = board.config.mode === 'photoshoot' ? board.config.photoshoots : 'Independent';
@@ -1116,22 +1125,38 @@ async function randomizeShotSeed(number, button) {
 }
 
 function openPrompt(shot) {
-  if (state.privacyCovered) return;
-  state.promptShot = shot;
-  state.promptTab = 'positive';
-  $('#dialog-eyebrow').textContent = `Set ${shot.photoshoot_index + 1} · Shot ${shot.shot_index + 1}`;
-  $('#dialog-title').textContent = `${shot.stage.level[0].toUpperCase()}${shot.stage.level.slice(1)} composition`;
-  $$('.prompt-tabs button').forEach((button) => button.classList.toggle('active', button.dataset.prompt === 'positive'));
-  updatePromptContent();
-  promptDialog.showModal();
+  if (!shot || !promptDialog) return;
+  if (state.privacyCovered) {
+    toast('Prompt hidden', 'Disable Privacy Cover to inspect shot prompts.', 'error');
+    return;
+  }
+  try {
+    state.promptShot = shot;
+    state.promptTab = 'positive';
+    $('#dialog-eyebrow').textContent = `Set ${shot.photoshoot_index + 1} · Shot ${shot.shot_index + 1}`;
+    const level = shot.stage?.level || 'shot';
+    $('#dialog-title').textContent = `${level[0].toUpperCase()}${level.slice(1)} composition`;
+    $$('.prompt-tabs button').forEach((button) => button.classList.toggle('active', button.dataset.prompt === 'positive'));
+    updatePromptContent();
+    if (promptDialog.open) promptDialog.close();
+    if (typeof promptDialog.showModal === 'function') promptDialog.showModal();
+    else promptDialog.setAttribute('open', '');
+  } catch (error) {
+    console.error('Could not open prompt dialog', error);
+    toast('Could not open prompt', error.message, 'error');
+  }
 }
 
 function updatePromptContent() {
   if (!state.promptShot) return;
+  const selectedIds = state.promptShot.selected_ids;
+  const selectedIdText = Array.isArray(selectedIds)
+    ? selectedIds.join('\n')
+    : Object.values(selectedIds || {}).flat().join('\n');
   const content = {
-    positive: state.promptShot.positive_prompt,
-    negative: state.promptShot.negative_prompt,
-    ids: state.promptShot.selected_ids.join('\n'),
+    positive: state.promptShot.positive_prompt || '',
+    negative: state.promptShot.negative_prompt || '',
+    ids: selectedIdText,
   }[state.promptTab];
   $('#prompt-content').textContent = content;
 }
@@ -3755,7 +3780,6 @@ $('#reset-config').addEventListener('click', () => {
 });
 $('#randomize-storyboard-seed').addEventListener('click', () => randomizeSeedField('prompt_seed'));
 $('#randomize-variation-seed').addEventListener('click', () => randomizeSeedField('inference_seed'));
-$('#reroll-all').addEventListener('click', () => requestStoryboardUpdate());
 $('#export-storyboard').addEventListener('click', exportStoryboard);
 $('#import-storyboard').addEventListener('click', () => $('#storyboard-file').click());
 $('#storyboard-file').addEventListener('change', importStoryboard);
@@ -3838,11 +3862,17 @@ $('#cancel-job').addEventListener('click', async () => {
 });
 
 shotGrid.addEventListener('click', (event) => {
-  const button = event.target.closest('button');
-  if (!button) return;
-  const number = Number(button.closest('.shot-card').dataset.shot);
+  const button = event.target.closest('button[data-action]');
+  const card = button?.closest('.shot-card');
+  if (!button || !card) return;
+  event.preventDefault();
+  const number = Number(card.dataset.shot);
   const shot = state.storyboard.shots.find((item) => item.number === number);
-  if (button.dataset.action === 'inspect') openPrompt(shot);
+  if (!shot) return;
+  if (button.dataset.action === 'inspect') {
+    openPrompt(shot);
+    return;
+  }
   if (button.dataset.action === 'director') {
     state.directorShot = number;
     switchView('director');
@@ -3851,7 +3881,20 @@ shotGrid.addEventListener('click', (event) => {
   if (button.dataset.action === 'render') startShotRender(number, button);
   if (button.dataset.action === 'variation') randomizeShotSeed(number, button);
   if (button.dataset.action === 'reroll') rerollShot(number, button);
-});
+}, true);
+
+shotGrid.addEventListener('toggle', (event) => {
+  const opened = event.target;
+  if (!opened.matches('details.storyboard-set')) return;
+  if (!opened.open) {
+    state.storyboardOpenSet = null;
+    return;
+  }
+  state.storyboardOpenSet = Number(opened.dataset.storyboardSet);
+  $$('.storyboard-set', shotGrid).forEach((set) => {
+    if (set !== opened) set.open = false;
+  });
+}, true);
 
 $('#shot-preview-close').addEventListener('click', closeShotPreview);
 $('#shot-preview-refresh').addEventListener('click', (event) => {

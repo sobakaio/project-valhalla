@@ -33,6 +33,22 @@ class AppError(RuntimeError):
 
 APP_VERSION = "1.6.0"
 MEDIA_TYPES = {"image", "video"}
+UI_SEED_MIN = 100_000_000_000_000
+UI_SEED_MAX = 999_999_999_999_999
+UI_SEED_SPAN = UI_SEED_MAX - UI_SEED_MIN + 1
+
+
+def automatic_ui_seed() -> int:
+    """Return a fixed-width decimal seed that remains exact in JavaScript."""
+    seed = UI_SEED_MIN + secrets.randbelow(UI_SEED_SPAN)
+    return seed if seed % 10 else seed + 1
+
+
+def deterministic_ui_seed(material: bytes) -> int:
+    """Derive a fixed-width UI-safe seed without losing reproducibility."""
+    digest = int.from_bytes(hashlib.sha256(material).digest()[:8], "big")
+    seed = UI_SEED_MIN + digest % UI_SEED_SPAN
+    return seed if seed % 10 else seed + 1
 
 
 def validate_media_type(media_type: str) -> str:
@@ -4771,10 +4787,10 @@ def build_storyboard(
                     avoid.setdefault(key, set()).add(item["id"])
             inference_seed = args.inference_seed
             if args.inference_strategy == "random":
-                inference_seed = secrets.randbelow(2**63)
+                inference_seed = automatic_ui_seed()
             elif args.inference_strategy == "sequence":
                 material = f"{args.inference_seed}:{photoshoot_index}:{shot_index}".encode()
-                inference_seed = int.from_bytes(hashlib.sha256(material).digest()[:8], "big") & (2**63 - 1)
+                inference_seed = deterministic_ui_seed(material)
             storyboard.append({
                 "number": len(storyboard) + 1,
                 "photoshoot_index": photoshoot_index,
@@ -5723,7 +5739,7 @@ def parse_run_config(payload: dict[str, Any], db: dict[str, Any]) -> SimpleNames
     if inference_strategy not in {"random", "fixed", "sequence"}:
         raise AppError("Inference seed strategy must be random, fixed, or sequence")
     if inference_strategy in {"fixed", "sequence"} and inference_seed is None:
-        inference_seed = secrets.randbelow(2**63)
+        inference_seed = automatic_ui_seed()
     use_curated_defaults = payload.get("use_curated_defaults", True)
     if not isinstance(use_curated_defaults, bool):
         raise AppError("use_curated_defaults must be a boolean")
@@ -6067,7 +6083,7 @@ class WebState:
     def create_storyboard(self, payload: dict[str, Any]) -> dict[str, Any]:
         db, _ = load_database()
         args = parse_run_config(payload, db)
-        prompt_seed = args.prompt_seed if args.prompt_seed is not None else secrets.randbits(63)
+        prompt_seed = args.prompt_seed if args.prompt_seed is not None else automatic_ui_seed()
         args.prompt_seed = prompt_seed
         rng = random.Random(prompt_seed)
         composer = Composer(db, rng, args.use_curated_defaults)
@@ -7321,7 +7337,7 @@ class WebState:
             shot["scene"] = record["composer"].resolve_scene(shot["context"], shot["stage"])
             self._apply_director_customs(shot, shot["scene"], shot["context"])
             if record["args"].inference_seed is None:
-                shot["inference_seed"] = secrets.randbelow(2**63)
+                shot["inference_seed"] = automatic_ui_seed()
             return serialize_shot(record["db"], shot)
 
     def randomize_shot_seed(self, storyboard_id: str, number: int) -> dict[str, Any]:
@@ -7339,7 +7355,7 @@ class WebState:
             shot = record["shots"][number - 1]
             previous = shot["inference_seed"]
             while shot["inference_seed"] == previous:
-                shot["inference_seed"] = secrets.randbelow(2**63)
+                shot["inference_seed"] = automatic_ui_seed()
             shot["seed_manual"] = True
             return serialize_shot(record["db"], shot)
 
@@ -7354,7 +7370,7 @@ class WebState:
             payload.get("inference_seed"), "Image variation seed", 2**64 - 1
         )
         if strategy in {"fixed", "sequence"} and base_seed is None:
-            base_seed = secrets.randbelow(2**63)
+            base_seed = automatic_ui_seed()
         with self.lock:
             if any(
                 job["storyboard_id"] == storyboard_id
@@ -7366,16 +7382,14 @@ class WebState:
             record["args"].inference_seed = base_seed
             for shot in record["shots"]:
                 if strategy == "random":
-                    seed = secrets.randbelow(2**63)
+                    seed = automatic_ui_seed()
                 elif strategy == "fixed":
                     seed = base_seed
                 else:
                     material = (
                         f"{base_seed}:{shot['photoshoot_index']}:{shot['shot_index']}"
                     ).encode()
-                    seed = int.from_bytes(
-                        hashlib.sha256(material).digest()[:8], "big"
-                    ) & (2**63 - 1)
+                    seed = deterministic_ui_seed(material)
                 shot["inference_seed"] = seed
                 shot["seed_manual"] = False
             return self.storyboard_payload(record)

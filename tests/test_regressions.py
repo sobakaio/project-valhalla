@@ -21,6 +21,25 @@ def director_fields(payload):
 
 
 class StudioGenerationLimitTests(unittest.TestCase):
+    def test_automatic_storyboard_seeds_use_fixed_width_ui_safe_values(self):
+        state = app.WebState()
+        board = state.create_storyboard({
+            "mode": "photoshoot",
+            "count": 1,
+            "photoshoots": 1,
+            "inference_strategy": "sequence",
+        })
+        for value in (
+            board["config"]["prompt_seed"],
+            board["config"]["inference_seed"],
+            board["shots"][0]["inference_seed"],
+        ):
+            self.assertIsInstance(value, int)
+            self.assertGreaterEqual(value, app.UI_SEED_MIN)
+            self.assertLessEqual(value, app.UI_SEED_MAX)
+            self.assertEqual(len(str(value)), 15)
+            self.assertNotEqual(value % 10, 0)
+
     def test_run_config_accepts_counts_above_the_previous_limits(self):
         database, _ = app.load_database()
         config = app.parse_run_config(
@@ -3209,6 +3228,14 @@ class OutputDeletionRegressionTests(unittest.TestCase):
 
 
 class FrontendContractTests(unittest.TestCase):
+    def test_seed_refresh_uses_fixed_width_decimal_format(self):
+        js = (Path(app.__file__).parent / "client" / "client.js").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("const minimum = 100000000000000;", js)
+        self.assertIn("const span = 900000000000000;", js)
+        self.assertIn("return seed % 10 ? seed : seed + 1;", js)
+
     def test_studio_exposes_curated_defaults_switch_and_persists_it(self):
         root = Path(app.__file__).parent
         html = (root / "client" / "client.html").read_text(encoding="utf-8")
@@ -3227,6 +3254,32 @@ class FrontendContractTests(unittest.TestCase):
         )
         self.assertIn("config.use_curated_defaults !== false", js)
 
+    def test_storyboard_header_has_no_duplicate_full_reroll_control(self):
+        html = (Path(app.__file__).parent / "client" / "client.html").read_text(
+            encoding="utf-8"
+        )
+        js = (Path(app.__file__).parent / "client" / "client.js").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotIn('id="reroll-all"', html)
+        self.assertNotIn("$('#reroll-all')", js)
+
+    def test_prompt_dialog_uses_compact_secondary_done_action(self):
+        html = (Path(app.__file__).parent / "client" / "client.html").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            '<button class="button ghost dialog-close">Done</button>',
+            html,
+        )
+        css = (Path(app.__file__).parent / "client" / "client.css").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            "#prompt-dialog .dialog-footer .dialog-close { font-size: 0.6875rem; }",
+            css,
+        )
+
     def test_storyboard_cards_show_subject_before_set_details(self):
         root = Path(app.__file__).parent
         js = (root / "client" / "client.js").read_text(encoding="utf-8")
@@ -3237,7 +3290,17 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('<span>Wardrobe ${fixed}</span>', js)
         self.assertIn("function displayCatalogLabel(value)", js)
         self.assertIn("function storyboardCards(shots)", js)
-        self.assertIn('class="storyboard-set-heading"', js)
+        self.assertIn('<button type="button" data-action="inspect">Prompt</button>', js)
+        self.assertIn("const button = event.target.closest('button[data-action]');", js)
+        self.assertIn("event.preventDefault();", js)
+        self.assertIn("Object.values(selectedIds || {}).flat().join('\\n')", js)
+        self.assertIn("toast('Could not open prompt', error.message, 'error');", js)
+        self.assertIn("}, true);", js[js.index("shotGrid.addEventListener('click'"):])
+        self.assertIn('class="director-group storyboard-set"', js)
+        self.assertIn('class="storyboard-set-shots"', js)
+        self.assertIn("state.storyboardOpenSet", js)
+        self.assertIn("storyboardPanel.classList.add('resolved')", js)
+        self.assertIn(".storyboard-panel.resolved", (root / "client" / "client.css").read_text(encoding="utf-8"))
         self.assertIn("const displayShotNumber = photoshoot ? shot.shot_index + 1 : shot.number;", js)
         self.assertNotIn('class="set-badge"', js)
         self.assertNotIn('class="shot-number"><i>', js)
@@ -3249,6 +3312,12 @@ class FrontendContractTests(unittest.TestCase):
         js = (root / "client" / "client.js").read_text(encoding="utf-8")
         self.assertIn("config.nsfw_percent == null || config.plateau_percent == null", js)
         self.assertIn("? 'Progressive'", js)
+
+    def test_gallery_cards_use_hand_cursor_for_clickable_media(self):
+        css = (Path(app.__file__).parent / "client" / "client.css").read_text(encoding="utf-8")
+        self.assertIn(".output-card {", css)
+        self.assertIn("cursor: pointer;", css[css.index(".output-card {"):css.index(".output-card {") + 300])
+        self.assertIn(".output-card.pending-output { cursor: default;", css)
 
     def test_release_version_is_consistent_across_server_and_ui(self):
         html = (Path(app.__file__).parent / "client" / "client.html").read_text(
@@ -3765,6 +3834,7 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("filterDirector(query, { collapseEmpty = false } = {})", js)
         self.assertIn("if (!normalized && collapseEmpty)", js)
         self.assertIn("state.directorOpenGroup = null", js)
+        self.assertIn("state.directorOpenGroup = 'identity'", js)
         self.assertIn("filterDirector(event.target.value, { collapseEmpty: true })", js)
 
     def test_director_custom_value_can_select_propagation_scope(self):
@@ -3793,7 +3863,9 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn(".render-choice { --render-color: var(--success);", css)
         self.assertIn(".render-mode-popover { position: absolute;", css)
         self.assertIn(".render-choice:focus-within", css)
-        self.assertIn(".render-choice:hover .button.render", css)
+        self.assertIn(".button.render:hover { background:", css)
+        self.assertIn(".render-choice .button.render:hover { background: var(--render-main-hover); }", css)
+        self.assertNotIn(".render-choice:hover .button.render", css)
         self.assertIn(".render-choice-menu > summary:hover { background: var(--render-hover); }", css)
         self.assertIn(".render-choice.preview { --render-color: var(--brand);", css)
 
