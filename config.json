@@ -15,8 +15,8 @@
     "media_profiles": {
       "image": {
         "source": "profiles",
-        "production": "cielbleu-v2-normal-detailslider",
-        "preview": "cielbleu-v2-normal-detailslider"
+        "production": "cielbleu-v2-innie-detailslider",
+        "preview": "cielbleu-v2-innie-detailslider"
       },
       "video": {
         "source": "profiles",
@@ -27,7 +27,7 @@
   "storage": {
     "output_dir": "./outputs",
     "proofs_dir": [],
-    "output_format": "png",
+    "output_format": "jpg",
     "jpeg_quality": 95,
     "strip_exif": true,
     "prompt_debug_log": {

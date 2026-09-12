@@ -241,6 +241,36 @@ class VideoWorkflowTests(unittest.TestCase):
                 {f"output:{first.name}", f"output:{second.name}"},
             )
 
+    def test_video_gallery_resolves_sources_from_one_set_to_one_set_identity(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output_dir = Path(temporary)
+            sources = [
+                output_dir / (
+                    "20260911_160243_066977_photoshoot_002_production_shot_001_"
+                    "111_image_01.png"
+                ),
+                output_dir / (
+                    "20260911_160243_066977_photoshoot_002_production_shot_002_"
+                    "222_image_01.png"
+                ),
+            ]
+            for source in sources:
+                source.write_bytes(b"source")
+                token = app.source_media_token("output", source.name, source.name)
+                (output_dir / f"run_video_from_{token}_1_video_01.mp4").write_bytes(b"video")
+            with (
+                patch.object(app, "proof_directories", return_value=[("output", output_dir)]),
+                patch.object(app, "output_directory", return_value=output_dir),
+                patch.object(app.WEB_STATE, "jobs", {}),
+            ):
+                videos = [item for item in app.list_output_images() if item["media_type"] == "video"]
+
+            self.assertEqual(len(videos), 2)
+            self.assertEqual(
+                {item["source_set_key"] for item in videos},
+                {"20260911_160243_066977:photoshoot:002:production"},
+            )
+
     def test_video_output_range_response_streams_only_the_requested_bytes(self):
         with tempfile.TemporaryDirectory() as temporary:
             video = Path(temporary) / "clip.mp4"
@@ -278,13 +308,21 @@ class VideoWorkflowTests(unittest.TestCase):
                 state = app.WebState()
                 payload = state.create_video_job(
                     "output", "frame.png", "subtle camera movement", 5,
-                    {"source_key": "output:frame.png", "shot": 7},
+                    {
+                        "source_key": "output:frame.png",
+                        "source_set_key": "run-1:photoshoot:002:production",
+                        "shot": 7,
+                    },
                 )
 
             self.assertEqual(payload["kind"], "video")
             self.assertEqual(payload["workflow_profile"], "ltx-2.5")
             self.assertEqual(payload["generation_mode"], "video")
             self.assertEqual(state.jobs[payload["id"]]["_video_source"]["source_key"], "output:frame.png")
+            self.assertEqual(
+                state.job_payload(state.jobs[payload["id"]])["pending_groups"][0]["source_set_key"],
+                "run-1:photoshoot:002:production",
+            )
             thread.assert_called_once()
 
 

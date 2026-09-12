@@ -7699,12 +7699,16 @@ class WebState:
             for key in (
                 "key", "source_key", "source_image", "generation_mode", "render_tier",
                 "group_index", "shot", "source_generation_mode", "source_render_tier",
-                "source_group_index", "source_shot",
+                "source_group_index", "source_shot", "set_key", "source_set_key",
             ):
                 value = source_metadata.get(key)
                 if isinstance(value, (str, int, float)) and not isinstance(value, bool):
                     source_record[key] = value
         source_record.setdefault("source_key", f"{source}:{relative_path}")
+        source_record.setdefault(
+            "source_set_key",
+            source_record.get("set_key") or output_set_key(source_record["name"]),
+        )
         job = {
             "id": job_id, "storyboard_id": None, "status": "queued", "fast": False,
             "workflow_profile": workflow_profile, "workflow_source": workflow_source_name,
@@ -7987,6 +7991,10 @@ class WebState:
                     source_key=source.get("source_key")
                     or f"{source.get('source', 'output')}:{source.get('relative_path', '')}",
                     source_image=source.get("name"),
+                    source_set_key=(
+                        source.get("source_set_key") or source.get("set_key")
+                        or output_set_key(source.get("name", ""))
+                    ),
                 )
         return groups
 
@@ -8180,11 +8188,32 @@ class WebState:
                 published = output_payload(path)
                 source_key = source.get("source_key") or published.get("source_key")
                 source_image = source.get("name") or source.get("source_image") or published.get("source_image")
+                source_set_key = (
+                    source.get("source_set_key") or source.get("set_key")
+                    or output_set_key(source.get("name", ""))
+                )
                 published.update(
                     prompt_id=prompt_id, media_type="video", generation_mode="video",
                     render_tier="production", group_index=1,
                     source_image=source_image,
                     source_key=source_key or f"{source['source']}:{source['relative_path']}",
+                    source_set_key=source_set_key,
+                    source_generation_mode=(
+                        source.get("source_generation_mode") or source.get("generation_mode")
+                    ),
+                    source_render_tier=(
+                        source.get("source_render_tier") or source.get("render_tier")
+                    ),
+                    source_group_index=(
+                        source.get("source_group_index")
+                        if source.get("source_group_index") is not None
+                        else source.get("group_index")
+                    ),
+                    source_shot=(
+                        source.get("source_shot")
+                        if source.get("source_shot") is not None
+                        else source.get("shot")
+                    ),
                     video_prompt=prompt, video_duration=job["_video_duration"], video_seed=seed,
                     group_key=f"job:{job_id}:video:1:production",
                 )
@@ -8360,6 +8389,12 @@ IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
 VIDEO_SUFFIXES = {".mp4", ".webm", ".mov", ".mkv", ".avi"}
 MEDIA_SUFFIXES = IMAGE_SUFFIXES | VIDEO_SUFFIXES
 IMAGE_MEDIA_REF_RE = re.compile(r"(?:^|_)(?P<media_id>-?\d+)_image_(?P<image_number>\d+)$", re.IGNORECASE)
+OUTPUT_SET_RE = re.compile(
+    r"^(?P<run>.+)_(?P<generation_mode>photoshoot|random)_"
+    r"(?P<group_index>\d+)_(?P<render_tier>production|preview)_shot_"
+    r"(?P<shot>\d+)_",
+    re.IGNORECASE,
+)
 VIDEO_SOURCE_RE = re.compile(
     r"_video_from_(?P<source_token>.+)_(?P<video_seed>-?\d+)_video_\d+\.[^.]+$",
     re.IGNORECASE,
@@ -8398,6 +8433,21 @@ def source_media_token(source: str, relative_path: str, name: str) -> str:
 def video_source_token(name: str) -> str | None:
     match = VIDEO_SOURCE_RE.search(name)
     return match.group("source_token") if match else None
+
+
+def output_set_key(name: str) -> str | None:
+    """Return the stable set identity encoded in a generated image filename."""
+    match = OUTPUT_SET_RE.match(Path(name).name)
+    if not match:
+        return None
+    return ":".join(
+        (
+            match.group("run"),
+            match.group("generation_mode").lower(),
+            match.group("group_index"),
+            match.group("render_tier").lower(),
+        )
+    )
 
 
 def output_directory() -> Path:
@@ -8481,6 +8531,7 @@ def output_payload(path: Path, source: str = "output", root: Path | None = None)
     except ValueError as exc:
         raise AppError("Proof image is outside its configured directory") from exc
     match = re.search(r"_shot_(\d+)_", path.name)
+    set_match = OUTPUT_SET_RE.match(path.name)
     stat = path.stat()
     encoded_path = quote(relative_path, safe="")
     is_video = path.suffix.lower() in VIDEO_SUFFIXES
@@ -8507,6 +8558,10 @@ def output_payload(path: Path, source: str = "output", root: Path | None = None)
         "thumbnail_url": f"/api/thumbnails/{encoded_path}?source={source}&v={stat.st_mtime_ns}",
         "shot": int(match.group(1)) if match else None,
         "size": stat.st_size,
+        "set_key": output_set_key(path.name),
+        "generation_mode": set_match.group("generation_mode").lower() if set_match else None,
+        "render_tier": set_match.group("render_tier").lower() if set_match else None,
+        "group_index": int(set_match.group("group_index")) if set_match else None,
     }
     if is_video:
         payload.update({
@@ -8515,6 +8570,7 @@ def output_payload(path: Path, source: str = "output", root: Path | None = None)
             "source_media_id": source_media_id,
             "source_media_ref": source_media_ref,
             "source_key": source_key,
+            "source_set_key": None,
             "source_relative_path": None,
             "source_generation_mode": None,
             "source_render_tier": None,
@@ -8710,6 +8766,7 @@ def list_output_images() -> list[dict[str, Any]]:
                 source_key=original["key"],
                 source_image=original["name"],
                 source_relative_path=original["relative_path"],
+                source_set_key=original.get("set_key"),
                 source_generation_mode=original.get("generation_mode"),
                 source_render_tier=original.get("render_tier"),
                 source_group_index=original.get("group_index"),

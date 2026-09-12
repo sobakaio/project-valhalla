@@ -323,6 +323,10 @@
             <input id="image-fit" type="checkbox">
             <span>Fit</span>
           </label>
+          <label class="viewer-fit viewer-loop" for="image-video-loop" title="Loop video">
+            <input id="image-video-loop" type="checkbox" checked>
+            <span>Loop video</span>
+          </label>
           <label class="viewer-zoom" for="image-zoom">
             <input id="image-zoom" type="range" min="25" max="300" step="5" value="100" aria-label="Media zoom">
             <output id="image-zoom-output" for="image-zoom">100%</output>
@@ -357,7 +361,7 @@
       <div class="image-stage" aria-label="Media preview. Drag to pan when zoomed.">
         <button class="viewer-nav previous" id="image-previous" aria-label="Previous media">‹</button>
         <img id="image-viewer-image" src="" alt="Maximized generated output" draggable="false">
-        <video id="image-viewer-video" class="hidden" controls playsinline autoplay></video>
+        <video id="image-viewer-video" class="hidden" controls playsinline autoplay loop></video>
         <button class="viewer-nav next" id="image-next" aria-label="Next media">›</button>
       </div>
     </div>

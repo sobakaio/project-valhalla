@@ -76,6 +76,7 @@ const state = {
   previewPanY: 0,
   slideshowTimer: null,
   slideshowActive: false,
+  videoLoop: localStorage.getItem('valhalla-video-loop') !== 'false',
   slideshowRandom: sessionStorage.getItem('valhalla-slideshow-random') === 'true',
   slideshowDelay: Math.min(10, Math.max(1, Number(sessionStorage.getItem('valhalla-slideshow-delay')) || 3)),
   fullscreenControlsTimer: null,
@@ -297,11 +298,25 @@ function galleryMediaItems() {
     .filter(({ item }) => galleryMediaMatches(item));
 }
 
+function outputSetKey(item) {
+  if (!item) return null;
+  if (typeof item.source_set_key === 'string' && item.source_set_key) return item.source_set_key;
+  if (typeof item.set_key === 'string' && item.set_key) return item.set_key;
+  const sourceName = item.source_image || item.name;
+  const match = typeof sourceName === 'string' ? sourceName.match(OUTPUT_FILENAME) : null;
+  if (match) return `${match[1]}:${match[2]}:${match[3]}:${match[4]}`;
+  return null;
+}
+
+function videoSetKey(item) {
+  return outputSetKey(item) || item?.source_key || item?.key || `video:${item?.name}`;
+}
+
 function videoGroups() {
   const groups = new Map();
   galleryMediaItems().forEach((entry) => {
     const item = entry.item;
-    const key = item.source_key || item.key || `video:${item.name}`;
+    const key = videoSetKey(item);
     if (!groups.has(key)) groups.set(key, {
       key,
       identity: {
@@ -314,16 +329,21 @@ function videoGroups() {
     groups.get(key).items.push(entry);
   });
   state.pendingGroups.filter((group) => group.generation_mode === 'video').forEach((pendingGroup) => {
-    const key = `pending:${pendingGroup.group_key}`;
-    groups.set(key, {
+    const key = pendingGroup.source_set_key || `pending:${pendingGroup.group_key}`;
+    if (!groups.has(key)) groups.set(key, {
       key,
       identity: {
         key, kind: 'video', tier: pendingGroup.render_tier || 'production',
         run: pendingGroup.source_image || 'Source image',
         source_image: pendingGroup.source_image || 'Source image',
       },
-      items: [], pendingGroup, firstIndex: state.outputs.length,
+      items: [], pendingGroups: [], firstIndex: state.outputs.length,
     });
+    const group = groups.get(key);
+    group.pendingGroups ||= [];
+    group.pendingGroups.push(pendingGroup);
+    group.pendingGroup ||= pendingGroup;
+    group.firstIndex = Math.min(group.firstIndex, state.outputs.length);
   });
   groups.forEach((group) => group.items.sort((left, right) => (
     left.item.name.localeCompare(right.item.name)
@@ -421,17 +441,31 @@ function pendingGroupCount(group) {
   return Array.isArray(group?.positions) ? group.positions.length : 0;
 }
 
+function groupPendingGroups(group) {
+  if (Array.isArray(group?.pendingGroups)) return group.pendingGroups;
+  return group?.pendingGroup ? [group.pendingGroup] : [];
+}
+
 function visiblePendingGroups() {
   return state.pendingGroups.filter((group) => galleryPendingGroupMatches(group));
 }
 
 function groupEntryCount(group) {
-  return (group?.items?.length || 0) + pendingGroupCount(group?.pendingGroup);
+  return (group?.items?.length || 0) + groupPendingGroups(group)
+    .reduce((count, pendingGroup) => count + pendingGroupCount(pendingGroup), 0);
 }
 
 function groupEntryAt(group, index) {
   if (index < group.items.length) return group.items[index];
-  return { item: pendingOutput(group.pendingGroup, index - group.items.length), outputIndex: null };
+  let offset = index - group.items.length;
+  for (const pendingGroup of groupPendingGroups(group)) {
+    const count = pendingGroupCount(pendingGroup);
+    if (offset < count) {
+      return { item: pendingOutput(pendingGroup, offset), outputIndex: null };
+    }
+    offset -= count;
+  }
+  return null;
 }
 
 function flatEntryCount() {
@@ -1590,6 +1624,7 @@ function pendingOutput(group, index) {
     eta_seconds: rendering ? group.frame_eta_seconds : null,
     observed_at: group.observed_at,
     source_key: group.source_key,
+    source_set_key: group.source_set_key,
     source_image: group.source_image,
     name: `pending_${group.job_id}_${String(position).padStart(6, '0')}`,
   };
@@ -2219,6 +2254,14 @@ function activePreviewMedia() {
   return isVideoOutput(state.outputs[state.previewIndex]) ? $('#image-viewer-video') : $('#image-viewer-image');
 }
 
+function syncVideoLoopControl() {
+  const control = $('#image-video-loop');
+  const video = $('#image-viewer-video');
+  control.disabled = !isVideoOutput(state.outputs[state.previewIndex]) || state.privacyCovered;
+  control.checked = state.videoLoop;
+  video.loop = state.videoLoop && !state.slideshowActive;
+}
+
 function previewPanBounds() {
   const image = activePreviewMedia();
   const stage = $('.image-stage');
@@ -2246,8 +2289,11 @@ function resetPreviewPan() {
 function unloadViewerVideo() {
   const video = $('#image-viewer-video');
   video.pause();
+  video.onended = null;
+  video.onloadedmetadata = null;
   video.removeAttribute('src');
   video.load();
+  video.loop = state.videoLoop;
   video.removeAttribute('data-output-key');
   video.style.removeProperty('width');
   video.style.removeProperty('height');
@@ -2306,6 +2352,8 @@ function showPreview(index) {
   const videoOutput = isVideoOutput(item);
   const createVideoButton = $('#image-create-video');
   state.videoSource = !videoOutput ? item : null;
+  video.onended = null;
+  video.onloadedmetadata = null;
   createVideoButton.classList.toggle('hidden', videoOutput || state.privacyCovered);
   createVideoButton.disabled = videoOutput || state.privacyCovered;
   resetPreviewPan();
@@ -2326,6 +2374,7 @@ function showPreview(index) {
   video.classList.toggle('hidden', !videoOutput || state.privacyCovered);
   video.controls = videoOutput && !state.privacyCovered;
   video.autoplay = videoOutput && !state.privacyCovered;
+  video.loop = videoOutput && !state.privacyCovered && state.videoLoop && !state.slideshowActive;
   video.style.display = videoOutput && !state.privacyCovered ? '' : 'none';
   if (videoOutput) video.dataset.outputKey = outputIdentity(item);
   video.onloadedmetadata = () => {
@@ -2408,6 +2457,7 @@ async function submitVideo() {
           key: source.key,
           source_key: source.source_key,
           source_image: source.name,
+          source_set_key: source.source_set_key || source.set_key,
           generation_mode: source.generation_mode,
           render_tier: source.render_tier,
           group_index: source.group_index,
@@ -2449,6 +2499,27 @@ function movePreviewRandom() {
   if (state.slideshowActive) scheduleSlideshow();
 }
 
+function movePreviewVideo(direction) {
+  const scope = previewOutputs().filter((entry) => isVideoOutput(entry.item));
+  if (!scope.length) return;
+  const position = scope.findIndex((entry) => entry.outputIndex === state.previewIndex);
+  const start = position < 0 ? 0 : position;
+  const next = scope[(start + direction + scope.length) % scope.length];
+  if (next) showPreview(next.outputIndex);
+  if (state.slideshowActive) scheduleSlideshow();
+}
+
+function movePreviewVideoRandom() {
+  const scope = previewOutputs().filter((entry) => isVideoOutput(entry.item));
+  if (!scope.length) return;
+  const position = scope.findIndex((entry) => entry.outputIndex === state.previewIndex);
+  const start = position < 0 ? 0 : position;
+  const offset = scope.length < 2 ? 0 : 1 + Math.floor(Math.random() * (scope.length - 1));
+  const next = scope[(start + offset) % scope.length];
+  if (next) showPreview(next.outputIndex);
+  if (state.slideshowActive) scheduleSlideshow();
+}
+
 function syncSlideshowControls() {
   const button = $('#image-slideshow-toggle');
   const active = state.slideshowActive && previewOutputs().length > 1;
@@ -2463,12 +2534,31 @@ function syncSlideshowControls() {
     choice.setAttribute('aria-pressed', String(selected));
   });
   $('#slideshow-random').checked = state.slideshowRandom;
+  syncVideoLoopControl();
 }
 
 function scheduleSlideshow() {
   clearTimeout(state.slideshowTimer);
   state.slideshowTimer = null;
   if (!state.slideshowActive || !imageDialog.open || previewOutputs().length < 2) return;
+  const current = state.outputs[state.previewIndex];
+  const video = $('#image-viewer-video');
+  if (isVideoOutput(current)) {
+    video.loop = false;
+    const advance = () => {
+      if (!state.slideshowActive || !imageDialog.open) return;
+      if (state.slideshowRandom) movePreviewVideoRandom();
+      else movePreviewVideo(1);
+    };
+    video.onended = advance;
+    if (video.ended) {
+      state.slideshowTimer = setTimeout(() => {
+        state.slideshowTimer = null;
+        advance();
+      }, 0);
+    }
+    return;
+  }
   state.slideshowTimer = setTimeout(() => {
     if (state.slideshowRandom) movePreviewRandom();
     else movePreview(1);
@@ -2642,6 +2732,11 @@ outputGrid.addEventListener('click', (event) => {
 $('#image-fit').addEventListener('change', (event) => setPreviewFit(event.target.checked));
 $('#image-zoom').addEventListener('input', (event) => setPreviewZoom(event.target.value));
 $('#image-zoom').addEventListener('dblclick', () => setPreviewZoom(100));
+$('#image-video-loop').addEventListener('change', (event) => {
+  state.videoLoop = event.currentTarget.checked;
+  localStorage.setItem('valhalla-video-loop', String(state.videoLoop));
+  syncVideoLoopControl();
+});
 $('#image-true-fullscreen').addEventListener('click', toggleTrueFullscreen);
 $('#image-slideshow-toggle').addEventListener('click', toggleSlideshow);
 $$('[data-slideshow-delay]').forEach((button) => button.addEventListener('click', (event) => {

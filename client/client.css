@@ -526,6 +526,7 @@ dialog.image-viewer::backdrop { background: #050608; backdrop-filter: none; }
 .slideshow-random:has(input:checked) { color: var(--text); }
 .viewer-fit { display: flex; align-items: center; gap: 6px; color: rgb(255 255 255 / 70%); cursor: pointer; font-size: 0.625rem; }
 .viewer-fit input { margin: 0; accent-color: var(--brand); }
+.viewer-loop:has(input:disabled) { opacity: .45; cursor: default; }
 .viewer-zoom { min-width: 175px; display: flex; align-items: center; justify-content: center; gap: 9px; color: rgb(255 255 255 / 58%); font-size: 0.625rem; }
 .viewer-zoom input { width: 130px; margin: 0; accent-color: var(--brand); cursor: pointer; }
 .viewer-zoom output { width: 34px; color: rgb(255 255 255 / 82%); font: 0.625rem ui-monospace, SFMono-Regular, Menlo, monospace; text-align: right; }
@@ -979,6 +980,8 @@ pre { min-height: 280px; max-height: 50vh; margin: 0; padding: 15px; overflow-x:
   .viewer-delay-menu { width: 34px; height: 34px; }
   .slideshow-toggle strong { display: none; }
   .viewer-fit { font-size: 0.625rem; }
+  .viewer-loop span { display: none; }
+  .viewer-loop input { width: 14px; height: 14px; }
   .viewer-zoom { min-width: 30px; gap: 0; }
   .viewer-zoom input { display: none; }
   .viewer-zoom output { width: 30px; font-size: 0.5625rem; text-align: center; }
