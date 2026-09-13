@@ -591,7 +591,6 @@
       "nsfw_final_percent": 50,
       "explicit_plateau_percent": 30
     },
-    "prompt_profile": "balanced",
     "surface_modifiers": {
       "color_chance": 0.65,
       "texture_chance": 0.45,
@@ -27195,10 +27194,6 @@
     }
   ],
   "prompt_defaults": {
-    "conditioning_policy": {
-      "structural_source": "positive",
-      "negative_role": "auxiliary_optional"
-    },
     "positive_prefix": "(solo {age}:1.4), (single subject:1.4)",
     "positive_suffix": "coherent visible anatomy, realistic photography, natural skin texture, high detail",
     "negative_prompt": "extra limbs, missing limbs, fused limbs, malformed hands, extra fingers, fused fingers, malformed feet, extra toes, malformed anatomy, distorted face",
@@ -27216,13 +27211,6 @@
       "intimate_closeup": "(explicit intimate anatomical close-up:1.5), fully nude, clearly visible, uncensored",
       "panties_aside": "(explicit panties-pulled-aside view:1.5), exposed vulva between parted legs, uncensored",
       "masturbation": "(hands-only masturbation:1.5), exposed genitals, fully nude, uncensored"
-    },
-    "prompt_priority": [
-      "subject",
-      "camera_direction",
-      "anatomy",
-      "traits_garments",
-      "location_treatment"
-    ]
+    }
   }
 }

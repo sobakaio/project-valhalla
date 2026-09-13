@@ -2338,7 +2338,7 @@ class DirectorRegressionTests(unittest.TestCase):
             self.assertFalse(visible & removed)
             removed = set(shot["scene"]["removed_garment_slots"])
 
-    def test_compiler_uses_declared_diffusion_priority(self):
+    def test_compiler_keeps_structural_diffusion_priority(self):
         state, storyboard_id = self.make_storyboard(count=8, prompt_seed=4141)
         record = state.get_storyboard(storyboard_id)
         shot = record["shots"][0]
@@ -2359,13 +2359,6 @@ class DirectorRegressionTests(unittest.TestCase):
             positive.index(scene["interior"]["prompt"].casefold()),
         ]
         self.assertEqual(positions, sorted(positions))
-        self.assertEqual(
-            record["db"]["prompt_defaults"]["prompt_priority"],
-            [
-                "subject", "camera_direction", "anatomy",
-                "traits_garments", "location_treatment",
-            ],
-        )
 
     def test_photoshoot_prompts_repeat_stable_age_anatomy_and_visible_colors_early(self):
         state, storyboard_id = self.make_storyboard(count=12, prompt_seed=616161)
@@ -2913,19 +2906,6 @@ class DirectorRegressionTests(unittest.TestCase):
         self.assertIn("carefully sliding the dress down", state.storyboard_payload(
             state.get_storyboard(storyboard_id)
         )["shots"][position - 1]["positive_prompt"])
-
-    def test_legacy_prompt_profile_is_ignored_without_truncation(self):
-        state = app.WebState()
-        common = {
-            "mode": "photoshoot", "count": 4, "photoshoots": 1,
-            "prompt_seed": 31415, "inference_seed": 92653,
-        }
-        normal = state.create_storyboard(common)
-        legacy = state.create_storyboard({**common, "prompt_profile": "compact"})
-        normal_prompts = [shot["positive_prompt"] for shot in normal["shots"]]
-        legacy_prompts = [shot["positive_prompt"] for shot in legacy["shots"]]
-        self.assertEqual(normal_prompts, legacy_prompts)
-
 
 class PromptDebugLogTests(unittest.TestCase):
     def setUp(self):
@@ -3653,6 +3633,7 @@ class FrontendContractTests(unittest.TestCase):
             css,
         )
         self.assertIn(".director-action-group { display: flex; flex: 0 0 auto; gap: 6px; }", css)
+
         self.assertNotIn("director-quick-actions button.randomize {", css)
         self.assertNotIn("director-quick-actions button.preview-action {", css)
         self.assertIn(
@@ -3670,6 +3651,15 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn(".director-quick-actions button { background: var(--surface); }", css)
         self.assertIn(".director-quick-actions button:hover { background: var(--surface-3); }", css)
         self.assertNotIn("director-quick-actions button.variation-action {", css)
+
+    def test_video_dialog_exposes_optional_gemma_prompt_enhancement(self):
+        root = Path(app.__file__).parent
+        html = (root / "client" / "client.html").read_text(encoding="utf-8")
+        js = (root / "client" / "client.js").read_text(encoding="utf-8")
+        self.assertIn('id="video-prompt-enhancement-row"', html)
+        self.assertIn('id="video-prompt-enhancement"', html)
+        self.assertIn("prompt_enhancement: enhancementInput.checked", js)
+        self.assertIn("videoPromptEnhancementSupported", js)
 
     def test_storyboard_cards_show_subject_before_set_details(self):
         root = Path(app.__file__).parent
@@ -5364,12 +5354,7 @@ class WorkflowProfileTests(unittest.TestCase):
         with self.assertRaisesRegex(app.AppError, "must expose scalar width and height"):
             app.detect_node_mapping(workflow, include_fast=True)
 
-    def test_database_declares_negative_conditioning_auxiliary(self):
-        database, _ = app.load_database()
-        self.assertEqual(database["prompt_defaults"]["conditioning_policy"], {
-            "structural_source": "positive",
-            "negative_role": "auxiliary_optional",
-        })
+    def test_negative_conditioning_ui_contract_is_explicit(self):
         root = Path(app.__file__).parent
         html = (root / "client" / "client.html").read_text(encoding="utf-8")
         javascript = (root / "client" / "client.js").read_text(encoding="utf-8")

@@ -668,6 +668,8 @@ async function refreshStatus(showToast = false) {
     const videoWorkflow = status.workflow.video || {
       source: 'profiles', profiles: [], production: null, ready: false,
     };
+    state.workflowProfilesByMedia.video = videoWorkflow;
+    syncVideoPromptEnhancementControl();
     const productionProfile = imageWorkflow.profiles.find(
       (profile) => profile.id === imageWorkflow.production,
     );
@@ -2511,6 +2513,24 @@ function savedVideoDuration() {
   return Number.isInteger(value) && value >= 1 && value <= 60 ? value : 5;
 }
 
+function savedVideoPromptEnhancement() {
+  return localStorage.getItem('valhalla-video-prompt-enhancement') === 'true';
+}
+
+function videoPromptEnhancementSupported() {
+  const profiles = state.workflowProfilesByMedia.video;
+  return Boolean(profiles && profiles.source !== 'live' && profiles.prompt_enhancement);
+}
+
+function syncVideoPromptEnhancementControl() {
+  const row = $('#video-prompt-enhancement-row');
+  const input = $('#video-prompt-enhancement');
+  if (!row || !input) return;
+  const supported = videoPromptEnhancementSupported();
+  row.classList.toggle('hidden', !supported);
+  if (!supported) input.checked = false;
+}
+
 function openVideoDialog() {
   const source = state.videoSource || state.outputs[state.previewIndex];
   if (!source || source.pending || isVideoOutput(source) || state.privacyCovered) return;
@@ -2518,6 +2538,8 @@ function openVideoDialog() {
   $('#video-source-label').textContent = source.name;
   $('#video-prompt').value = localStorage.getItem('valhalla-video-prompt') || '';
   $('#video-duration').value = String(savedVideoDuration());
+  syncVideoPromptEnhancementControl();
+  $('#video-prompt-enhancement').checked = videoPromptEnhancementSupported() && savedVideoPromptEnhancement();
   videoDialog.showModal();
   requestAnimationFrame(() => $('#video-prompt').focus());
 }
@@ -2526,6 +2548,7 @@ async function submitVideo() {
   const source = state.videoSource;
   const promptInput = $('#video-prompt');
   const durationInput = $('#video-duration');
+  const enhancementInput = $('#video-prompt-enhancement');
   const prompt = promptInput.value.trim();
   const duration = Math.round(Number(durationInput.value));
   if (!source || !prompt) {
@@ -2540,6 +2563,7 @@ async function submitVideo() {
   }
   localStorage.setItem('valhalla-video-prompt', prompt);
   localStorage.setItem('valhalla-video-duration', String(duration));
+  localStorage.setItem('valhalla-video-prompt-enhancement', String(enhancementInput.checked));
   const returnGalleryLocation = {
     view: state.galleryView,
     group: state.galleryGroup,
@@ -2556,6 +2580,7 @@ async function submitVideo() {
         relative_path: source.relative_path || source.name,
         prompt,
         duration,
+        prompt_enhancement: enhancementInput.checked,
         source_metadata: {
           key: source.key,
           source_key: source.source_key,
@@ -3885,6 +3910,7 @@ function renderWorkflowProfiles(profiles, media = profiles?.media_type || state.
       </div>`).join('')
     : '<p class="profile-empty">No profiles captured yet.</p>';
   syncProfileControls(controls.media);
+  if (controls.media === 'video') syncVideoPromptEnhancementControl();
 }
 
 function setProfileMedia(media) {
@@ -4366,6 +4392,9 @@ $('#video-prompt').addEventListener('input', (event) => {
 });
 $('#video-duration').addEventListener('input', (event) => {
   localStorage.setItem('valhalla-video-duration', event.currentTarget.value);
+});
+$('#video-prompt-enhancement').addEventListener('change', (event) => {
+  localStorage.setItem('valhalla-video-prompt-enhancement', String(event.currentTarget.checked));
 });
 $('#video-submit').addEventListener('click', submitVideo);
 const mobileSystemToggle = $('#mobile-system-toggle');

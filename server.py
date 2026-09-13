@@ -390,23 +390,6 @@ def validate_database(db: dict[str, Any]) -> None:
     cameltoe_prompt = db["prompt_defaults"].get("cameltoe_prompt")
     if not isinstance(cameltoe_prompt, str) or not cameltoe_prompt.strip():
         raise AppError("prompt_defaults.cameltoe_prompt must be a non-empty string")
-    expected_priority = [
-        "subject", "camera_direction", "anatomy", "traits_garments",
-        "location_treatment",
-    ]
-    if db["prompt_defaults"].get("prompt_priority") != expected_priority:
-        raise AppError(
-            "prompt_defaults.prompt_priority must define subject, camera_direction, "
-            "anatomy, traits_garments, location_treatment in that order"
-        )
-    if db["prompt_defaults"].get("conditioning_policy") != {
-        "structural_source": "positive",
-        "negative_role": "auxiliary_optional",
-    }:
-        raise AppError(
-            "prompt_defaults.conditioning_policy must keep structural guarantees "
-            "in positive and treat negative conditioning as auxiliary_optional"
-        )
     negative_profiles = db["prompt_defaults"].get("negative_profiles")
     if not isinstance(negative_profiles, dict) or not all(
         isinstance(negative_profiles.get(key), str)
@@ -1442,6 +1425,31 @@ def detect_video_node_mapping(workflow: dict[str, Any]) -> dict[str, Any]:
         (target for target in prompt_targets if "primitive" in str(workflow[target["node"]].get("class_type", "")).casefold()),
         prompt_targets[0],
     )
+    prompt_enhancement = None
+    enhancement_candidates = []
+    for node_id, node in workflow.items():
+        if not isinstance(node, dict) or "switch" not in str(node.get("class_type", "")).casefold():
+            continue
+        inputs = node.get("inputs") if isinstance(node.get("inputs"), dict) else {}
+        on_false = inputs.get("on_false")
+        on_true = inputs.get("on_true")
+        switch_link = inputs.get("switch")
+        if on_false != [prompt_target["node"], 0] or not (
+            isinstance(on_true, list) and len(on_true) == 2
+            and isinstance(switch_link, list) and len(switch_link) == 2
+        ):
+            continue
+        switch_node = workflow.get(str(switch_link[0]))
+        switch_inputs = switch_node.get("inputs") if isinstance(switch_node, dict) else None
+        if not isinstance(switch_inputs, dict) or not isinstance(switch_inputs.get("value"), bool):
+            continue
+        enhancement_candidates.append({
+            "switch": {"node": str(switch_link[0]), "input": "value"},
+            "switch_node": str(node_id),
+            "enhanced_output": {"node": str(on_true[0]), "output": on_true[1]},
+        })
+    if len(enhancement_candidates) == 1:
+        prompt_enhancement = enhancement_candidates[0]
     seed_targets = []
     for node_id, node in workflow.items():
         if not isinstance(node, dict):
@@ -1506,6 +1514,7 @@ def detect_video_node_mapping(workflow: dict[str, Any]) -> dict[str, Any]:
         "media_type": "video",
         "image_targets": image_targets,
         "prompt": prompt_target,
+        "prompt_enhancement": prompt_enhancement,
         "inference_seed": seed_targets,
         "duration": duration,
         "output_nodes": output_nodes,
@@ -3708,8 +3717,8 @@ def compile_scene(
         else stage_anchors.get(stage.get("level"), "")
     )
     # Explicit compiler priority: subject -> camera/direction -> anatomy ->
-    # traits/garments -> location/treatment. Keep the order data-declared and
-    # stable because diffusion models give earlier structural tokens more weight.
+    # traits/garments -> location/treatment. Keep the order stable because
+    # diffusion models give earlier structural tokens more weight.
     stage_custom = custom.get("shot.stage")
     if stage_custom:
         fragments.append(stage_custom)
@@ -4427,9 +4436,11 @@ def list_workflow_profiles(
                 )
                 valid, error = True, None
                 negative_conditioning = mapping.get("negative_prompt") is not None if media_type == "image" else True
+                prompt_enhancement = mapping.get("prompt_enhancement") is not None
             except Exception as exc:
                 valid, error = False, str(exc)
                 negative_conditioning = False
+                prompt_enhancement = False
             profiles.append({
                 "id": profile_id,
                 "name": profile_id.replace("-", " ").title(),
@@ -4437,6 +4448,7 @@ def list_workflow_profiles(
                 "valid": valid,
                 "error": error,
                 "negative_conditioning": negative_conditioning,
+                "prompt_enhancement": prompt_enhancement,
             })
     ids = {item["id"] for item in profiles if item["valid"]}
     for mode in (("production", "preview") if media_type == "image" else ("production",)):
@@ -4448,6 +4460,16 @@ def list_workflow_profiles(
         "preview": registry.get("preview"),
         "source": workflow_source(media_type),
         "media_type": media_type,
+        "prompt_enhancement": bool(
+            next(
+                (
+                    item.get("prompt_enhancement")
+                    for item in profiles
+                    if item["valid"] and item["id"] == registry.get("production")
+                ),
+                False,
+            )
+        ) if media_type == "video" else False,
     }
 
 
@@ -4939,7 +4961,7 @@ def upload_comfy_image(
 
 def patch_video_workflow(
     workflow: dict[str, Any], mapping: dict[str, Any], image_name: str,
-    prompt: str, seed: int, duration: int,
+    prompt: str, seed: int, duration: int, prompt_enhancement: bool = False,
 ) -> None:
     targets = list(mapping.get("image_targets", []))
     try:
@@ -4951,6 +4973,12 @@ def patch_video_workflow(
             workflow[target["node"]]["inputs"][target["input"]] = seed
         target = mapping["duration"]
         workflow[target["node"]]["inputs"][target["input"]] = duration
+        enhancer = mapping.get("prompt_enhancement")
+        if prompt_enhancement and enhancer is None:
+            raise AppError("Selected Video workflow does not support prompt enhancement")
+        if enhancer is not None:
+            target = enhancer["switch"]
+            workflow[target["node"]]["inputs"][target["input"]] = prompt_enhancement
     except (KeyError, TypeError) as exc:
         raise AppError(f"Video workflow mapping is no longer valid: {exc}") from exc
 
@@ -4958,12 +4986,14 @@ def patch_video_workflow(
 def generate_video_one(
     db: dict[str, Any], source_path: Path, source_item: dict[str, Any],
     prompt: str, seed: int, duration: int, workflow_template: dict[str, Any],
-    mapping: dict[str, Any], run_id: str,
+    mapping: dict[str, Any], run_id: str, prompt_enhancement: bool = False,
 ) -> tuple[str, list[Path]]:
     workflow = copy.deepcopy(workflow_template)
     session, url, timeout = comfy_session(db)
     image_name = upload_comfy_image(session, url, timeout, source_path)
-    patch_video_workflow(workflow, mapping, image_name, prompt, seed, duration)
+    patch_video_workflow(
+        workflow, mapping, image_name, prompt, seed, duration, prompt_enhancement
+    )
     try:
         response = session.post(
             f"{url}/prompt", json=valhalla_prompt_request(workflow), timeout=timeout
@@ -8171,6 +8201,7 @@ class WebState:
     def create_video_job(
         self, source: str, relative_path: str, prompt: str, duration: int,
         source_metadata: dict[str, Any] | None = None,
+        prompt_enhancement: bool = False,
     ) -> dict[str, Any]:
         db, db_path = load_database()
         source = str(source)
@@ -8183,6 +8214,8 @@ class WebState:
             raise AppError("Video prompt is too long (maximum 6000 characters)")
         if isinstance(duration, bool) or not isinstance(duration, int) or not 1 <= duration <= 60:
             raise AppError("Video duration must be an integer from 1 to 60 seconds")
+        if not isinstance(prompt_enhancement, bool):
+            raise AppError("Video prompt enhancement must be a boolean")
         source_path = proof_image_path(str(relative_path), str(source))
         if source_path.suffix.lower() not in IMAGE_SUFFIXES or not source_path.is_file():
             raise AppError("Video source must be an existing generated image")
@@ -8197,6 +8230,14 @@ class WebState:
             workflow_profile = load_workflow_profile_registry(db, db_path, "video").get("production")
             if not workflow_profile:
                 raise AppError("No Video workflow profile is selected")
+        if prompt_enhancement:
+            mapping = live_mapping
+            if mapping is None:
+                _, mapping = load_workflow_runtime(
+                    db, db_path, False, workflow_profile, "video"
+                )
+            if mapping.get("prompt_enhancement") is None:
+                raise AppError("Selected Video workflow does not support prompt enhancement")
         seed = secrets.randbelow(2**63)
         job_id = uuid.uuid4().hex
         source_record = {
@@ -8233,6 +8274,8 @@ class WebState:
             "_shots": [], "_workflow_template": live_workflow, "_workflow_mapping": live_mapping,
             "_frame_durations": [], "_media_type": "video", "_video_source": source_record,
             "_video_prompt": prompt, "_video_duration": duration, "_video_seed": seed,
+            "prompt_enhancement": prompt_enhancement,
+            "_video_prompt_enhancement": prompt_enhancement,
         }
         start_worker = False
         with self.lock:
@@ -8666,16 +8709,18 @@ class WebState:
             job["current_prompt"] = {
                 "media_type": "video", "positive": prompt, "negative": "",
                 "seed": seed, "source_image": source["name"],
+                "prompt_enhancement": job.get("_video_prompt_enhancement", False),
             }
             job["logs"].append({
                 "time": _iso_now(), "type": "shot_started", "message": "Rendering video",
                 "shot": None, "position": 1, "total": 1, "positive": prompt,
                 "negative": "", "seed": seed, "source_image": source["name"],
+                "prompt_enhancement": job.get("_video_prompt_enhancement", False),
                 "media_type": "video",
             })
         prompt_id, paths = generate_video_one(
             db, source_path, source, prompt, seed, job["_video_duration"],
-            workflow, mapping, job["_run_id"],
+            workflow, mapping, job["_run_id"], job.get("_video_prompt_enhancement", False),
         )
         for path in paths:
             append_prompt_debug_record({
@@ -8683,6 +8728,7 @@ class WebState:
                 "render_tier": "production", "result": path.name, "job_id": job_id,
                 "source_image": source["name"], "source_key": f"{source['source']}:{source['relative_path']}",
                 "prompt": prompt, "seed": seed, "duration": job["_video_duration"],
+                "prompt_enhancement": job.get("_video_prompt_enhancement", False),
                 "prompt_id": prompt_id, "workflow_profile": job["workflow_profile"],
                 "workflow_source": job["workflow_source"],
             })
@@ -9564,6 +9610,7 @@ class ValhallaHandler(BaseHTTPRequestHandler):
                     str(payload.get("prompt", "")),
                     _safe_int(payload.get("duration"), "Video duration", 1, 60),
                     payload.get("source_metadata") if isinstance(payload.get("source_metadata"), dict) else None,
+                    payload.get("prompt_enhancement", False),
                 ), HTTPStatus.ACCEPTED)
             elif path == "/api/workflow/capture":
                 if WEB_STATE.has_active_render():

@@ -385,6 +385,11 @@
       <div class="video-source"><span>Source image</span><strong id="video-source-label">—</strong></div>
       <label class="field"><span>Video prompt</span><textarea id="video-prompt" rows="7" maxlength="6000" placeholder="Describe the motion, camera movement, and changes in the scene…"></textarea></label>
       <label class="field"><span>Duration (seconds)</span><input id="video-duration" type="number" min="1" max="60" step="1" value="5"></label>
+      <label class="switch-row video-prompt-enhancement-row hidden" id="video-prompt-enhancement-row" title="Use the optional ComfyUI Gemma prompt enhancer">
+        <span><strong>Enhance prompt with Gemma</strong><small>Use the optional prompt-enhancement branch in the selected Video workflow.</small></span>
+        <input id="video-prompt-enhancement" type="checkbox">
+        <i aria-hidden="true"></i>
+      </label>
     </div>
     <div class="dialog-footer"><button class="button ghost video-dialog-close">Cancel</button><button class="button primary" id="video-submit">Queue video</button></div>
   </dialog>
