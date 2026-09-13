@@ -547,6 +547,14 @@ dialog.image-viewer::backdrop { background: #050608; backdrop-filter: none; }
 .image-stage.pannable.panning { cursor: grabbing; }
 .image-stage img { position: absolute; left: 50%; top: 50%; display: block; width: auto; height: auto; max-width: none; max-height: none; object-fit: contain; object-position: center; user-select: none; transform: translate(-50%, -50%); transform-origin: center center; transition: width .12s ease-out, height .12s ease-out; }
 .image-stage video { position: absolute; left: 50%; top: 50%; display: block; width: auto; height: auto; max-width: none; max-height: none; object-fit: contain; background: transparent; transform: translate(-50%, -50%); user-select: none; }
+.viewer-video-controls { position: absolute; left: max(18px, env(safe-area-inset-left)); right: max(18px, env(safe-area-inset-right)); bottom: max(18px, env(safe-area-inset-bottom)); z-index: 3; min-height: 42px; padding: 7px 9px; display: flex; align-items: center; gap: 9px; border: 1px solid rgb(255 255 255 / 18%); border-radius: 0; background: rgb(8 10 14 / 58%); box-shadow: 0 8px 26px rgb(0 0 0 / 24%); opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(8px); transition: opacity .16s ease, transform .16s ease, visibility .16s; }
+.image-stage.video-active.video-controls-visible .viewer-video-controls,
+.image-stage.video-active:focus-within .viewer-video-controls { opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0); }
+.viewer-video-control { width: 32px; height: 30px; flex: 0 0 auto; padding: 0; border: 0; border-radius: 7px; background: transparent; color: rgb(255 255 255 / 88%); cursor: pointer; font-size: .8rem; }
+.viewer-video-control:hover, .viewer-video-control:focus-visible { background: rgb(255 255 255 / 13%); color: white; }
+.viewer-video-progress { min-width: 0; width: auto; flex: 1 1 auto; margin: 0; accent-color: var(--brand); cursor: pointer; }
+.viewer-video-volume { width: 74px; min-width: 74px; max-width: 74px; flex: 0 0 74px; margin: 0; accent-color: var(--brand); cursor: pointer; }
+.viewer-video-time { min-width: 82px; color: rgb(255 255 255 / 72%); font: .625rem ui-monospace, SFMono-Regular, Menlo, monospace; text-align: center; white-space: nowrap; }
 .privacy-covered .image-stage video { visibility: hidden !important; pointer-events: none; }
 .image-stage.panning img { transition: none; }
 .image-stage.pinching img { transition: none; will-change: transform; }
@@ -608,6 +616,10 @@ pre { min-height: 280px; max-height: 50vh; margin: 0; padding: 15px; overflow-x:
 .director-editor-head p:last-child { margin: 5px 0 0; color: var(--muted); font-size: 0.75rem; }
 .director-quick-actions { padding: 10px 20px; display: flex; flex-wrap: wrap; gap: 14px; border-bottom: 1px solid var(--line); background: var(--surface-2); }
 .director-action-group { display: flex; flex: 0 0 auto; gap: 6px; }
+.director-yolo-toggle { flex: 0 0 auto; margin-left: auto; padding: 0 2px; gap: 12px; justify-content: flex-start; }
+.director-yolo-toggle strong { color: var(--danger); }
+.director-yolo-toggle:hover strong { color: var(--text); }
+.director-yolo-toggle input:disabled + i { opacity: .55; cursor: wait; }
 .director-quick-actions button { height: 32px; padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); color: var(--muted); cursor: pointer; font-size: 0.6875rem; font-weight: 650; }
 .director-quick-actions button:hover { background: var(--surface-3); color: var(--text); }
 .director-quick-actions button:disabled { opacity: .5; cursor: wait; }
@@ -985,6 +997,10 @@ pre { min-height: 280px; max-height: 50vh; margin: 0; padding: 15px; overflow-x:
   .viewer-zoom { min-width: 30px; gap: 0; }
   .viewer-zoom input { display: none; }
   .viewer-zoom output { width: 30px; font-size: 0.5625rem; text-align: center; }
+  .viewer-video-controls { left: 8px; right: 8px; bottom: max(8px, env(safe-area-inset-bottom)); min-height: 40px; padding: 6px; gap: 5px; }
+  .viewer-video-volume { display: none; }
+  .viewer-video-time { min-width: 74px; font-size: 0.5625rem; }
+  .viewer-video-control { width: 30px; }
   .image-viewer-actions { flex: 0 0 auto; gap: 4px; }
   .image-viewer-actions .button { height: 34px; min-height: 34px; padding: 0 6px; font-size: 0.5625rem; }
   .image-viewer-actions .icon-button { width: 34px; height: 34px; min-width: 34px; min-height: 34px; }

@@ -76,6 +76,8 @@ const state = {
   previewPanY: 0,
   slideshowTimer: null,
   slideshowActive: false,
+  videoControlsTimer: null,
+  videoVolume: 1,
   videoLoop: localStorage.getItem('valhalla-video-loop') !== 'false',
   slideshowRandom: sessionStorage.getItem('valhalla-slideshow-random') === 'true',
   slideshowDelay: Math.min(10, Math.max(1, Number(sessionStorage.getItem('valhalla-slideshow-delay')) || 3)),
@@ -346,7 +348,8 @@ function videoGroups() {
     group.firstIndex = Math.min(group.firstIndex, state.outputs.length);
   });
   groups.forEach((group) => group.items.sort((left, right) => (
-    left.item.name.localeCompare(right.item.name)
+    videoSourceShotSequence(left.item) - videoSourceShotSequence(right.item)
+    || left.item.name.localeCompare(right.item.name)
     || outputIdentity(left.item).localeCompare(outputIdentity(right.item))
   )));
   return [...groups.values()].sort((a, b) => a.firstIndex - b.firstIndex);
@@ -394,6 +397,16 @@ function outputShotSequence(item) {
   if (match) return Number(match[5]);
   const shot = Number(item.shot);
   return Number.isFinite(shot) ? shot : Number.POSITIVE_INFINITY;
+}
+
+function videoSourceShotSequence(item) {
+  if (item?.source_shot != null && Number.isFinite(Number(item.source_shot))) {
+    return Number(item.source_shot);
+  }
+  const sourceName = item?.source_image;
+  const match = typeof sourceName === 'string' ? sourceName.match(OUTPUT_FILENAME) : null;
+  if (match) return Number(match[5]);
+  return outputShotSequence(item);
 }
 
 function photoshootGroups() {
@@ -1547,8 +1560,7 @@ async function finishJob() {
   if (job.status === 'completed') {
     const mediaLabel = job.kind === 'video' || job.generation_mode === 'video' ? 'video' : 'image';
     toast(`${modeTitle(job.generation_mode)} ${tierTitle(job.render_tier).toLowerCase()} complete`, `${job.outputs.length} ${mediaLabel}${job.outputs.length === 1 ? '' : 's'} saved.`, 'success');
-    if (mediaLabel === 'video') setGalleryView('videos');
-    switchView('outputs');
+    if (mediaLabel !== 'video') switchView('outputs');
   } else if (job.status === 'cancelled') {
     const mediaLabel = job.generation_mode === 'video' ? 'videos' : 'images';
     toast(`${modeTitle(job.generation_mode)} ${tierTitle(job.render_tier).toLowerCase()} cancelled`, `${job.completed} of ${job.total} ${mediaLabel} completed.`);
@@ -2262,6 +2274,84 @@ function syncVideoLoopControl() {
   video.loop = state.videoLoop && !state.slideshowActive;
 }
 
+function formatVideoTime(seconds) {
+  const value = Number.isFinite(Number(seconds)) ? Math.max(0, Math.floor(Number(seconds))) : 0;
+  const minutes = Math.floor(value / 60);
+  const rest = value % 60;
+  if (minutes >= 60) {
+    const hours = Math.floor(minutes / 60);
+    return `${hours}:${String(minutes % 60).padStart(2, '0')}:${String(rest).padStart(2, '0')}`;
+  }
+  return `${minutes}:${String(rest).padStart(2, '0')}`;
+}
+
+function syncViewerVideoControls() {
+  const video = $('#image-viewer-video');
+  const progress = $('#image-viewer-video-progress');
+  const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 0;
+  progress.max = String(duration || 1);
+  progress.value = String(duration ? Math.min(video.currentTime, duration) : 0);
+  progress.disabled = !duration;
+  $('#image-viewer-video-time').textContent = `${formatVideoTime(video.currentTime)} / ${formatVideoTime(duration)}`;
+  const play = $('#image-viewer-video-play');
+  play.textContent = video.paused ? '▶' : '❚❚';
+  play.setAttribute('aria-label', video.paused ? 'Play video' : 'Pause video');
+  play.title = video.paused ? 'Play video' : 'Pause video';
+  const muted = video.muted || video.volume === 0;
+  const mute = $('#image-viewer-video-mute');
+  mute.textContent = muted ? '🔇' : '🔊';
+  mute.setAttribute('aria-label', muted ? 'Unmute video' : 'Mute video');
+  mute.title = muted ? 'Unmute video' : 'Mute video';
+  $('#image-viewer-video-volume').value = String(muted ? 0 : video.volume);
+}
+
+function syncViewerVideoControlPosition() {
+  const controls = $('#image-viewer-video-controls');
+  const video = $('#image-viewer-video');
+  if (!imageStage.classList.contains('video-active') || video.classList.contains('hidden')) {
+    controls.style.removeProperty('left');
+    controls.style.removeProperty('right');
+    controls.style.removeProperty('bottom');
+    controls.style.removeProperty('width');
+    return;
+  }
+  const stageRect = imageStage.getBoundingClientRect();
+  const videoRect = video.getBoundingClientRect();
+  if (!videoRect.width || !videoRect.height) return;
+  controls.style.left = `${videoRect.left - stageRect.left}px`;
+  controls.style.right = 'auto';
+  controls.style.bottom = `${stageRect.bottom - videoRect.bottom}px`;
+  controls.style.width = `${videoRect.width}px`;
+}
+
+function hideViewerVideoControls() {
+  clearTimeout(state.videoControlsTimer);
+  state.videoControlsTimer = null;
+  imageStage.classList.remove('video-controls-visible');
+}
+
+function revealViewerVideoControls({ autoHide = true } = {}) {
+  const video = $('#image-viewer-video');
+  if (!isVideoOutput(state.outputs[state.previewIndex]) || state.privacyCovered) return;
+  imageStage.classList.add('video-controls-visible');
+  clearTimeout(state.videoControlsTimer);
+  state.videoControlsTimer = null;
+  if (autoHide && !video.paused) {
+    state.videoControlsTimer = setTimeout(() => {
+      state.videoControlsTimer = null;
+      if (!video.paused) imageStage.classList.remove('video-controls-visible');
+    }, 2000);
+  }
+}
+
+function toggleViewerVideoPlayback() {
+  const video = $('#image-viewer-video');
+  if (!isVideoOutput(state.outputs[state.previewIndex]) || state.privacyCovered) return;
+  revealViewerVideoControls({ autoHide: true });
+  if (video.paused) video.play().catch(() => {});
+  else video.pause();
+}
+
 function previewPanBounds() {
   const image = activePreviewMedia();
   const stage = $('.image-stage');
@@ -2288,6 +2378,8 @@ function resetPreviewPan() {
 
 function unloadViewerVideo() {
   const video = $('#image-viewer-video');
+  hideViewerVideoControls();
+  imageStage.classList.remove('video-active');
   video.pause();
   video.onended = null;
   video.onloadedmetadata = null;
@@ -2321,6 +2413,7 @@ function fitPreviewMedia() {
   media.style.height = `${Math.round(mediaHeight * scale)}px`;
   $('#image-zoom-output').textContent = `${Math.round(scale * 100)}%`;
   applyPreviewPan();
+  syncViewerVideoControlPosition();
 }
 
 function setPreviewZoom(value) {
@@ -2352,6 +2445,8 @@ function showPreview(index) {
   const videoOutput = isVideoOutput(item);
   const createVideoButton = $('#image-create-video');
   state.videoSource = !videoOutput ? item : null;
+  hideViewerVideoControls();
+  imageStage.classList.remove('video-active');
   video.onended = null;
   video.onloadedmetadata = null;
   createVideoButton.classList.toggle('hidden', videoOutput || state.privacyCovered);
@@ -2370,17 +2465,21 @@ function showPreview(index) {
     unloadViewerVideo();
     image.src = item.url;
   }
+  imageStage.classList.toggle('video-active', videoOutput && !state.privacyCovered);
   image.classList.toggle('hidden', videoOutput);
   video.classList.toggle('hidden', !videoOutput || state.privacyCovered);
-  video.controls = videoOutput && !state.privacyCovered;
+  video.controls = false;
+  video.tabIndex = videoOutput && !state.privacyCovered ? 0 : -1;
   video.autoplay = videoOutput && !state.privacyCovered;
   video.loop = videoOutput && !state.privacyCovered && state.videoLoop && !state.slideshowActive;
   video.style.display = videoOutput && !state.privacyCovered ? '' : 'none';
   if (videoOutput) video.dataset.outputKey = outputIdentity(item);
   video.onloadedmetadata = () => {
     fitPreviewMedia();
+    syncViewerVideoControls();
     if (videoOutput && !state.privacyCovered) video.play().catch(() => {});
   };
+  syncViewerVideoControls();
   if (videoOutput && !state.privacyCovered) video.play().catch(() => {});
   image.alt = `Maximized generated output from shot ${outputDisplayShot(item)}`;
   const displayName = videoOutput
@@ -2441,6 +2540,10 @@ async function submitVideo() {
   }
   localStorage.setItem('valhalla-video-prompt', prompt);
   localStorage.setItem('valhalla-video-duration', String(duration));
+  const returnGalleryLocation = {
+    view: state.galleryView,
+    group: state.galleryGroup,
+  };
   const button = $('#video-submit');
   const alreadyActive = Boolean(isRenderActive());
   const previousActiveId = alreadyActive ? state.job.id : null;
@@ -2466,9 +2569,9 @@ async function submitVideo() {
       }),
     });
     videoDialog.close();
+    if (imageDialog.open) imageDialog.close();
     await trackQueuedJob(queuedJob, previousActiveId);
-    setGalleryView('videos');
-    switchView('outputs');
+    restoreGalleryLocation(returnGalleryLocation);
     toast(
       alreadyActive ? 'Video added to queue' : 'Video queued',
       `Video from ${source.name} is waiting${alreadyActive ? ` at position ${queuedJob.queue_position}` : ''}.`,
@@ -2693,6 +2796,19 @@ function openPhotoshoot(key) {
   restoreProofsPosition({ fallbackToGrid: true });
 }
 
+function restoreGalleryLocation(location) {
+  if (!location || !['photoshoots', 'flat', 'videos'].includes(location.view)) return;
+  const changed = state.galleryView !== location.view || state.galleryGroup !== location.group;
+  state.galleryView = location.view;
+  state.galleryGroup = location.group || null;
+  sessionStorage.setItem('valhalla-gallery-view', state.galleryView);
+  sessionStorage.setItem('valhalla-gallery-group', state.galleryGroup || '');
+  if (!changed) return;
+  outputRenderSignature = '';
+  renderOutputs();
+  restoreProofsPosition({ fallbackToGrid: true });
+}
+
 function closePhotoshoot() {
   if (!state.galleryGroup) return false;
   rememberProofsPosition();
@@ -2875,6 +2991,7 @@ imageDialog.addEventListener('keydown', (event) => {
   if (isVideoOutput(state.outputs[state.previewIndex]) && event.code === 'Space') {
     event.preventDefault();
     const video = $('#image-viewer-video');
+    revealViewerVideoControls({ autoHide: true });
     if (!state.privacyCovered) video.paused ? video.play().catch(() => {}) : video.pause();
     return;
   }
@@ -2895,7 +3012,77 @@ let previewTouch = null;
 let previewPinch = null;
 let previewPinchFrame = null;
 const imageStage = $('.image-stage');
+const viewerVideo = $('#image-viewer-video');
+const viewerVideoControls = $('#image-viewer-video-controls');
+viewerVideo.addEventListener('pointerenter', (event) => {
+  if (event.pointerType === 'mouse') revealViewerVideoControls({ autoHide: true });
+});
+viewerVideo.addEventListener('pointermove', (event) => {
+  if (event.pointerType === 'mouse') revealViewerVideoControls({ autoHide: true });
+});
+viewerVideoControls.addEventListener('pointermove', (event) => {
+  if (event.pointerType === 'mouse') revealViewerVideoControls({ autoHide: true });
+});
+viewerVideo.addEventListener('loadedmetadata', syncViewerVideoControls);
+viewerVideo.addEventListener('durationchange', syncViewerVideoControls);
+viewerVideo.addEventListener('timeupdate', syncViewerVideoControls);
+viewerVideo.addEventListener('volumechange', syncViewerVideoControls);
+viewerVideo.addEventListener('play', () => {
+  syncViewerVideoControls();
+  if (!imageStage.matches(':hover')) imageStage.classList.remove('video-controls-visible');
+});
+viewerVideo.addEventListener('pause', () => {
+  syncViewerVideoControls();
+  if (imageStage.classList.contains('video-active')) revealViewerVideoControls({ autoHide: false });
+});
+viewerVideo.addEventListener('click', (event) => {
+  if (event.target !== viewerVideo) return;
+  toggleViewerVideoPlayback();
+});
+viewerVideo.addEventListener('keydown', (event) => {
+  if (event.code !== 'Space' && event.key.toLowerCase() !== 'k') return;
+  event.preventDefault();
+  toggleViewerVideoPlayback();
+});
+$('#image-viewer-video-play').addEventListener('click', (event) => {
+  event.preventDefault();
+  toggleViewerVideoPlayback();
+});
+$('#image-viewer-video-progress').addEventListener('input', (event) => {
+  if (Number.isFinite(viewerVideo.duration) && viewerVideo.duration > 0) {
+    viewerVideo.currentTime = Number(event.currentTarget.value);
+  }
+  revealViewerVideoControls({ autoHide: false });
+  syncViewerVideoControls();
+});
+$('#image-viewer-video-mute').addEventListener('click', (event) => {
+  event.preventDefault();
+  if (viewerVideo.muted || viewerVideo.volume === 0) {
+    viewerVideo.muted = false;
+    viewerVideo.volume = state.videoVolume || 1;
+  } else {
+    state.videoVolume = viewerVideo.volume;
+    viewerVideo.muted = true;
+  }
+  revealViewerVideoControls({ autoHide: true });
+  syncViewerVideoControls();
+});
+$('#image-viewer-video-volume').addEventListener('input', (event) => {
+  const volume = Math.min(1, Math.max(0, Number(event.currentTarget.value)));
+  if (volume > 0) state.videoVolume = volume;
+  viewerVideo.volume = volume;
+  viewerVideo.muted = volume === 0;
+  revealViewerVideoControls({ autoHide: true });
+  syncViewerVideoControls();
+});
+imageStage.addEventListener('pointerleave', (event) => {
+  if (event.pointerType === 'mouse' && !viewerVideo.paused) hideViewerVideoControls();
+});
 imageStage.addEventListener('pointerdown', (event) => {
+  if (event.pointerType === 'touch' && isVideoOutput(state.outputs[state.previewIndex])) {
+    revealViewerVideoControls({ autoHide: true });
+  }
+  if (event.target.closest('.viewer-video-controls')) return;
   if (event.target.closest('video') && event.clientY > event.target.getBoundingClientRect().bottom - 64) return;
   if (event.pointerType === 'touch' || previewPinch || event.button !== 0 || event.target.closest('button')) return;
   const bounds = previewPanBounds();
@@ -2952,6 +3139,10 @@ function touchDistance(touches) {
 }
 
 imageStage.addEventListener('touchstart', (event) => {
+  if (event.target.closest('.viewer-video-controls')) {
+    if (isVideoOutput(state.outputs[state.previewIndex])) revealViewerVideoControls({ autoHide: true });
+    return;
+  }
   if (event.target.closest('video') && event.touches.length === 1 && event.touches[0].clientY > event.target.getBoundingClientRect().bottom - 64) return;
   if (event.touches.length === 1) {
     const touch = event.touches[0];
@@ -3115,6 +3306,8 @@ function renderDirector() {
   const sets = new Set(state.storyboard.shots.map((shot) => shot.photoshoot_index)).size;
   $('#director-set-count').textContent = `${sets} set${sets === 1 ? '' : 's'}`;
   const data = state.director;
+  const yoloToggle = $('#director-yolo');
+  if (yoloToggle) yoloToggle.checked = Boolean(data.yolo);
   const shot = data.summary;
   $('#director-title').textContent = `Set ${shot.photoshoot_index + 1} · Shot ${shot.shot_index + 1}`;
   $('#director-summary').innerHTML = [
@@ -3202,6 +3395,30 @@ async function remixDirector(target, button) {
     toast('Could not remix', error.message, 'error');
   } finally {
     buttons.forEach((item) => { item.disabled = false; });
+  }
+}
+
+async function toggleDirectorYolo(toggle) {
+  if (!state.storyboard || !state.director) return;
+  const previous = !toggle.checked;
+  toggle.disabled = true;
+  try {
+    state.director = await api(`/api/storyboards/${state.storyboard.id}/director`, {
+      method: 'POST',
+      body: JSON.stringify({
+        shot: state.directorShot,
+        field: 'director.yolo',
+        value: String(toggle.checked),
+      }),
+    });
+    state.storyboard = await api(`/api/storyboards/${state.storyboard.id}`);
+    renderStoryboard();
+    renderDirector();
+  } catch (error) {
+    toggle.checked = previous;
+    toast('Could not change YOLO mode', error.message, 'error');
+  } finally {
+    toggle.disabled = false;
   }
 }
 
@@ -3940,6 +4157,9 @@ $('.director-quick-actions').addEventListener('click', (event) => {
   }
   const button = event.target.closest('[data-director-remix]');
   if (button) remixDirector(button.dataset.directorRemix, button);
+});
+$('#director-yolo').addEventListener('change', (event) => {
+  toggleDirectorYolo(event.currentTarget);
 });
 $('#director-shot-list').addEventListener('click', (event) => {
   const button = event.target.closest('[data-director-shot]');

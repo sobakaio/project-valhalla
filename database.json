@@ -349,6 +349,136 @@
           ],
           "positive_prompt": "one intact sheer full-body garment continuously covering the torso and pelvis, translucent fabric remains visibly between skin and camera with realistic weave, seams, smooth tension, and no openings or protrusions"
         }
+      ],
+      "accessory_dependencies": [
+        {
+          "id": "wool_scarf_requires_outer_layer",
+          "accessory_ids": [
+            "accessory_wool_scarf"
+          ],
+          "accessory_slot": "accessories",
+          "supporting_slots": [
+            "outerwear"
+          ],
+          "supporting_tags_any": [
+            "outdoor",
+            "cozy"
+          ],
+          "requires_support_visible": true
+        },
+        {
+          "id": "cotton_neckerchief_requires_top_layer",
+          "accessory_ids": [
+            "accessory_cotton_neckerchief"
+          ],
+          "accessory_slot": "accessories",
+          "supporting_slots": [
+            "upperwear",
+            "outerwear",
+            "full_body"
+          ],
+          "supporting_tags_any": [
+            "casual",
+            "everyday",
+            "outdoor",
+            "normal_clothes"
+          ],
+          "requires_support_visible": true
+        },
+        {
+          "id": "knit_beanie_requires_outer_layer",
+          "accessory_ids": [
+            "accessory_knit_beanie"
+          ],
+          "accessory_slot": "accessories",
+          "supporting_slots": [
+            "outerwear"
+          ],
+          "supporting_tags_any": [
+            "outdoor",
+            "cozy"
+          ],
+          "requires_support_visible": true
+        }
+      ],
+      "curated_underwear_weights": {
+        "preferred_ids": [
+          "panties_brazilian",
+          "panties_cotton_bikini",
+          "panties_cotton_lace_trim_bikini",
+          "panties_cotton_thong",
+          "panties_gstring",
+          "panties_lace_bikini",
+          "panties_lace_cheeky",
+          "panties_lace_cheeky_bow",
+          "panties_lace_tanga_highcut",
+          "panties_lace_thong_narrow",
+          "panties_leopard_thong",
+          "panties_mesh_bikini",
+          "panties_mesh_thong",
+          "panties_micro_thong",
+          "panties_modal_cheeky",
+          "panties_ribbed_bikini",
+          "panties_satin_bikini",
+          "panties_satin_thong",
+          "panties_sheer_lace_brazilian",
+          "panties_tanga",
+          "panties_thong"
+        ],
+        "preferred_multiplier": 7,
+        "other_multiplier": 3
+      },
+      "garment_pair_rules": [
+        {
+          "id": "heavy_outerwear_with_shorts_is_warm_weather_only",
+          "slot_a": "outerwear",
+          "slot_b": "lowerwear",
+          "a_ids": [
+            "outer_quilted_jacket",
+            "outer_short_puffer",
+            "outer_fleece_zip",
+            "outer_field_jacket",
+            "outer_peacoat",
+            "outer_windbreaker"
+          ],
+          "b_ids": [
+            "lower_tailored_shorts",
+            "lower_lounge_shorts",
+            "lower_pajama_shorts",
+            "lower_denim_shorts",
+            "lower_cutoff_denim_shorts",
+            "lower_relaxed_denim_shorts",
+            "lower_cotton_shorts",
+            "lower_jersey_shorts",
+            "lower_bike_shorts",
+            "lower_running_shorts",
+            "lower_shaping_bike_shorts",
+            "lower_lounge_dolphin_shorts",
+            "lower_velour_lounge_shorts",
+            "lower_bermuda_shorts"
+          ],
+          "allowed_template_ids": [
+            "template_everyday_casual",
+            "template_casual_trouser_day",
+            "template_casual_skirt_skort",
+            "template_casual_layered_outdoor",
+            "template_casual_athleisure"
+          ]
+        },
+        {
+          "id": "silk_denim_pair_requires_casual_context",
+          "slot_a": "upperwear",
+          "slot_b": "lowerwear",
+          "a_tags_any": [
+            "silk"
+          ],
+          "b_tags_any": [
+            "denim"
+          ],
+          "allowed_template_ids": [
+            "template_everyday_casual"
+          ]
+        }
       ]
     },
     "garment_layer_rules": [
@@ -462,11 +592,6 @@
       "explicit_plateau_percent": 30
     },
     "prompt_profile": "balanced",
-    "prompt_token_budgets": {
-      "compact": 140,
-      "balanced": 230,
-      "detailed": 360
-    },
     "surface_modifiers": {
       "color_chance": 0.65,
       "texture_chance": 0.45,
@@ -2213,7 +2338,10 @@
       },
       {
         "id": "makeup_red_lip",
-        "prompt": "classic makeup with bold red lipstick"
+        "prompt": "classic makeup with bold red lipstick",
+        "tags": [
+          "lip_shape_accent"
+        ]
       },
       {
         "id": "makeup_bronzed",
@@ -6715,7 +6843,8 @@
         "tags": [
           "normal_clothes",
           "casual",
-          "everyday"
+          "everyday",
+          "high_collar"
         ],
         "allowed_colors": [
           "color_white",
@@ -7048,6 +7177,7 @@
           "everyday",
           "normal_clothes",
           "home",
+          "high_collar",
           "casual_core"
         ],
         "diversity_fingerprint": "turtleneck:relaxed:hip:ribbed-knit",
@@ -14409,6 +14539,23 @@
           "boudoir",
           "erotic"
         ],
+        "neckline_compatibility": {
+          "allowed_tags": [
+            "lingerie",
+            "boudoir",
+            "erotic",
+            "home"
+          ],
+          "excluded_tags": [
+            "high_collar"
+          ]
+        },
+        "material": "velvet",
+        "jewelry_conflicts": [
+          "accessory_pearl_necklace",
+          "accessory_layered_necklaces",
+          "accessory_simple_02"
+        ],
         "allowed_colors": [
           "color_black",
           "color_red"
@@ -14532,6 +14679,9 @@
           "outdoor",
           "garden",
           "swimwear"
+        ],
+        "requires_environment_tags": [
+          "outdoor"
         ],
         "allowed_colors": [
           "color_black",
@@ -19121,7 +19271,24 @@
       ],
       "tags": [
         "low_angle"
-      ]
+      ],
+      "camera_position": "camera positioned below the subject and looking slightly upward"
+    },
+    {
+      "id": "angle_upward",
+      "prompt": "gentle upward-looking camera angle",
+      "menu_label": "Upward",
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "tags": [
+        "upward_angle"
+      ],
+      "camera_position": "camera placed at a low front position and aimed upward in an ordinary editorial composition"
     },
     {
       "id": "angle_high",
@@ -25354,12 +25521,34 @@
       ]
     },
     {
+      "id": "expression_tongue_out_playful",
+      "prompt": "playful tongue-out expression with a bright relaxed smile",
+      "tags": [
+        "playful_expression",
+        "tongue_out"
+      ],
+      "excludes_tags": [
+        "closed_mouth",
+        "lip_shape_accent"
+      ],
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
       "id": "expression_playful",
       "prompt": "playful knowing smile with bright direct eye contact"
     },
     {
       "id": "expression_serene",
-      "prompt": "serene relaxed expression with softly closed lips"
+      "prompt": "serene relaxed expression with softly closed lips",
+      "tags": [
+        "closed_mouth"
+      ]
     },
     {
       "id": "expression_bold",

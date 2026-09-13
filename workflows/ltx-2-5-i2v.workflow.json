@@ -104,7 +104,7 @@
   },
   "398:376": {
     "inputs": {
-      "value": "Use the provided start image as the first frame. Cat smiles and says \"meow!\"."
+      "value": ""
     },
     "class_type": "PrimitiveStringMultiline",
     "_meta": {

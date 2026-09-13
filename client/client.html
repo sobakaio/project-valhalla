@@ -260,6 +260,11 @@
                 <button class="randomize" data-director-remix="wardrobe">Remix wardrobe</button>
                 <button class="randomize" data-director-remix="scene">Remix scene</button>
               </div>
+              <label class="switch-row director-yolo-toggle" title="Nothing is true, everything is permitted">
+                <span><strong>YOLO</strong></span>
+                <input id="director-yolo" type="checkbox" aria-label="YOLO debug mode">
+                <i aria-hidden="true"></i>
+              </label>
             </div>
             <div class="director-loading hidden" id="director-loading"><div class="spinner"></div><strong>Checking compatible choices…</strong></div>
             <div class="director-groups" id="director-groups"></div>
@@ -323,9 +328,9 @@
             <input id="image-fit" type="checkbox">
             <span>Fit</span>
           </label>
-          <label class="viewer-fit viewer-loop" for="image-video-loop" title="Loop video">
+          <label class="viewer-fit viewer-loop" for="image-video-loop" title="Loop">
             <input id="image-video-loop" type="checkbox" checked>
-            <span>Loop video</span>
+            <span>Loop</span>
           </label>
           <label class="viewer-zoom" for="image-zoom">
             <input id="image-zoom" type="range" min="25" max="300" step="5" value="100" aria-label="Media zoom">
@@ -361,7 +366,14 @@
       <div class="image-stage" aria-label="Media preview. Drag to pan when zoomed.">
         <button class="viewer-nav previous" id="image-previous" aria-label="Previous media">‹</button>
         <img id="image-viewer-image" src="" alt="Maximized generated output" draggable="false">
-        <video id="image-viewer-video" class="hidden" controls playsinline autoplay loop></video>
+        <video id="image-viewer-video" class="hidden" playsinline autoplay loop></video>
+        <div class="viewer-video-controls" id="image-viewer-video-controls" aria-label="Video controls">
+          <button class="viewer-video-control" id="image-viewer-video-play" type="button" aria-label="Play video" title="Play video">▶</button>
+          <input class="viewer-video-progress" id="image-viewer-video-progress" type="range" min="0" max="1" step="0.01" value="0" aria-label="Video progress">
+          <span class="viewer-video-time" id="image-viewer-video-time">0:00 / 0:00</span>
+          <button class="viewer-video-control" id="image-viewer-video-mute" type="button" aria-label="Mute video" title="Mute video">🔊</button>
+          <input class="viewer-video-volume" id="image-viewer-video-volume" type="range" min="0" max="1" step="0.05" value="1" aria-label="Video volume">
+        </div>
         <button class="viewer-nav next" id="image-next" aria-label="Next media">›</button>
       </div>
     </div>

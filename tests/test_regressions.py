@@ -1083,6 +1083,140 @@ class CatalogQualityTests(unittest.TestCase):
         ):
             self.assertNotIn(removed, negative.split(", "))
 
+    def test_accessory_dependencies_hide_and_restore_with_supporting_layers(self):
+        database, _ = app.load_database()
+        template = next(
+            item for item in database["outfit_templates"]
+            if item["id"] == "template_casual_layered_outdoor"
+        )
+        outerwear = next(
+            item for item in database["garments"]["outerwear"]
+            if item["id"] == "outer_quilted_jacket"
+        )
+        scarf = next(
+            item for item in database["garments"]["accessories"]
+            if item["id"] == "accessory_wool_scarf"
+        )
+        outfit = {"template": template, "garments": {
+            "outerwear": outerwear, "accessories": scarf,
+        }}
+        covered = next(stage for stage in template["stages"] if stage["level"] == "covered")
+        lingerie = next(stage for stage in template["stages"] if stage["level"] == "lingerie")
+        self.assertIn(
+            "accessories", app.effective_visible_slots(database, outfit, covered)
+        )
+        self.assertNotIn(
+            "accessories", app.effective_visible_slots(database, outfit, lingerie)
+        )
+        detached = {"template": template, "garments": {"accessories": scarf}}
+        app.validate_outfit_layers(database, detached)
+        self.assertNotIn(
+            "accessories", app.effective_visible_slots(database, detached, covered)
+        )
+
+        configured = copy.deepcopy(database)
+        for item in configured["garments"]["accessories"]:
+            item["disabled"] = item["id"] != "accessory_wool_scarf"
+        for item in configured["garments"]["outerwear"]:
+            item["disabled"] = item["id"] != "outer_quilted_jacket"
+        forced_template = copy.deepcopy(template)
+        forced_template["slots"]["accessories"]["chance"] = 1
+        composer = app.Composer(configured, app.random.Random(808080))
+        forced_outfit = composer.choose_outfit(forced_template)
+        interior = next(
+            item for item in configured["interiors"]
+            if item["id"] == "interior_garden_patio"
+        )
+        furniture = next(
+            item for item in configured["furniture"]
+            if app.compatible_with_requirements(item, app.tags(interior))
+            and app.category_allows(interior, item)
+        )
+        fixed = {
+            "human": composer.choose_human(),
+            "outfit": forced_outfit,
+            "interior": interior,
+            "furniture": furniture,
+            "mood": configured["moods"][0],
+            "photography_style": configured["photography_styles"][0],
+        }
+        covered_scene = composer.resolve_scene(fixed, covered)
+        covered_positive, _, _ = app.compile_scene(configured, covered_scene)
+        self.assertIn(scarf["prompt"], covered_positive)
+        lingerie_scene = composer.resolve_scene(fixed, lingerie)
+        lingerie_scene["custom_values"] = {
+            "outfit.garments.accessories": "custom detached scarf wording",
+        }
+        lingerie_positive, _, _ = app.compile_scene(configured, lingerie_scene)
+        self.assertNotIn(scarf["prompt"], lingerie_positive)
+        self.assertNotIn("custom detached scarf wording", lingerie_positive)
+
+    def test_curated_underwear_preference_is_weighted_after_compatibility(self):
+        database, _ = app.load_database()
+        template = next(
+            item for item in database["outfit_templates"]
+            if item["id"] == "template_everyday_casual"
+        )
+        composer = app.Composer(database, app.random.Random(606060), use_curated_defaults=True)
+        preferred = set(
+            database["settings"]["wardrobe_compatibility"]
+            ["curated_underwear_weights"]["preferred_ids"]
+        )
+        counts = Counter()
+        for _ in range(800):
+            outfit = composer.choose_outfit(template)
+            counts["preferred"] += int(outfit["garments"]["panties"]["id"] in preferred)
+            counts["other"] += int(outfit["garments"]["panties"]["id"] not in preferred)
+        self.assertGreater(counts["preferred"], counts["other"])
+        # The configured 7:3 preference is a target distribution, not an exact
+        # per-seed quota; keep the assertion tolerant of finite-sample noise.
+        self.assertGreaterEqual(counts["preferred"] / sum(counts.values()), 0.50)
+        self.assertGreater(counts["other"], 0)
+
+    def test_tongue_out_expression_respects_mouth_and_lip_conflicts(self):
+        database, _ = app.load_database()
+        expression = next(
+            item for item in database["expressions"]
+            if item["id"] == "expression_tongue_out_playful"
+        )
+        serene = next(
+            item for item in database["expressions"]
+            if item["id"] == "expression_serene"
+        )
+        red_lip = next(
+            item for item in database["human_model_parts"]["makeup"]
+            if item["id"] == "makeup_red_lip"
+        )
+        lips = next(item for item in database["human_model_parts"]["lips"])
+        self.assertTrue(app.expression_compatible_with_human(expression, {
+            "lips": lips, "makeup": database["human_model_parts"]["makeup"][0],
+        }))
+        self.assertFalse(app.expression_compatible_with_human(expression, {
+            "lips": lips, "makeup": red_lip,
+        }))
+        self.assertIn("closed_mouth", app.tags(serene))
+
+    def test_contextual_garment_pair_rules_reject_only_unsupported_templates(self):
+        database, _ = app.load_database()
+        rule = next(
+            item for item in database["settings"]["wardrobe_compatibility"]["garment_pair_rules"]
+            if item["id"] == "heavy_outerwear_with_shorts_is_warm_weather_only"
+        )
+        outerwear = next(item for item in database["garments"]["outerwear"] if item["id"] == "outer_peacoat")
+        shorts = next(item for item in database["garments"]["lowerwear"] if item["id"] == "lower_bermuda_shorts")
+        allowed = next(item for item in database["outfit_templates"] if item["id"] == rule["allowed_template_ids"][0])
+        blocked = copy.deepcopy(allowed)
+        blocked["id"] = "validation_only_cold_shorts"
+        with self.assertRaisesRegex(app.AppError, "Garment pair"):
+            app.validate_outfit_layers(database, {
+                "template": blocked,
+                "garments": {"outerwear": outerwear, "lowerwear": shorts},
+            })
+        app.validate_outfit_layers(database, {
+            "template": allowed,
+            "garments": {"outerwear": outerwear, "lowerwear": shorts},
+        })
+
 
 class DirectorRegressionTests(unittest.TestCase):
     def setUp(self):
@@ -1116,6 +1250,87 @@ class DirectorRegressionTests(unittest.TestCase):
         }
         self.assertTrue(expected.issubset(levels))
         self.assertIn("explicit", levels)
+
+    def test_director_yolo_allows_arbitrary_selection_to_compile(self):
+        state, storyboard_id = self.make_storyboard(content_mode="sfw", count=1)
+        normal = director_fields(state.director_payload(storyboard_id, 1))
+        self.assertEqual(
+            {option["prompt"] for option in normal["shot.stage"]["options"]},
+            {"covered"},
+        )
+
+        enabled = state.update_director(storyboard_id, {
+            "shot": 1, "field": "director.yolo", "value": "true",
+        })
+        self.assertTrue(enabled["yolo"])
+        fields = director_fields(enabled)
+        self.assertIn(
+            "explicit",
+            {option["prompt"] for option in fields["shot.stage"]["options"]},
+        )
+        self.assertEqual(
+            {option["id"] for option in fields["shot.intensity"]["options"]},
+            set(app.INTENSITY_LEVELS),
+        )
+
+        state.update_director(storyboard_id, {
+            "shot": 1,
+            "field": "shot.stage",
+            "value": next(
+                option["id"] for option in fields["shot.stage"]["options"]
+                if option["prompt"] == "explicit"
+            ),
+        })
+        for key in ("shot.pose", "shot.action", "shot.expression", "shot.camera_angle"):
+            fields = director_fields(state.director_payload(storyboard_id, 1))
+            value = next(option["id"] for option in fields[key]["options"] if option["id"])
+            state.update_director(storyboard_id, {
+                "shot": 1, "field": key, "value": value,
+            })
+            state.storyboard_payload(state.get_storyboard(storyboard_id))
+
+        self.assertTrue(state.storyboard_payload(
+            state.get_storyboard(storyboard_id)
+        )["shots"])
+
+    def test_disabling_director_yolo_repairs_the_whole_set(self):
+        state, storyboard_id = self.make_storyboard(content_mode="sfw", count=2)
+        state.update_director(storyboard_id, {
+            "shot": 1, "field": "director.yolo", "value": "true",
+        })
+        fields = director_fields(state.director_payload(storyboard_id, 1))
+        state.update_director(storyboard_id, {
+            "shot": 1,
+            "field": "shot.stage",
+            "value": next(
+                option["id"] for option in fields["shot.stage"]["options"]
+                if option["prompt"] == "explicit"
+            ),
+        })
+        state.update_director(storyboard_id, {
+            "shot": 1, "field": "shot.intensity", "value": "explicit",
+        })
+        template = state.get_storyboard(storyboard_id)["shots"][0]["context"]["outfit"]["template"]
+        removable_slot = next(
+            slot for slot, rule in template["slots"].items()
+            if not rule.get("required", False)
+        )
+        state.update_director(storyboard_id, {
+            "shot": 1,
+            "field": f"outfit.garments.{removable_slot}",
+            "value": "",
+        })
+
+        state.update_director(storyboard_id, {
+            "shot": 1, "field": "director.yolo", "value": "false",
+        })
+        record = state.get_storyboard(storyboard_id)
+        self.assertFalse(record["director_yolo"])
+        for shot in record["shots"]:
+            self.assertEqual(shot["stage"]["level"], "covered")
+            self.assertIn(shot["scene"]["intensity"], {"fashion", "sensual"})
+            record["composer"].validate_scene_rules(shot["scene"])
+        self.assertEqual(len(state.storyboard_payload(record)["shots"]), 2)
 
     def test_sfw_only_resolves_fully_covered_scenes_in_both_modes(self):
         blocked = app.SFW_BLOCKED_VISIBILITY
@@ -3418,8 +3633,15 @@ class FrontendContractTests(unittest.TestCase):
         root = Path(app.__file__).parent
         html = (root / "client" / "client.html").read_text(encoding="utf-8")
         css = (root / "client" / "client.css").read_text(encoding="utf-8")
+        js = (root / "client" / "client.js").read_text(encoding="utf-8")
         for label in ("Reroll shot", "New variation", "Preview shot", "Remix subject", "Remix wardrobe", "Remix scene"):
             self.assertIn(f">{label}</button>", html)
+        self.assertIn(
+            'class="switch-row director-yolo-toggle" title="Nothing is true, everything is permitted"',
+            html,
+        )
+        self.assertIn('id="director-yolo"', html)
+        self.assertIn("field: 'director.yolo'", js)
         self.assertLess(
             html.index('id="director-summary"'),
             html.index('class="director-quick-actions"'),
@@ -3674,7 +3896,12 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('id="image-viewer-shell"', html)
         self.assertIn('id="image-slideshow-toggle"', html)
         self.assertIn('id="image-video-loop"', html)
-        self.assertIn('Loop video', html)
+        self.assertIn('id="image-viewer-video-controls"', html)
+        self.assertIn('id="image-viewer-video-progress"', html)
+        self.assertIn('id="image-viewer-video-volume"', html)
+        self.assertIn('title="Loop"', html)
+        self.assertIn('<span>Loop</span>', html)
+        self.assertNotIn('video id="image-viewer-video" class="hidden" controls', html)
         self.assertNotIn("<span>Pause</span>", html)
         self.assertIn('class="viewer-delay-menu"', html)
         slideshow = html.split('id="image-slideshow-delay"', 1)[1].split("</details>", 1)[0]
@@ -3684,6 +3911,14 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("function scheduleSlideshow()", js)
         self.assertIn("valhalla-video-loop", js)
         self.assertIn("function syncVideoLoopControl()", js)
+        self.assertIn("function toggleViewerVideoPlayback()", js)
+        self.assertIn("function syncViewerVideoControlPosition()", js)
+        self.assertIn("video.getBoundingClientRect()", js)
+        self.assertIn("video.controls = false", js)
+        self.assertIn("viewerVideo.addEventListener('pointermove'", js)
+        self.assertIn("viewerVideoControls.addEventListener('pointermove'", js)
+        self.assertIn("viewerVideo.addEventListener('pause'", js)
+        self.assertIn("viewerVideo.addEventListener('timeupdate'", js)
         self.assertIn("function movePreviewVideo(direction)", js)
         self.assertIn("video.onended = advance", js)
         self.assertIn("video.loop = false", js)
@@ -3708,6 +3943,30 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn(".image-stage video { position: absolute; left: 50%; top: 50%;", css)
         self.assertIn("width: auto; height: auto; max-width: none; max-height: none;", css)
         self.assertIn("background: transparent", css)
+        self.assertIn(".image-stage.video-active.video-controls-visible .viewer-video-controls", css)
+        self.assertIn(".viewer-video-controls", css)
+        self.assertIn("flex: 0 0 74px", css)
+
+    def test_video_submission_closes_lightbox_without_leaving_current_photoset(self):
+        js = (Path(app.__file__).parent / "client" / "client.js").read_text(encoding="utf-8")
+        submission = js.split("async function submitVideo()", 1)[1].split(
+            "function movePreview(", 1
+        )[0]
+        self.assertIn("videoDialog.close();", submission)
+        self.assertIn("if (imageDialog.open) imageDialog.close();", submission)
+        self.assertIn("const returnGalleryLocation = {", submission)
+        self.assertIn("restoreGalleryLocation(returnGalleryLocation);", submission)
+        self.assertLess(
+            submission.index("if (imageDialog.open) imageDialog.close();"),
+            submission.index("await trackQueuedJob(queuedJob, previousActiveId);"),
+        )
+        self.assertLess(
+            submission.index("await trackQueuedJob(queuedJob, previousActiveId);"),
+            submission.index("restoreGalleryLocation(returnGalleryLocation);"),
+        )
+        self.assertNotIn("setGalleryView('videos');", submission)
+        self.assertNotIn("switchView('outputs');", submission)
+        self.assertIn("function restoreGalleryLocation(location)", js)
 
     def test_lightbox_supports_touch_pinch_zoom(self):
         root = Path(app.__file__).parent
@@ -3908,6 +4167,8 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("function galleryMediaMatches(item)", js)
         self.assertIn("if (state.galleryView === 'flat') return true;", js)
         self.assertIn("function outputShotSequence(item)", js)
+        self.assertIn("function videoSourceShotSequence(item)", js)
+        self.assertIn("videoSourceShotSequence(left.item) - videoSourceShotSequence(right.item)", js)
         self.assertIn("outputShotSequence(left.item) - outputShotSequence(right.item)", js)
         self.assertIn("function sortOutputsByFilename()", js)
         self.assertNotIn("modified_at", js)
@@ -3925,6 +4186,14 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("const localShot = outputShotSequence(item)", js)
         self.assertIn("outputCardHtml(entry.item, entry.outputIndex, layout, index, group)", js)
         self.assertIn("aria-posinset=\"${position + 1}\"", js)
+
+    def test_video_completion_does_not_change_the_current_page(self):
+        js = (Path(app.__file__).parent / "client" / "client.js").read_text(encoding="utf-8")
+        completion = js.split("async function finishJob()", 1)[1].split(
+            "async function loadOutputs()", 1
+        )[0]
+        self.assertIn("if (mediaLabel !== 'video') switchView('outputs');", completion)
+        self.assertNotIn("setGalleryView('videos');", completion)
 
     def test_bulk_delete_is_scoped_to_the_opened_photoshoot(self):
         js = (Path(app.__file__).parent / "client" / "client.js").read_text(encoding="utf-8")
@@ -4177,6 +4446,15 @@ class CameraGrammarRegressionTests(unittest.TestCase):
             "camera_angle",
             self.index["angle_eye_level"],
         ))
+
+    def test_upward_camera_angle_has_explicit_position_and_compiles(self):
+        angle = self.index["angle_upward"]
+        self.assertIn("camera_position", angle)
+        self.assertTrue(angle["camera_position"])
+        scene = self.explicit_scene("recipe_intimate_macro")
+        scene["camera_angle"] = angle
+        positive, _, _ = app.compile_scene(self.database, scene)
+        self.assertIn(angle["camera_position"], positive)
 
     def test_intimate_action_requires_intimate_focus_and_close_treatment(self):
         scene = self.explicit_scene("recipe_hands_only")
