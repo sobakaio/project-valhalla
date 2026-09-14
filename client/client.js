@@ -1625,9 +1625,10 @@ function showJob() {
   syncRenderControls();
   syncJobDockLayer();
   jobDock.classList.remove('hidden');
+  jobDock.classList.toggle('prompt-preparation-dock', isPromptPreparation);
   jobDock.classList.toggle('video-progress-estimating', estimatingVideo);
   $('#job-title').textContent = isPromptPreparation
-    ? `Enhancing ${tierTitle(job.render_tier).toLowerCase()} prompts`
+    ? 'Enhancing prompts'
     : `Rendering ${tierTitle(job.render_tier).toLowerCase()}`;
   $('#job-percent').textContent = estimatingVideo ? '…' : `${job.progress || 0}%`;
   $('#job-progress').style.width = estimatingVideo ? '' : `${job.progress || 0}%`;
