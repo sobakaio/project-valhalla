@@ -1367,29 +1367,46 @@ function selectedLoggerJob() {
   return jobs.find((job) => job.id === state.loggerJobId) || state.job || jobs[0] || null;
 }
 
-function loggerJobStatus(job) {
-  if (job.status === 'completed') return 'Complete';
-  if (job.status === 'failed') return 'Failed';
-  if (job.status === 'cancelled') return 'Cancelled';
-  if (job.status === 'running') return 'Rendering';
-  return 'Queued';
+function loggerEvents() {
+  return loggerJobs().flatMap((job) => (job.logs || []).map((entry, logIndex) => ({
+    entry,
+    job,
+    logIndex,
+  }))).sort((left, right) => {
+    return new Date(right.entry.time || right.job.created_at || 0)
+      - new Date(left.entry.time || left.job.created_at || 0);
+  });
 }
 
-function renderLoggerSession() {
-  const jobs = loggerJobs();
-  const list = $('#logger-session-list');
-  if (!list) return;
-  $('#logger-session-count').textContent = `${jobs.length} job${jobs.length === 1 ? '' : 's'}`;
-  list.innerHTML = jobs.map((job) => {
-    const isVideo = job.kind === 'video' || job.generation_mode === 'video';
-    const label = isVideo ? 'Video' : modeTitle(job.generation_mode);
-    const time = job.created_at
-      ? new Date(job.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      : '—';
-    const selected = job.id === state.loggerJobId ? ' selected' : '';
-    const progress = `${job.completed || 0}/${job.total || 0}`;
-    return `<button class="logger-session-entry${selected}" type="button" data-logger-job-id="${escapeHtml(job.id)}"><strong><span>${escapeHtml(label)}</span><span>${escapeHtml(loggerJobStatus(job))}</span></strong><small>${escapeHtml(time)} · ${escapeHtml(job.workflow_profile || 'Workflow')}</small><em>${escapeHtml(progress)} ${isVideo ? 'video' : 'images'}</em></button>`;
-  }).join('');
+function renderLoggerEvents(preview = null) {
+  const events = loggerEvents().map(({ entry, job: eventJob, logIndex }) => {
+    const eventTime = entry.time || eventJob.created_at;
+    const time = new Date(eventTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const count = entry.position ? `${entry.position}/${entry.total}` : `0/${entry.total}`;
+    const liveDuration = Math.max(0, (Date.now() - new Date(eventTime).getTime()) / 1000);
+    const detail = entry.type === 'shot_started'
+      ? `Rendering · ${formatDuration(liveDuration)}`
+      : (entry.type === 'shot_completed'
+        ? `Rendered in ${formatDuration(entry.duration_seconds)}`
+        : entry.message);
+    const inspectable = entry.positive != null && entry.negative != null;
+    const isVideo = eventJob.kind === 'video' || eventJob.generation_mode === 'video';
+    const eventLabel = entry.shot != null ? `Shot ${entry.shot}` : tierTitle(eventJob.render_tier);
+    const selected = state.loggerInspection?.jobId === eventJob.id
+      && state.loggerInspection.logIndex === logIndex;
+    return {
+      time: eventTime,
+      markup: `<div class="logger-event ${escapeHtml(entry.type)}${inspectable ? ' inspectable' : ''}${selected ? ' selected' : ''}"${inspectable ? ` data-job-id="${escapeHtml(eventJob.id)}" data-log-index="${logIndex}" role="button" tabindex="0" aria-label="Inspect prompts for ${escapeHtml(isVideo ? 'video' : 'image')} shot ${entry.shot}"` : ''}><time>${escapeHtml(time)}</time><i>${escapeHtml(eventLabel)}</i><span>${escapeHtml(`${isVideo ? 'Video' : 'Image'} · ${detail || ''}`)}</span><em>${escapeHtml(count)}</em></div>`,
+    };
+  });
+  if (preview) {
+    const time = new Date(preview.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    events.push({
+      time: preview.created_at,
+      markup: `<div class="logger-event ${escapeHtml(preview.status)}"><time>${escapeHtml(time)}</time><i>Preview</i><span>${escapeHtml(`Shot ${preview.shot} preview ${preview.status}`)}</span><em>1/1</em></div>`,
+    });
+  }
+  return events.sort((left, right) => new Date(right.time) - new Date(left.time)).map((event) => event.markup).join('');
 }
 
 function inspectedJobPrompt(job) {
@@ -1451,6 +1468,10 @@ function renderLoggerImage(prompt) {
   const empty = $('#logger-rendered-empty');
   const isVideo = prompt?.media_type === 'video' || prompt?.video_url;
   const url = state.privacyCovered ? null : (isVideo ? prompt?.video_url : prompt?.image_url);
+  const showVideo = Boolean(isVideo && url);
+  const showImage = Boolean(!isVideo && url);
+  image.hidden = !showImage;
+  video.hidden = !showVideo;
   const frame = image.closest('.logger-rendered-frame');
   if (url) {
     if (isVideo) {
@@ -1513,12 +1534,9 @@ function renderLogger() {
     && (!selectedJob || new Date(preview.created_at) >= new Date(selectedJob.created_at));
   const job = usePreview ? null : selectedJob;
   const empty = $('#logger-empty');
-  const session = $('#logger-session');
   const workspace = $('#logger-workspace');
-  renderLoggerSession();
   if (!job && !preview) {
     empty.classList.remove('hidden');
-    session.classList.add('hidden');
     workspace.classList.add('hidden');
     updateNavigationCount('log-count', 0, 'log entry', 'log entries');
     $('#clear-logger').disabled = false;
@@ -1526,7 +1544,6 @@ function renderLogger() {
     return;
   }
   empty.classList.add('hidden');
-  session.classList.toggle('hidden', loggerJobs().length === 0);
   workspace.classList.remove('hidden');
   if (usePreview) {
     $('#clear-logger').disabled = ['queued', 'running'].includes(preview.status);
@@ -1542,11 +1559,9 @@ function renderLogger() {
     $('#logger-negative').textContent = formatLoggedPrompt(preview.negative);
     renderLoggerImage(preview);
     $('#logger-job-id').textContent = `${preview.workflow_profile} · Preview ${preview.id.slice(0, 10)}`;
-    const time = new Date(preview.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    $('#logger-event-list').innerHTML = `<div class="logger-event ${escapeHtml(preview.status)}"><time>${escapeHtml(time)}</time><i>Preview</i><span>${escapeHtml(`Shot ${preview.shot} preview ${preview.status}`)}</span><em>1/1</em></div>`;
+    $('#logger-event-list').innerHTML = renderLoggerEvents(preview);
     return;
   }
-  const logs = job.logs || [];
   $('#clear-logger').disabled = ['queued', 'running'].includes(job.status);
   updateNavigationCount('log-count', loggerJobs().reduce((count, item) => count + (item.logs?.length || 0), 0), 'log entry', 'log entries');
   const visiblePosition = job.current_prompt?.position || job.completed || 0;
@@ -1564,21 +1579,7 @@ function renderLogger() {
   $('#logger-negative').textContent = formatLoggedPrompt(inspectedPrompt?.negative);
   renderLoggerImage(inspectedPrompt);
   $('#logger-job-id').textContent = `${modeTitle(job.generation_mode)} · ${tierTitle(job.render_tier)} · ${job.workflow_profile} · Job ${job.id.slice(0, 10)}`;
-  $('#logger-event-list').innerHTML = logs.map((entry, logIndex) => ({ entry, logIndex })).reverse().map(({ entry, logIndex }) => {
-    const time = new Date(entry.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const count = entry.position ? `${entry.position}/${entry.total}` : `0/${entry.total}`;
-    const liveDuration = Math.max(0, (Date.now() - new Date(entry.time).getTime()) / 1000);
-    const detail = entry.type === 'shot_started'
-      ? `Rendering · ${formatDuration(liveDuration)}`
-      : (entry.type === 'shot_completed'
-        ? `Rendered in ${formatDuration(entry.duration_seconds)}`
-        : entry.message);
-    const inspectable = entry.positive != null && entry.negative != null;
-    const eventLabel = entry.shot != null ? `Shot ${entry.shot}` : tierTitle(job.render_tier);
-    const selected = state.loggerInspection?.jobId === job.id
-      && state.loggerInspection.logIndex === logIndex;
-    return `<div class="logger-event ${escapeHtml(entry.type)}${inspectable ? ' inspectable' : ''}${selected ? ' selected' : ''}"${inspectable ? ` data-log-index="${logIndex}" role="button" tabindex="0" aria-label="Inspect prompts for shot ${entry.shot}"` : ''}><time>${escapeHtml(time)}</time><i>${escapeHtml(eventLabel)}</i><span>${escapeHtml(detail)}</span><em>${escapeHtml(count)}</em></div>`;
-  }).join('');
+  $('#logger-event-list').innerHTML = renderLoggerEvents();
 }
 
 function showJob() {
@@ -4626,23 +4627,16 @@ document.addEventListener('keydown', (event) => {
 });
 
 function inspectLoggerEvent(element) {
-  const job = selectedLoggerJob();
+  const job = loggerJobs().find((item) => item.id === element?.dataset.jobId) || selectedLoggerJob();
   if (!job || !element?.dataset.logIndex) return;
   const logIndex = Number(element.dataset.logIndex);
+  state.loggerJobId = job.id;
+  state.loggerJobPinned = true;
   const alreadySelected = state.loggerInspection?.jobId === job.id
     && state.loggerInspection.logIndex === logIndex;
   state.loggerInspection = alreadySelected ? null : { jobId: job.id, logIndex };
   renderLogger();
 }
-
-$('#logger-session-list').addEventListener('click', (event) => {
-  const button = event.target.closest('[data-logger-job-id]');
-  if (!button) return;
-  state.loggerJobId = button.dataset.loggerJobId;
-  state.loggerJobPinned = true;
-  state.loggerInspection = null;
-  renderLogger();
-});
 
 $('#logger-view').addEventListener('click', async (event) => {
   const timelineEvent = event.target.closest('.logger-event.inspectable');

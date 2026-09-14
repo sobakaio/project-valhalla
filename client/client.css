@@ -262,18 +262,7 @@ h3 { margin-bottom: 6px; font-size: 1rem; }
 .logger-empty { min-height: 360px; display: grid; place-content: center; justify-items: center; padding: 30px; color: var(--muted); text-align: center; }
 .logger-empty-mark { margin-bottom: 12px; color: var(--faint); font: 36px/1 ui-monospace, monospace; }
 .logger-empty p { max-width: 420px; margin: 0; }
-.logger-session { overflow: hidden; }
-.logger-session > header { min-height: 48px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); }
-.logger-session > header h3 { margin: 0; }
-.logger-session > header > span { color: var(--faint); font: 0.625rem/1.2 ui-monospace, monospace; }
-.logger-session-list { display: flex; gap: 7px; padding: 9px; overflow-x: auto; }
-.logger-session-entry { min-width: 178px; padding: 9px 10px; display: grid; gap: 4px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); color: var(--muted); cursor: pointer; text-align: left; font: inherit; }
-.logger-session-entry:hover { border-color: var(--line-strong); color: var(--text); }
-.logger-session-entry.selected { border-color: var(--brand); background: var(--brand-soft); color: var(--text); box-shadow: inset 3px 0 0 var(--brand); }
-.logger-session-entry strong { display: flex; justify-content: space-between; gap: 8px; color: inherit; font-size: 0.6875rem; }
-.logger-session-entry small { color: var(--faint); font-size: 0.625rem; white-space: nowrap; }
-.logger-session-entry em { color: var(--muted); font-size: 0.625rem; font-style: normal; }
-.logger-workspace { height: calc(100dvh - 235px); min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+.logger-workspace { height: calc(100dvh - 144px); min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
 .logger-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: hidden; }
 .logger-metrics > div { min-width: 0; padding: 16px 18px; border-right: 1px solid var(--line); }
 .logger-metrics > div:last-child { border-right: 0; }
@@ -289,6 +278,7 @@ h3 { margin-bottom: 6px; font-size: 1rem; }
 .logger-rendered-frame { width: 100%; min-height: 0; flex: 1; padding: 0; position: relative; display: grid; place-items: center; overflow: hidden; border: 0; border-radius: 0; background: var(--surface-2); color: inherit; cursor: default; font: inherit; }
 .logger-rendered-frame.has-media { cursor: zoom-in; }
 .logger-rendered-frame img, .logger-rendered-frame video { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; }
+.logger-rendered-frame img[hidden], .logger-rendered-frame video[hidden] { display: none; }
 .logger-rendered-frame:not(.has-media) img, .logger-rendered-frame:not(.has-media) video { display: none; }
 .logger-rendered-frame span { padding: 20px; color: var(--faint); font-size: 0.75rem; text-align: center; }
 .logger-rendered-frame.has-media > span { display: none; }
@@ -745,7 +735,7 @@ pre { min-height: 280px; max-height: 50vh; margin: 0; padding: 15px; overflow-x:
   .nav-item { justify-content: center; padding: 0; }
   .nav-icon { font-size: 1.125rem; }
   .main-area { padding: 0 16px 40px; }
-  .logger-workspace { height: calc(100dvh - 225px); }
+  .logger-workspace { height: calc(100dvh - 134px); }
   .studio-grid { grid-template-columns: 1fr; }
   .logger-metrics, .logger-prompt-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .logger-rendered { grid-column: 1 / -1; min-height: 300px; }
@@ -762,7 +752,7 @@ pre { min-height: 280px; max-height: 50vh; margin: 0; padding: 15px; overflow-x:
   .storyboard-panel { min-height: 550px; }
 }
 @media (max-width: 560px) {
-  .logger-workspace { height: calc(100dvh - 255px); }
+  .logger-workspace { height: calc(100dvh - 164px); }
   .logger-prompt-grid { grid-template-columns: 1fr; }
   .logger-rendered { grid-column: auto; min-height: 260px; }
   .logger-event { grid-template-columns: 68px 76px minmax(0, 1fr); gap: 7px; }
@@ -968,9 +958,7 @@ pre { min-height: 280px; max-height: 50vh; margin: 0; padding: 15px; overflow-x:
   .output-delete, .output-card a { min-height: 34px; display: inline-flex; align-items: center; font-size: 0.6875rem; }
   .photoshoot-count { padding: 3px 6px; }
 
-  .logger-workspace { height: auto; min-height: calc(100dvh - 260px); grid-template-rows: auto auto auto; gap: 9px; }
-  .logger-session-list { padding: 7px; }
-  .logger-session-entry { min-width: 164px; }
+  .logger-workspace { height: auto; min-height: calc(100dvh - 174px); grid-template-rows: auto auto auto; gap: 9px; }
   .logger-metrics > div { min-height: 82px; padding: 12px; }
   .logger-metrics strong { font-size: 1.125rem; }
   .logger-metrics span, .logger-metrics small { font-size: 0.6875rem; }
