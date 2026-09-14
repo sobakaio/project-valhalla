@@ -3,3 +3,4 @@ instructions/*
 !instructions/
 !instructions/*.md.example
 outputs/
+config.json
