@@ -3954,9 +3954,9 @@ class FrontendContractTests(unittest.TestCase):
         html = (Path(app.__file__).parent / "client" / "client.html").read_text(
             encoding="utf-8"
         )
-        self.assertEqual(app.APP_VERSION, "1.7.0")
-        self.assertEqual(app.ValhallaHandler.server_version, "Valhalla/1.7.0")
-        self.assertIn('Photo Studio <span class="brand-version">1.7.0</span>', html)
+        self.assertEqual(app.APP_VERSION, "1.7.1")
+        self.assertEqual(app.ValhallaHandler.server_version, "Valhalla/1.7.1")
+        self.assertIn('Photo Studio <span class="brand-version">1.7.1</span>', html)
         self.assertNotIn('Local workspace', html)
 
     def test_primary_workspace_names_and_headers_use_photography_terms(self):
@@ -5372,6 +5372,32 @@ class PromptPreparationTests(unittest.TestCase):
         payload = state.cancel_prompt_preparation("job")
         self.assertTrue(payload["cancel_requested"])
         self.assertEqual(payload["status"], "running")
+
+    def test_reroll_shot_removes_both_tier_cache_entries(self):
+        state = app.WebState()
+        board = state.create_storyboard({
+            "mode": "photoshoot", "count": 1, "photoshoots": 1,
+            "prompt_seed": 123, "inference_seed": 456,
+        })
+        for tier in ("production", "preview"):
+            state._prompt_cache[(board["id"], tier, 1)] = {"status": "ready"}
+        state.reroll_shot(board["id"], 1)
+        self.assertNotIn((board["id"], "production", 1), state._prompt_cache)
+        self.assertNotIn((board["id"], "preview", 1), state._prompt_cache)
+
+    def test_replacing_storyboard_removes_previous_prompt_cache(self):
+        state = app.WebState()
+        board = state.create_storyboard({
+            "mode": "photoshoot", "count": 1, "photoshoots": 1,
+            "prompt_seed": 123, "inference_seed": 456,
+        })
+        state._prompt_cache[(board["id"], "production", 1)] = {"status": "ready"}
+        state.create_storyboard({
+            "mode": "photoshoot", "count": 1, "photoshoots": 1,
+            "prompt_seed": 789, "inference_seed": 987,
+            "previous_storyboard_id": board["id"],
+        })
+        self.assertNotIn((board["id"], "production", 1), state._prompt_cache)
 
 
 class WorkflowProfileTests(unittest.TestCase):

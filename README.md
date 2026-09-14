@@ -1,6 +1,6 @@
 # Valhalla Photo Studio
 
-Valhalla Photo Studio 1.7.0 is a local production workspace for generating coherent SFW and NSFW photoshoots of adult women with your own ComfyUI instance. It turns creative direction into complete, automatically composed prompts, keeps the subject and visual story consistent across a set, and sends the approved shots to ComfyUI for image inference and Motion proofs.
+Valhalla Photo Studio 1.7.1 is a local production workspace for generating coherent SFW and NSFW photoshoots of adult women with your own ComfyUI instance. It turns creative direction into complete, automatically composed prompts, keeps the subject and visual story consistent across a set, and sends the approved shots to ComfyUI for image inference and Motion proofs.
 
 The browser interface brings the full workflow together: storyboard planning, prompt automation, compatible scene and wardrobe selection, shot-level direction, Preview and Production rendering, progress tracking, and a built-in Proofs gallery for organizing and reviewing generated images and Motion outputs. Every rule-compatible storyboard is resolved before GPU work begins, so poses, wardrobe, scene geometry, camera direction, content progression, prompts, and seeds can be inspected or edited before an expensive render.
 
@@ -8,7 +8,7 @@ The application is designed for a private workstation or trusted LAN. It has no 
 
 > **Adult-content notice:** the production catalog supports SFW, progressive adult, and explicit solo-adult modes. All configured subjects are adults aged 21–23. Use the application only where its content is lawful and appropriate.
 
-## Version 1.7.0
+## Version 1.7.1
 
 This release adds the LTX 2.5 video workflow and keeps image and video render history together in the current-session Logbook. Queued renders remain separate when several videos share a source image, completed outputs retain their exact source identity, and Image and Video workflow profile updates can proceed independently.
 

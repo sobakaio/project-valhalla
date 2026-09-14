@@ -909,6 +909,7 @@ function configPayload() {
     inference_strategy: value('inference_strategy'),
     use_curated_defaults: form.elements.use_curated_defaults.checked,
     fast: state.renderMode === 'preview',
+    previous_storyboard_id: state.storyboard?.id || null,
   };
 }
 

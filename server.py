@@ -31,7 +31,7 @@ class AppError(RuntimeError):
     """An expected, user-facing application error."""
 
 
-APP_VERSION = "1.7.0"
+APP_VERSION = "1.7.1"
 MEDIA_TYPES = {"image", "video"}
 UI_SEED_MIN = 100_000_000_000_000
 UI_SEED_MAX = 999_999_999_999_999
@@ -6824,6 +6824,22 @@ class WebState:
         while len(mapping) > maximum:
             mapping.pop(next(iter(mapping)))
 
+    def invalidate_prompt_cache(
+        self, storyboard_id: str, shot_numbers: Iterable[int] | None = None
+    ) -> None:
+        numbers = set(shot_numbers) if shot_numbers is not None else None
+        with self.lock:
+            for key in list(self._prompt_cache):
+                if key[0] == storyboard_id and (numbers is None or key[2] in numbers):
+                    self._prompt_cache.pop(key, None)
+
+    def prune_prompt_cache(self) -> None:
+        with self.lock:
+            storyboard_ids = set(self.storyboards)
+            for key in list(self._prompt_cache):
+                if key[0] not in storyboard_ids:
+                    self._prompt_cache.pop(key, None)
+
     def _prompt_status(
         self, storyboard_id: str, shot: dict[str, Any], render_tier: str,
         context: dict[str, Any] | None = None, positive: str | None = None,
@@ -7145,6 +7161,9 @@ class WebState:
 
     def create_storyboard(self, payload: dict[str, Any]) -> dict[str, Any]:
         db, _ = load_database()
+        previous_storyboard_id = str(payload.get("previous_storyboard_id", "")).strip()
+        if previous_storyboard_id and self.has_active_prompt_preparation(previous_storyboard_id):
+            raise AppError("Wait for prompt enhancement to finish or cancel it first")
         args = parse_run_config(payload, db)
         prompt_seed = args.prompt_seed if args.prompt_seed is not None else automatic_ui_seed()
         args.prompt_seed = prompt_seed
@@ -7169,6 +7188,9 @@ class WebState:
         with self.lock:
             self.storyboards[storyboard_id] = record
             self.trim(self.storyboards, load_config()[0]["limits"]["max_storyboards"])
+            if previous_storyboard_id:
+                self.invalidate_prompt_cache(previous_storyboard_id)
+            self.prune_prompt_cache()
         return self.storyboard_payload(record)
 
     def storyboard_payload(self, record: dict[str, Any]) -> dict[str, Any]:
@@ -7887,6 +7909,8 @@ class WebState:
 
     def update_director(self, storyboard_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         record = self.get_storyboard(storyboard_id)
+        if self.has_active_prompt_preparation(storyboard_id):
+            raise AppError("Wait for prompt enhancement to finish or cancel it first")
         with self.lock:
             active = any(
                 job["storyboard_id"] == storyboard_id
@@ -8575,6 +8599,7 @@ class WebState:
         with self.lock:
             self.storyboards[storyboard_id] = record
             self.trim(self.storyboards, load_config()[0]["limits"]["max_storyboards"])
+            self.prune_prompt_cache()
         return self.storyboard_payload(record)
 
     def reroll_shot(self, storyboard_id: str, number: int) -> dict[str, Any]:
@@ -8582,6 +8607,8 @@ class WebState:
         shots = record["shots"]
         if not 1 <= number <= len(shots):
             raise AppError("Shot number is out of range")
+        if self.has_active_prompt_preparation(storyboard_id):
+            raise AppError("Wait for prompt enhancement to finish or cancel it first")
         with self.lock:
             record["director_edited"] = True
             shot = shots[number - 1]
@@ -8589,6 +8616,7 @@ class WebState:
             self._apply_director_customs(shot, shot["scene"], shot["context"])
             if record["args"].inference_seed is None:
                 shot["inference_seed"] = automatic_ui_seed()
+            self.invalidate_prompt_cache(storyboard_id, [number])
             return self._shot_payload(record, shot)
 
     def randomize_shot_seed(self, storyboard_id: str, number: int) -> dict[str, Any]:
@@ -9261,10 +9289,11 @@ class WebState:
                 preview["status"] in {"queued", "running"} for preview in self.previews.values()
             )
 
-    def has_active_prompt_preparation(self) -> bool:
+    def has_active_prompt_preparation(self, storyboard_id: str | None = None) -> bool:
         with self.lock:
             return any(
                 job["status"] == "running"
+                and (storyboard_id is None or job["storyboard_id"] == storyboard_id)
                 for job in self._prompt_preparation_jobs.values()
             )
 
