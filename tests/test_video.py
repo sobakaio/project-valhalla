@@ -327,6 +327,37 @@ class VideoWorkflowTests(unittest.TestCase):
             )
             thread.assert_called_once()
 
+    def test_video_eta_uses_first_completed_video_as_queue_reference(self):
+        state = app.WebState()
+        state._video_queue_reference_seconds = 30.0
+        job = {
+            "id": "video-job",
+            "status": "running",
+            "fast": False,
+            "workflow_profile": "ltx-2.5",
+            "generation_mode": "video",
+            "render_tier": "production",
+            "total": 1,
+            "completed": 0,
+            "shot_numbers": [1],
+            "render_groups": [{"group_index": 1, "positions": [1], "shot_numbers": [1]}],
+            "progress": 0,
+            "elapsed_seconds": 5,
+            "eta_seconds": None,
+            "outputs": [],
+            "current_prompt": None,
+            "logs": [],
+            "cancel_requested": False,
+            "_shot_started_monotonic": app.time.monotonic() - 5,
+            "_video_source": {"source": "output", "relative_path": "frame.png", "name": "frame.png"},
+        }
+
+        payload = state.job_payload(job)
+
+        self.assertEqual(payload["estimated_frame_seconds"], 30.0)
+        self.assertGreaterEqual(payload["eta_seconds"], 24.0)
+        self.assertLessEqual(payload["eta_seconds"], 30.0)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -6765,6 +6765,7 @@ class WebState:
         self.previews: dict[str, dict[str, Any]] = {}
         self._job_worker_running = False
         self._render_timings: dict[tuple[bool, str], list[float]] = {}
+        self._video_queue_reference_seconds: float | None = None
 
     def trim(self, mapping: dict[str, Any], maximum: int) -> None:
         while len(mapping) > maximum:
@@ -8641,6 +8642,10 @@ class WebState:
                 )
 
     def job_frame_seconds(self, job: dict[str, Any]) -> float | None:
+        if job.get("generation_mode") == "video":
+            if self._video_queue_reference_seconds is None:
+                return None
+            return round(self._video_queue_reference_seconds, 1)
         durations = [
             float(value) for value in job.get("_frame_durations", [])[-7:]
             if isinstance(value, (int, float)) and value > 0
@@ -8859,6 +8864,7 @@ class WebState:
                 )
                 if next_job is None:
                     self._job_worker_running = False
+                    self._video_queue_reference_seconds = None
                     return
                 job_id = next_job["id"]
             self._run_job(job_id)
@@ -8878,6 +8884,7 @@ class WebState:
             if job["cancel_requested"]:
                 job["status"] = "cancelled"
                 return
+            job["_shot_started_monotonic"] = time.monotonic()
             job["current_prompt"] = {
                 "media_type": "video", "positive": prompt, "negative": "",
                 "seed": seed, "source_image": source["name"],
@@ -8903,9 +8910,13 @@ class WebState:
             })
         with self.lock:
             elapsed = time.monotonic() - started
+            frame_duration = round(elapsed, 1)
+            job["_frame_durations"].append(frame_duration)
+            if self._video_queue_reference_seconds is None:
+                self._video_queue_reference_seconds = frame_duration
             job["completed"] = 1
             job["progress"] = 100
-            job["elapsed_seconds"] = round(elapsed, 1)
+            job["elapsed_seconds"] = frame_duration
             job["eta_seconds"] = 0
             shot_outputs = []
             for path in paths:
