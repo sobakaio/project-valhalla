@@ -1,6 +1,6 @@
 {
   "server": {
-    "host": "0.0.0.0",
+    "host": "127.0.0.1",
     "port": 8765
   },
   "comfy": {
@@ -25,11 +25,11 @@
     }
   },
   "prompt_enhancer": {
-    "production": true,
+    "production": false,
     "preview": false,
     "url": "http://127.0.0.1:1234",
     "model": "gemma4-12b-q4",
-    "instructions_path": "./instructions/image-inference.md",
+    "instructions_path": "./HERETIC.md",
     "api_key_env": "LLAMA_API_KEY",
     "timeout_seconds": 120,
     "max_tokens": 450,
