@@ -192,6 +192,10 @@
                       <p>Rendering mode</p>
                       <button type="button" data-render-mode-choice="production"><strong>Production</strong><small>Full-quality workflow</small></button>
                       <button type="button" data-render-mode-choice="preview"><strong>Preview</strong><small>Faster draft workflow</small></button>
+                      <div class="prompt-preparation">
+                        <button type="button" data-prompt-preparation data-render-action-choice="enhance"><strong>Enhance prompts</strong><small>Process missing or changed prompts</small></button>
+                        <div class="prompt-preparation-meta"><span data-prompt-preparation-status>Not prepared</span></div>
+                      </div>
                     </div>
                   </details>
                 </div>
@@ -243,6 +247,10 @@
                       <p>Rendering mode</p>
                       <button type="button" data-render-mode-choice="production"><strong>Production</strong><small>Full-quality workflow</small></button>
                       <button type="button" data-render-mode-choice="preview"><strong>Preview</strong><small>Faster draft workflow</small></button>
+                      <div class="prompt-preparation">
+                        <button type="button" data-prompt-preparation data-render-action-choice="enhance"><strong>Enhance prompts</strong><small>Process missing or changed prompts</small></button>
+                        <div class="prompt-preparation-meta"><span data-prompt-preparation-status>Not prepared</span></div>
+                      </div>
                     </div>
                   </details>
                 </div>
@@ -394,7 +402,7 @@
   <dialog id="prompt-dialog">
     <div class="dialog-header"><div><p class="eyebrow" id="dialog-eyebrow">Shot</p><h2 id="dialog-title">Prompt inspector</h2></div><button class="icon-button dialog-close" aria-label="Close">×</button></div>
     <div class="dialog-body">
-      <div class="prompt-tabs"><button class="active" data-prompt="positive">Positive</button><button data-prompt="negative">Auxiliary negative</button><button data-prompt="ids">Selected IDs</button></div>
+      <div class="prompt-tabs"><button class="active" data-prompt="optimized">Optimized</button><button data-prompt="positive">Positive</button><button data-prompt="negative">Auxiliary negative</button><button data-prompt="ids">Selected IDs</button></div>
       <pre id="prompt-content"></pre>
     </div>
     <div class="dialog-footer"><button class="button ghost" id="copy-prompt">Copy to clipboard</button><button class="button ghost dialog-close">Done</button></div>

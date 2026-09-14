@@ -52,6 +52,8 @@ const state = {
   job: null,
   jobTimer: null,
   queuePaused: false,
+  promptPreparation: { production: null, preview: null },
+  promptPreparationTimer: null,
   sessionLog: [],
   loggerJobId: null,
   loggerJobPinned: false,
@@ -72,6 +74,7 @@ const state = {
   renderMode: sessionStorage.getItem('valhalla-render-mode') === 'preview'
     ? 'preview'
     : 'production',
+  renderAction: 'render',
   previewIndex: 0,
   previewOutputIndexes: null,
   previewZoom: Number(sessionStorage.getItem('valhalla-preview-zoom')) || 100,
@@ -1058,6 +1061,19 @@ async function importStoryboard(event) {
   }
 }
 
+function promptStatusPresentation(status) {
+  const labels = {
+    ready: ['ready', 'LLM prompt ready'],
+    preparing: ['running', 'LLM prompt is being prepared'],
+    failed: ['failed', 'LLM prompt preparation failed'],
+    disabled: ['disabled', 'Prompt enhancer is disabled'],
+    unavailable: ['failed', 'Prompt enhancer is unavailable'],
+    needs_update: ['pending', 'LLM prompt needs an update'],
+    not_prepared: ['pending', 'LLM prompt is not prepared'],
+  };
+  return labels[status] || labels.not_prepared;
+}
+
 function shotCard(shot) {
   const explicit = shot.stage.level === 'explicit' ? 'explicit' : '';
   const stage = shot.stage.plateau_kind || shot.stage.level;
@@ -1067,6 +1083,8 @@ function shotCard(shot) {
   const manualTitle = shot.manual_fields?.length
     ? `Manual: ${shot.manual_fields.join(', ')}`
     : 'Manual Director edit';
+  const promptStatus = shot.prompt_enhancement?.[state.renderMode]?.status || 'not_prepared';
+  const [promptStatusClass, promptStatusLabel] = promptStatusPresentation(promptStatus);
   const statuses = [
     manual ? `<span class="card-status manual" title="${escapeHtml(manualTitle)}">Manual</span>` : '',
     shot.prompt_warnings?.length
@@ -1091,7 +1109,7 @@ function shotCard(shot) {
       <div class="shot-footer">
         <button type="button" class="direct" data-action="director">Director</button>
         <button type="button" class="reroll" data-action="reroll">Reroll</button>
-        <button type="button" data-action="inspect">Prompt</button>
+        <button type="button" class="prompt-button" data-action="inspect" aria-label="Inspect prompt · ${escapeHtml(promptStatusLabel)}" title="${escapeHtml(promptStatusLabel)}"><span class="prompt-ai-indicator ${promptStatusClass}" data-prompt-ai aria-hidden="true">✦</span>Prompt</button>
         <button type="button" class="variation" data-action="variation">Variation</button>
         <button type="button" class="preview" data-action="preview">Preview</button>
         <button type="button" class="render-one" data-action="render">Render</button>
@@ -1120,6 +1138,7 @@ function storyboardCards(shots) {
 function renderStoryboard() {
   const board = state.storyboard;
   if (!board) return;
+  sessionStorage.setItem('valhalla-storyboard-id', board.id);
   const navigationSetCount = board.config.mode === 'photoshoot'
     ? new Set(board.shots.map((shot) => shot.photoshoot_index)).size
     : (board.shots.length ? 1 : 0);
@@ -1141,6 +1160,7 @@ function renderStoryboard() {
   storyboardMeta.classList.remove('hidden');
   shotGrid.classList.remove('hidden');
   syncPendingState();
+  syncPromptPreparation();
 }
 
 function updateNavigationCount(id, count, singular, plural = `${singular}s`) {
@@ -1167,6 +1187,7 @@ async function rerollShot(number, button) {
     const shot = await api(`/api/storyboards/${state.storyboard.id}/shots/${number}/reroll`, { method: 'POST', body: '{}' });
     state.storyboard.director_edited = true;
     renderOneShot(shot);
+    await syncPromptPreparation();
   } catch (error) {
     setBusy(button, false);
     toast('Could not reroll shot', error.message, 'error');
@@ -1198,11 +1219,11 @@ function openPrompt(shot) {
   }
   try {
     state.promptShot = shot;
-    state.promptTab = 'positive';
+    state.promptTab = 'optimized';
     $('#dialog-eyebrow').textContent = `Set ${shot.photoshoot_index + 1} · Shot ${shot.shot_index + 1}`;
     const level = shot.stage?.level || 'shot';
     $('#dialog-title').textContent = `${level[0].toUpperCase()}${level.slice(1)} composition`;
-    $$('.prompt-tabs button').forEach((button) => button.classList.toggle('active', button.dataset.prompt === 'positive'));
+    $$('.prompt-tabs button').forEach((button) => button.classList.toggle('active', button.dataset.prompt === 'optimized'));
     updatePromptContent();
     if (promptDialog.open) promptDialog.close();
     if (typeof promptDialog.showModal === 'function') promptDialog.showModal();
@@ -1219,7 +1240,9 @@ function updatePromptContent() {
   const selectedIdText = Array.isArray(selectedIds)
     ? selectedIds.join('\n')
     : Object.values(selectedIds || {}).flat().join('\n');
+  const optimized = state.promptShot.prompt_enhancement?.[state.renderMode]?.optimized_positive;
   const content = {
+    optimized: optimized || 'No optimized prompt is available yet for this render tier. Use Enhance prompts, or start rendering to generate it on demand.',
     positive: state.promptShot.positive_prompt || '',
     negative: state.promptShot.negative_prompt || '',
     ids: selectedIdText,
@@ -1656,6 +1679,9 @@ async function finishJob() {
   rememberLoggerJob(job);
   syncJobPendingGroups(job);
   syncRenderControls();
+  if (job.storyboard_id && state.storyboard?.id === job.storyboard_id) {
+    await syncPromptPreparation();
+  }
   $('#job-dock').classList.add('hidden');
   if (job.status === 'completed') {
     const mediaLabel = job.kind === 'video' || job.generation_mode === 'video' ? 'video' : 'image';
@@ -1814,16 +1840,134 @@ function isRenderActive() {
 
 function setRenderMode(mode) {
   state.renderMode = mode === 'preview' ? 'preview' : 'production';
+  state.renderAction = 'render';
   sessionStorage.setItem('valhalla-render-mode', state.renderMode);
   syncRenderControls();
+  syncPromptPreparation();
+}
+
+function setRenderAction(action) {
+  state.renderAction = action === 'enhance' ? 'enhance' : 'render';
+  syncRenderControls();
+  syncPromptPreparation();
+}
+
+function promptPreparationText(payload) {
+  if (!payload) return 'Not prepared';
+  const counts = payload.counts || {};
+  if (payload.status === 'running' && payload.job) {
+    const current = payload.job.current_shot ? ` · Shot ${payload.job.current_shot}` : '';
+    return `Preparing ${payload.job.completed} / ${payload.job.total}${current}`;
+  }
+  if (payload.status === 'disabled') return 'Enhancer disabled';
+  if (payload.status === 'unavailable') return 'Instructions unavailable';
+  if (payload.status === 'ready') return `${counts.ready} / ${payload.total} ready`;
+  if (payload.status === 'failed') return `${counts.failed} failed · ${counts.ready} ready`;
+  const pending = (counts.needs_update || 0) + (counts.not_prepared || 0);
+  return `${pending} need update · ${counts.ready || 0} ready`;
+}
+
+function updatePromptStatusIndicators(payload) {
+  if (!state.storyboard || !Array.isArray(payload?.shot_statuses)) return;
+  payload.shot_statuses.forEach((status, index) => {
+    const shot = state.storyboard.shots[index];
+    if (!shot) return;
+    const enhancement = payload.shot_prompt_enhancements?.[index] || { status };
+    shot.prompt_enhancement ||= {};
+    shot.prompt_enhancement[state.renderMode] = {
+      ...(shot.prompt_enhancement[state.renderMode] || {}),
+      ...enhancement,
+    };
+    if (state.promptShot?.number === shot.number) {
+      state.promptShot = shot;
+      if (promptDialog.open) updatePromptContent();
+    }
+    const promptButton = $(`.shot-card[data-shot="${shot.number}"] [data-action="inspect"]`);
+    if (promptButton) {
+      const [className, label] = promptStatusPresentation(status);
+      const promptIcon = $('[data-prompt-ai]', promptButton);
+      if (promptIcon) promptIcon.className = `prompt-ai-indicator ${className}`;
+      promptButton.title = label;
+      promptButton.setAttribute('aria-label', `Inspect prompt · ${label}`);
+    }
+  });
+}
+
+async function syncPromptPreparation() {
+  const board = state.storyboard;
+  if (!board) {
+    $$('[data-prompt-preparation]').forEach((button) => { button.disabled = true; });
+    $$('[data-prompt-preparation-status]').forEach((status) => { status.textContent = 'Not prepared'; });
+    return;
+  }
+  const tier = state.renderMode;
+  try {
+    const payload = await api(`/api/prompt-preparation?storyboard_id=${encodeURIComponent(board.id)}&tier=${tier}`);
+    if (state.storyboard?.id !== board.id) return;
+    state.promptPreparation[tier] = payload;
+    updatePromptStatusIndicators(payload);
+    const running = payload.status === 'running';
+    const unavailable = ['disabled', 'unavailable'].includes(payload.status);
+    $$('[data-prompt-preparation-status]').forEach((status) => {
+      status.textContent = promptPreparationText(payload);
+    });
+    $$('[data-prompt-preparation]').forEach((button) => {
+      button.disabled = running;
+      const label = button.querySelector('strong');
+      if (label) label.textContent = running ? 'Enhancing…' : 'Enhance prompts';
+      button.title = unavailable
+        ? promptPreparationText(payload)
+        : 'Process prompts that are missing or changed';
+    });
+    $$('[data-render-action]').forEach((button) => {
+      if (state.renderAction !== 'enhance') return;
+      button.disabled = running;
+      button.textContent = running ? 'Enhancing…' : 'Enhance prompts';
+      button.title = unavailable
+        ? promptPreparationText(payload)
+        : 'Enhance missing or changed prompts before rendering';
+    });
+    if (state.promptPreparationTimer) {
+      clearTimeout(state.promptPreparationTimer);
+      state.promptPreparationTimer = null;
+    }
+    if (running) {
+      state.promptPreparationTimer = setTimeout(syncPromptPreparation, 1000);
+    }
+  } catch (error) {
+    $$('[data-prompt-preparation-status]').forEach((status) => { status.textContent = 'Status unavailable'; });
+  }
+}
+
+async function preparePrompts(button) {
+  if (!state.storyboard) return;
+  const menu = button.closest('[data-render-mode]');
+  if (menu) menu.open = false;
+  button.disabled = true;
+  try {
+    const payload = await api('/api/prompt-preparation', {
+      method: 'POST',
+      body: JSON.stringify({ storyboard_id: state.storyboard.id, render_tier: state.renderMode }),
+    });
+    await syncPromptPreparation();
+    if (payload.status === 'disabled') {
+      toast('Prompt enhancer is disabled', 'Enable it for this render tier in System settings.', 'error');
+    } else if (payload.status === 'unavailable') {
+      toast('Prompt enhancer is unavailable', 'Check the selected instructions file.', 'error');
+    }
+  } catch (error) {
+    button.disabled = false;
+    toast('Prompt preparation failed', error.message, 'error');
+  }
 }
 
 function syncRenderControls() {
   const active = Boolean(isRenderActive());
   const preview = state.renderMode === 'preview';
-  const baseLabel = preview ? 'Preview storyboard' : 'Render storyboard';
+  const enhancing = state.renderAction === 'enhance';
+  const baseLabel = enhancing ? 'Enhance prompts' : (preview ? 'Preview storyboard' : 'Render storyboard');
   const idleLabel = state.pendingStructural
-    ? (preview ? 'Update & Preview' : 'Update & Render')
+    ? (enhancing ? 'Enhance prompts' : (preview ? 'Update & Preview' : 'Update & Render'))
     : baseLabel;
   $$('[data-render-control]').forEach((control) => {
     control.classList.toggle('preview', preview);
@@ -1833,12 +1977,19 @@ function syncRenderControls() {
     button.classList.toggle('active', selected);
     button.setAttribute('aria-pressed', String(selected));
   });
+  $$('[data-render-action-choice]').forEach((button) => {
+    const selected = button.dataset.renderActionChoice === state.renderAction;
+    button.classList.toggle('active', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
   $$('[data-render-action]').forEach((button) => {
-    button.disabled = false;
+    button.disabled = enhancing && active;
     button.textContent = idleLabel;
     button.title = active
       ? 'Add this storyboard after the current render jobs'
-      : `${idleLabel} using the ${preview ? 'faster draft' : 'full production'} workflow`;
+      : (enhancing
+        ? 'Enhance missing or changed prompts'
+        : `${idleLabel} using the ${preview ? 'faster draft' : 'full production'} workflow`);
   });
   form.elements.inference_seed.disabled = active;
   form.elements.inference_strategy.disabled = active;
@@ -2017,6 +2168,7 @@ async function loadOutputs() {
 
 async function restoreApplication() {
   await loadOutputs();
+  const savedStoryboardId = sessionStorage.getItem('valhalla-storyboard-id');
   if (state.galleryBenchmark) {
     switchView('outputs');
     return;
@@ -2048,6 +2200,15 @@ async function restoreApplication() {
     if (videoJob && session.active_job) pollJob();
   } catch (error) {
     toast('Could not restore render state', error.message, 'error');
+  }
+  if (!state.storyboard && savedStoryboardId) {
+    try {
+      state.storyboard = await api(`/api/storyboards/${encodeURIComponent(savedStoryboardId)}`);
+      restoreConfig(state.storyboard.config);
+      renderStoryboard();
+    } catch (error) {
+      sessionStorage.removeItem('valhalla-storyboard-id');
+    }
   }
   if (!state.storyboard
     && !(['queued', 'running'].includes(state.job?.status)
@@ -4336,6 +4497,10 @@ $$('[data-render-mode-choice]').forEach((button) => button.addEventListener('cli
   setRenderMode(event.currentTarget.dataset.renderModeChoice);
   event.currentTarget.closest('[data-render-mode]').open = false;
 }));
+$$('[data-render-action-choice]').forEach((button) => button.addEventListener('click', (event) => {
+  setRenderAction(event.currentTarget.dataset.renderActionChoice);
+  event.currentTarget.closest('[data-render-mode]').open = false;
+}));
 document.addEventListener('click', (event) => {
   $$('[data-render-mode][open]').forEach((menu) => {
     if (!event.target.closest('[data-render-mode]') || !menu.contains(event.target)) menu.open = false;
@@ -4344,7 +4509,10 @@ document.addEventListener('click', (event) => {
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') $$('[data-render-mode][open]').forEach((menu) => { menu.open = false; });
 });
-$$('[data-render-action]').forEach((button) => button.addEventListener('click', startGeneration));
+$$('[data-render-action]').forEach((button) => button.addEventListener('click', () => {
+  if (state.renderAction === 'enhance') preparePrompts(button);
+  else startGeneration();
+}));
 $('#director-open-studio').addEventListener('click', () => switchView('studio'));
 $('#director-search').addEventListener('input', (event) => {
   filterDirector(event.target.value, { collapseEmpty: true });

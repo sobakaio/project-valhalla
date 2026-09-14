@@ -86,7 +86,8 @@ ComfyUI defaults to `http://127.0.0.1:8188`. Valhalla defaults to port `8765` an
 4. Capture the latest successful ComfyUI workflow, give it a clear profile name, and select it for Production and Preview.
 5. Configure a batch in **Studio**, then choose **Resolve storyboard**.
 6. Review the planned shots or refine them in **Director**.
-7. Choose **Preview storyboard** for drafts or **Render storyboard** for full production.
+7. Open the render dropdown in Studio or Director and optionally choose **Enhance prompts**. It processes only missing or changed image prompts and reports progress; rendering still computes an absent prompt on demand before GPU submission.
+8. Choose **Preview storyboard** for drafts or **Render storyboard** for full production.
 
 The launcher opens the Web UI automatically. It detects an existing server process belonging to this project and asks before stopping it. It never kills an unrelated Python process.
 
@@ -278,6 +279,15 @@ instruction is read fresh from `instructions_image` for each request and is not
 duplicated in the application code. Set `LLAMA_API_KEY` before starting the
 server when the local LLM endpoint requires authentication. This setting applies
 only to image renders.
+
+The **Enhance prompts** action is available in both Studio and Director
+render dropdowns. It keeps optimized prompts in server memory for the current
+session, processes shots sequentially, skips prompts whose compiled input and
+instructions are unchanged, and marks changed shots for recomputation. If a
+prompt is absent or stale when rendering starts, the normal LLM request runs
+immediately before that shot is submitted to ComfyUI. Editing either active
+instruction Markdown file takes effect on the next status check or request;
+no server restart is needed for those Markdown edits.
 
 Creative records and selection rules live in `database.json`, not `config.json`. Records can be temporarily removed from selection with `"disabled": true`.
 

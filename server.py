@@ -4282,15 +4282,19 @@ def comfy_session(db: dict[str, Any]) -> tuple[Any, str, float]:
     return session, url, timeout
 
 
-def enhance_compiled_prompt(positive: str, render_tier: str) -> tuple[str, bool]:
-    """Optionally rewrite one compiled image prompt through the local LLM server."""
+def prompt_enhancer_context(render_tier: str) -> dict[str, Any]:
+    """Load the image prompt enhancer settings and current instructions."""
     if render_tier not in {"production", "preview"}:
         raise AppError("Prompt enhancer render tier must be production or preview")
     config, config_file = load_config()
     settings = config.get("prompt_enhancer", {})
     if not settings.get(render_tier, False):
-        return positive, False
-    module = require_requests()
+        return {
+            "enabled": False,
+            "settings": settings,
+            "config_file": config_file,
+            "instructions": "",
+        }
     instructions_image_path = resolve_path(config_file.parent, settings["instructions_image"])
     try:
         instructions = instructions_image_path.read_text(encoding="utf-8").strip()
@@ -4300,6 +4304,45 @@ def enhance_compiled_prompt(positive: str, render_tier: str) -> tuple[str, bool]
         ) from exc
     if not instructions:
         raise AppError(f"Prompt enhancer instructions are empty: {instructions_image_path}")
+    return {
+        "enabled": True,
+        "settings": settings,
+        "config_file": config_file,
+        "instructions": instructions,
+    }
+
+
+def prompt_enhancer_fingerprint(
+    positive: str, render_tier: str, context: dict[str, Any] | None = None
+) -> str:
+    """Identify the exact image prompt enhancer input and configuration."""
+    context = context or prompt_enhancer_context(render_tier)
+    settings = context["settings"]
+    material = {
+        "positive": positive,
+        "render_tier": render_tier,
+        "instructions": context.get("instructions", ""),
+        "settings": {
+            key: settings.get(key)
+            for key in (
+                "url", "model", "api_key_env", "temperature", "top_p",
+                "max_tokens", "timeout_seconds", "instructions_image",
+            )
+        },
+    }
+    return hashlib.sha256(
+        json.dumps(material, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+
+def enhance_compiled_prompt(positive: str, render_tier: str) -> tuple[str, bool]:
+    """Optionally rewrite one compiled image prompt through the local LLM server."""
+    context = prompt_enhancer_context(render_tier)
+    if not context["enabled"]:
+        return positive, False
+    settings = context["settings"]
+    instructions = context["instructions"]
+    module = require_requests()
     messages = [
         {"role": "system", "content": instructions},
         {
@@ -6773,10 +6816,271 @@ class WebState:
         self._queue_resume_event.set()
         self._render_timings: dict[tuple[bool, str], list[float]] = {}
         self._video_queue_reference_seconds: float | None = None
+        self._prompt_cache: dict[tuple[str, str, int], dict[str, Any]] = {}
+        self._prompt_preparation_jobs: dict[str, dict[str, Any]] = {}
+        self._prompt_preparation_running: str | None = None
 
     def trim(self, mapping: dict[str, Any], maximum: int) -> None:
         while len(mapping) > maximum:
             mapping.pop(next(iter(mapping)))
+
+    def _prompt_status(
+        self, storyboard_id: str, shot: dict[str, Any], render_tier: str,
+        context: dict[str, Any] | None = None, positive: str | None = None,
+    ) -> dict[str, Any]:
+        if context is None:
+            try:
+                context = prompt_enhancer_context(render_tier)
+            except AppError as exc:
+                return {"status": "unavailable", "error": str(exc)}
+        if context.get("error"):
+            return {"status": "unavailable", "error": context["error"]}
+        if not context["enabled"]:
+            return {"status": "disabled"}
+        if positive is None:
+            positive, _, _ = compile_scene(self.get_storyboard(storyboard_id)["db"], shot["scene"])
+        fingerprint = prompt_enhancer_fingerprint(positive, render_tier, context)
+        key = (storyboard_id, render_tier, shot["number"])
+        with self.lock:
+            entry = self._prompt_cache.get(key)
+        if not entry:
+            return {"status": "not_prepared"}
+        if entry.get("fingerprint") != fingerprint:
+            return {"status": "needs_update", "updated_at": entry.get("updated_at")}
+        result = {
+            "status": entry.get("status", "needs_update"),
+            "updated_at": entry.get("updated_at"),
+        }
+        if result["status"] == "ready" and isinstance(entry.get("optimized_positive"), str):
+            result["optimized_positive"] = entry["optimized_positive"]
+        if entry.get("error"):
+            result["error"] = entry["error"]
+        return result
+
+    def _shot_payload(
+        self, record: dict[str, Any], shot: dict[str, Any],
+        contexts: dict[str, dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        payload = serialize_shot(record["db"], shot)
+        contexts = contexts or {}
+        payload["prompt_enhancement"] = {
+            tier: self._prompt_status(
+                record["id"], shot, tier, contexts.get(tier), payload["positive_prompt"]
+            )
+            for tier in ("production", "preview")
+        }
+        return payload
+
+    @staticmethod
+    def _prompt_contexts() -> dict[str, dict[str, Any]]:
+        contexts = {}
+        for tier in ("production", "preview"):
+            try:
+                contexts[tier] = prompt_enhancer_context(tier)
+            except AppError as exc:
+                contexts[tier] = {"error": str(exc), "enabled": False, "settings": {}}
+        return contexts
+
+    def prompt_preparation_payload(
+        self, storyboard_id: str, render_tier: str
+    ) -> dict[str, Any]:
+        if render_tier not in {"production", "preview"}:
+            raise AppError("Prompt preparation render tier must be production or preview")
+        record = self.get_storyboard(storyboard_id)
+        try:
+            context = prompt_enhancer_context(render_tier)
+        except AppError as exc:
+            statuses = [{"status": "unavailable", "error": str(exc)}] * len(record["shots"])
+        else:
+            statuses = [
+                self._prompt_status(storyboard_id, shot, render_tier, context)
+                for shot in record["shots"]
+            ]
+        counts = {
+            "ready": sum(item["status"] == "ready" for item in statuses),
+            "preparing": sum(item["status"] == "preparing" for item in statuses),
+            "needs_update": sum(item["status"] == "needs_update" for item in statuses),
+            "not_prepared": sum(item["status"] == "not_prepared" for item in statuses),
+            "failed": sum(item["status"] == "failed" for item in statuses),
+            "unavailable": sum(item["status"] == "unavailable" for item in statuses),
+            "disabled": sum(item["status"] == "disabled" for item in statuses),
+        }
+        with self.lock:
+            job = next(
+                (
+                    item for item in self._prompt_preparation_jobs.values()
+                    if item["storyboard_id"] == storyboard_id
+                    and item["render_tier"] == render_tier
+                    and item["status"] == "running"
+                ),
+                None,
+            )
+            job_payload = copy.deepcopy(job) if job else None
+        if job_payload:
+            status = "running"
+        elif counts["unavailable"] or counts["disabled"] == len(statuses):
+            status = "unavailable" if counts["unavailable"] else "disabled"
+        elif counts["ready"] == len(statuses):
+            status = "ready"
+        elif counts["failed"]:
+            status = "failed"
+        else:
+            status = "idle"
+        return {
+            "storyboard_id": storyboard_id,
+            "render_tier": render_tier,
+            "status": status,
+            "total": len(statuses),
+            "counts": counts,
+            "shot_statuses": [item["status"] for item in statuses],
+            "shot_prompt_enhancements": statuses,
+            "job": job_payload,
+        }
+
+    def start_prompt_preparation(
+        self, storyboard_id: str, render_tier: str
+    ) -> dict[str, Any]:
+        if render_tier not in {"production", "preview"}:
+            raise AppError("Prompt preparation render tier must be production or preview")
+        record = self.get_storyboard(storyboard_id)
+        try:
+            context = prompt_enhancer_context(render_tier)
+        except AppError:
+            return self.prompt_preparation_payload(storyboard_id, render_tier)
+        if not context["enabled"]:
+            return self.prompt_preparation_payload(storyboard_id, render_tier)
+        with self.lock:
+            active_job = self._prompt_preparation_jobs.get(self._prompt_preparation_running or "")
+            if active_job and active_job.get("status") == "running":
+                if (
+                    active_job["storyboard_id"] == storyboard_id
+                    and active_job["render_tier"] == render_tier
+                ):
+                    return self.prompt_preparation_payload(storyboard_id, render_tier)
+                raise AppError("Another prompt preparation batch is already running")
+            running = next(
+                (
+                    item for item in self._prompt_preparation_jobs.values()
+                    if item["storyboard_id"] == storyboard_id
+                    and item["render_tier"] == render_tier
+                    and item["status"] == "running"
+                ),
+                None,
+            )
+            if running:
+                return self.prompt_preparation_payload(storyboard_id, render_tier)
+            job_id = uuid.uuid4().hex
+            job = {
+                "id": job_id,
+                "storyboard_id": storyboard_id,
+                "render_tier": render_tier,
+                "status": "running",
+                "total": len(record["shots"]),
+                "completed": 0,
+                "skipped": 0,
+                "failed": 0,
+                "current_shot": None,
+                "progress": 0,
+                "started_at": _iso_now(),
+                "finished_at": None,
+                "error": None,
+            }
+            self._prompt_preparation_jobs[job_id] = job
+            self._prompt_preparation_running = job_id
+        threading.Thread(
+            target=self._run_prompt_preparation, args=(job_id,), daemon=True
+        ).start()
+        return self.prompt_preparation_payload(storyboard_id, render_tier)
+
+    def _run_prompt_preparation(self, job_id: str) -> None:
+        with self.lock:
+            job = self._prompt_preparation_jobs.get(job_id)
+            record = self.storyboards.get(job["storyboard_id"]) if job else None
+            shots = copy.deepcopy(record["shots"]) if record else []
+        if not job or not record:
+            return
+        try:
+            for shot in shots:
+                positive, _, _ = compile_scene(record["db"], shot["scene"])
+                context = prompt_enhancer_context(job["render_tier"])
+                fingerprint = prompt_enhancer_fingerprint(positive, job["render_tier"], context)
+                key = (job["storyboard_id"], job["render_tier"], shot["number"])
+                with self.lock:
+                    cached = self._prompt_cache.get(key)
+                    if cached and cached.get("status") == "ready" and cached.get("fingerprint") == fingerprint:
+                        job["skipped"] += 1
+                        job["completed"] += 1
+                        job["progress"] = round(job["completed"] * 100 / job["total"], 1)
+                        continue
+                    job["current_shot"] = shot["number"]
+                    self._prompt_cache[key] = {
+                        "fingerprint": fingerprint,
+                        "compiled_positive": positive,
+                        "status": "preparing",
+                        "updated_at": _iso_now(),
+                        "error": None,
+                    }
+                try:
+                    optimized, applied = enhance_compiled_prompt(positive, job["render_tier"])
+                except Exception as exc:
+                    with self.lock:
+                        self._prompt_cache[key].update(
+                            status="failed", error=str(exc), updated_at=_iso_now()
+                        )
+                        job["failed"] += 1
+                else:
+                    with self.lock:
+                        self._prompt_cache[key].update(
+                            optimized_positive=optimized,
+                            prompt_enhanced=applied,
+                            status="ready",
+                            updated_at=_iso_now(),
+                            error=None,
+                        )
+                with self.lock:
+                    job["completed"] += 1
+                    job["progress"] = round(job["completed"] * 100 / job["total"], 1)
+                    job["current_shot"] = None
+            with self.lock:
+                job["status"] = "failed" if job["failed"] else "completed"
+                job["finished_at"] = _iso_now()
+                job["progress"] = 100
+        except Exception as exc:
+            with self.lock:
+                job["status"] = "failed"
+                job["error"] = str(exc)
+                job["finished_at"] = _iso_now()
+        finally:
+            with self.lock:
+                if self._prompt_preparation_running == job_id:
+                    self._prompt_preparation_running = None
+
+    def get_or_enhance_prompt(
+        self, storyboard_id: str, shot: dict[str, Any], render_tier: str,
+        positive: str, negative: str,
+    ) -> tuple[str, bool]:
+        context = prompt_enhancer_context(render_tier)
+        if not context["enabled"]:
+            return positive, False
+        key = (storyboard_id, render_tier, shot["number"])
+        fingerprint = prompt_enhancer_fingerprint(positive, render_tier, context)
+        with self.lock:
+            entry = self._prompt_cache.get(key)
+            if entry and entry.get("status") == "ready" and entry.get("fingerprint") == fingerprint:
+                return entry["optimized_positive"], bool(entry.get("prompt_enhanced"))
+        optimized, applied = enhance_compiled_prompt(positive, render_tier)
+        with self.lock:
+            self._prompt_cache[key] = {
+                "fingerprint": fingerprint,
+                "compiled_positive": positive,
+                "negative": negative,
+                "optimized_positive": optimized,
+                "prompt_enhanced": applied,
+                "status": "ready",
+                "updated_at": _iso_now(),
+                "error": None,
+            }
+        return optimized, applied
 
     def create_storyboard(self, payload: dict[str, Any]) -> dict[str, Any]:
         db, _ = load_database()
@@ -6815,6 +7119,7 @@ class WebState:
             for key in ("pose", "action", "furniture", "shot_size", "camera_angle", "framing", "focus_target"):
                 comparisons += 1
                 changes += previous[key]["id"] != current[key]["id"]
+        contexts = self._prompt_contexts()
         return {
             "id": record["id"],
             "created_at": record["created_at"],
@@ -6823,7 +7128,7 @@ class WebState:
             "diversity": round(changes * 100 / comparisons) if comparisons else 100,
             "director_edited": bool(record.get("director_edited", False)),
             "director_yolo": bool(record.get("director_yolo", False)),
-            "shots": [serialize_shot(record["db"], shot) for shot in record["shots"]],
+            "shots": [self._shot_payload(record, shot, contexts) for shot in record["shots"]],
         }
 
     def get_storyboard(self, storyboard_id: str) -> dict[str, Any]:
@@ -7375,7 +7680,7 @@ class WebState:
             "photoshoot_index": shot["photoshoot_index"],
             "shot_index": shot["shot_index"],
             "yolo": yolo,
-            "summary": serialize_shot(db, shot),
+            "summary": self._shot_payload(record, shot),
             "groups": groups,
         }
 
@@ -8223,7 +8528,7 @@ class WebState:
             self._apply_director_customs(shot, shot["scene"], shot["context"])
             if record["args"].inference_seed is None:
                 shot["inference_seed"] = automatic_ui_seed()
-            return serialize_shot(record["db"], shot)
+            return self._shot_payload(record, shot)
 
     def randomize_shot_seed(self, storyboard_id: str, number: int) -> dict[str, Any]:
         record = self.get_storyboard(storyboard_id)
@@ -8242,7 +8547,7 @@ class WebState:
             while shot["inference_seed"] == previous:
                 shot["inference_seed"] = automatic_ui_seed()
             shot["seed_manual"] = True
-            return serialize_shot(record["db"], shot)
+            return self._shot_payload(record, shot)
 
     def update_storyboard_seeds(
         self, storyboard_id: str, payload: dict[str, Any]
@@ -8489,7 +8794,9 @@ class WebState:
             raise AppError("Shot number is out of range")
         shot = record["shots"][number - 1]
         positive, negative, _ = compile_scene(record["db"], shot["scene"])
-        positive, prompt_enhanced = enhance_compiled_prompt(positive, "preview")
+        positive, prompt_enhanced = self.get_or_enhance_prompt(
+            storyboard_id, shot, "preview", positive, negative
+        )
         debug_positive, _, _ = compile_scene(
             record["db"], shot["scene"], include_age=False
         )
@@ -9086,8 +9393,8 @@ class WebState:
                     job["_shot_started_monotonic"] = shot_started
                 positive, negative, _ = compile_scene(db, shot["scene"])
                 compiled_positive = positive
-                positive, prompt_enhanced = enhance_compiled_prompt(
-                    positive, job["render_tier"]
+                positive, prompt_enhanced = self.get_or_enhance_prompt(
+                    job["storyboard_id"], shot, job["render_tier"], positive, negative
                 )
                 debug_positive, _, _ = compile_scene(
                     db, shot["scene"], include_age=False
@@ -9799,6 +10106,11 @@ class ValhallaHandler(BaseHTTPRequestHandler):
                 self.send_json(application_status())
             elif path == "/api/prompt-enhancer/settings":
                 self.send_json(prompt_enhancer_settings())
+            elif path == "/api/prompt-preparation":
+                query = parse_qs(urlparse(self.path).query)
+                render_tier = query.get("tier", ["production"])[0]
+                storyboard_id = query.get("storyboard_id", [""])[0]
+                self.send_json(WEB_STATE.prompt_preparation_payload(storyboard_id, render_tier))
             elif path == "/api/workflow/profiles":
                 media_type = parse_qs(urlparse(self.path).query).get("media", ["image"])[0]
                 db, db_path = load_database()
@@ -9923,6 +10235,12 @@ class ValhallaHandler(BaseHTTPRequestHandler):
                 self.send_json(save_prompt_enhancer_settings(
                     payload.get("production"), payload.get("preview")
                 ))
+            elif path == "/api/prompt-preparation":
+                payload = self.read_json()
+                self.send_json(WEB_STATE.start_prompt_preparation(
+                    str(payload.get("storyboard_id", "")),
+                    str(payload.get("render_tier", "production")),
+                ), HTTPStatus.ACCEPTED)
             elif path == "/api/workflow/capture":
                 if WEB_STATE.has_active_render():
                     raise AppError("Workflow profiles cannot be captured while rendering is active")

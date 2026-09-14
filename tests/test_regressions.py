@@ -3881,7 +3881,7 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("#video-dialog { width: min(624px, calc(100vw - 36px)); }", css)
         self.assertNotIn("video-prompt-enhancement", html)
         self.assertNotIn("videoPromptEnhancement", js)
-        self.assertNotIn("prompt_enhancement", js)
+        self.assertNotIn("prompt_enhancement", html)
 
     def test_storyboard_cards_show_subject_before_set_details(self):
         root = Path(app.__file__).parent
@@ -3900,7 +3900,8 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("function displayCatalogLabel(value)", js)
         self.assertIn("label === 'Wardrobe' ? displayCatalogLabel(value) : displayValue(value)", js)
         self.assertIn("function storyboardCards(shots)", js)
-        self.assertIn('<button type="button" data-action="inspect">Prompt</button>', js)
+        self.assertIn('class="prompt-button" data-action="inspect"', js)
+        self.assertIn('class="prompt-ai-indicator', js)
         self.assertIn("const button = event.target.closest('button[data-action]');", js)
         self.assertIn("event.preventDefault();", js)
         self.assertIn("Object.values(selectedIds || {}).flat().join('\\n')", js)
@@ -4617,11 +4618,32 @@ class FrontendContractTests(unittest.TestCase):
         self.assertNotIn("retry_count", html)
         self.assertNotIn("retry_count", javascript)
 
+    def test_prompt_preparation_is_available_in_both_render_dropdowns(self):
+        root = Path(__file__).resolve().parents[1]
+        html = (root / "client" / "client.html").read_text(encoding="utf-8")
+        javascript = (root / "client" / "client.js").read_text(encoding="utf-8")
+        self.assertEqual(html.count('data-prompt-preparation '), 2)
+        self.assertEqual(html.count('data-prompt-preparation-status>'), 2)
+        self.assertEqual(html.count('data-render-action-choice="enhance"'), 2)
+        self.assertIn("/api/prompt-preparation?storyboard_id=", javascript)
+        self.assertIn("function preparePrompts(button)", javascript)
+        self.assertIn("function setRenderAction(action)", javascript)
+        self.assertIn("data-render-action-choice", javascript)
+        self.assertIn("if (state.renderAction === 'enhance') preparePrompts(button)", javascript)
+        self.assertIn("function updatePromptStatusIndicators(payload)", javascript)
+        self.assertIn("data-prompt-ai", javascript)
+        self.assertIn('data-prompt="optimized"', html)
+        self.assertIn("optimized: optimized ||", javascript)
+        self.assertNotIn("class=\"card-status llm", javascript)
+        self.assertNotIn("director-shot-llm", javascript)
+
     def test_active_page_is_restored_after_browser_reload(self):
         javascript = (Path(app.__file__).parent / "client" / "client.js").read_text(encoding="utf-8")
         self.assertIn("sessionStorage.getItem('valhalla-active-view')", javascript)
         self.assertIn("sessionStorage.setItem('valhalla-active-view', name)", javascript)
         self.assertIn("switchView(restoredView);", javascript)
+        self.assertIn("valhalla-storyboard-id", javascript)
+        self.assertIn("savedStoryboardId", javascript)
         self.assertIn("function rememberProofsPosition()", javascript)
         self.assertIn("function restoreProofsPosition(", javascript)
         self.assertIn("valhalla-proofs-positions", javascript)
@@ -5236,6 +5258,103 @@ class VisualCompatibilityRegressionTests(unittest.TestCase):
                 item["support_mode"] = value
             with self.assertRaisesRegex(app.AppError, "support_mode"):
                 app.validate_database(broken)
+
+
+class PromptPreparationTests(unittest.TestCase):
+    def setUp(self):
+        self.context = {
+            "enabled": True,
+            "settings": {
+                "url": "http://llm", "model": "test", "api_key_env": "KEY",
+                "temperature": 1, "top_p": 0.9, "max_tokens": 100,
+                "timeout_seconds": 5, "instructions_image": "instructions.md",
+            },
+            "instructions": "Rewrite the image prompt.",
+        }
+
+    def test_render_uses_cached_prompt_and_falls_back_on_cache_miss(self):
+        state = app.WebState()
+        shot = {"number": 1}
+        with (
+            patch.object(app, "prompt_enhancer_context", return_value=self.context),
+            patch.object(app, "enhance_compiled_prompt", return_value=("optimized", True)) as enhance,
+        ):
+            first = state.get_or_enhance_prompt("board", shot, "production", "compiled", "negative")
+            second = state.get_or_enhance_prompt("board", shot, "production", "compiled", "negative")
+        self.assertEqual(first, ("optimized", True))
+        self.assertEqual(second, first)
+        enhance.assert_called_once_with("compiled", "production")
+        status = state._prompt_status("board", shot, "production", self.context, "compiled")
+        self.assertEqual(status["optimized_positive"], "optimized")
+
+    def test_changed_compiled_prompt_is_marked_for_recomputation(self):
+        state = app.WebState()
+        shot = {"number": 1}
+        with (
+            patch.object(app, "prompt_enhancer_context", return_value=self.context),
+            patch.object(app, "enhance_compiled_prompt", return_value=("optimized", True)),
+        ):
+            state.get_or_enhance_prompt("board", shot, "production", "compiled one", "")
+            status = state._prompt_status(
+                "board", shot, "production", self.context, "compiled two"
+            )
+        self.assertEqual(status["status"], "needs_update")
+
+    def test_batch_skips_valid_entries_and_processes_missing_entries(self):
+        state = app.WebState()
+        state.storyboards["board"] = {
+            "id": "board", "db": {},
+            "shots": [{"number": 1, "scene": {}}, {"number": 2, "scene": {}}],
+        }
+        with (
+            patch.object(app, "prompt_enhancer_context", return_value=self.context),
+            patch.object(app, "compile_scene", side_effect=lambda _db, scene: (
+                f"compiled-{scene.get('number', 1)}", "", []
+            )),
+            patch.object(app, "enhance_compiled_prompt", return_value=("optimized", True)) as enhance,
+        ):
+            state.storyboards["board"]["shots"][0]["scene"]["number"] = 1
+            state.storyboards["board"]["shots"][1]["scene"]["number"] = 2
+            fingerprint = app.prompt_enhancer_fingerprint("compiled-1", "production", self.context)
+            state._prompt_cache[("board", "production", 1)] = {
+                "fingerprint": fingerprint, "status": "ready", "optimized_positive": "old",
+                "prompt_enhanced": True,
+            }
+            job = {
+                "id": "job", "storyboard_id": "board", "render_tier": "production",
+                "status": "running", "total": 2, "completed": 0, "skipped": 0,
+                "failed": 0, "current_shot": None, "progress": 0,
+                "started_at": "now", "finished_at": None, "error": None,
+            }
+            state._prompt_preparation_jobs["job"] = job
+            state._run_prompt_preparation("job")
+        self.assertEqual(enhance.call_count, 1)
+        self.assertEqual(job["skipped"], 1)
+        self.assertEqual(job["completed"], 2)
+        self.assertEqual(job["status"], "completed")
+
+    def test_running_batch_exposes_ready_prompt_text_immediately(self):
+        state = app.WebState()
+        state.storyboards["board"] = {
+            "id": "board", "db": {}, "shots": [{"number": 1, "scene": {}}],
+        }
+        with (
+            patch.object(app, "prompt_enhancer_context", return_value=self.context),
+            patch.object(app, "compile_scene", return_value=("compiled", "", [])),
+        ):
+            optimized = "optimized immediately"
+            state._prompt_cache[("board", "production", 1)] = {
+                "fingerprint": app.prompt_enhancer_fingerprint("compiled", "production", self.context),
+                "status": "ready", "optimized_positive": optimized,
+            }
+            state._prompt_preparation_jobs["job"] = {
+                "id": "job", "storyboard_id": "board", "render_tier": "production",
+                "status": "running", "total": 1, "completed": 0, "current_shot": 1,
+                "progress": 0,
+            }
+            payload = state.prompt_preparation_payload("board", "production")
+        self.assertEqual(payload["status"], "running")
+        self.assertEqual(payload["shot_prompt_enhancements"][0]["optimized_positive"], optimized)
 
 
 class WorkflowProfileTests(unittest.TestCase):

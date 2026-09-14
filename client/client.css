@@ -242,6 +242,11 @@ h3 { margin-bottom: 6px; font-size: 1rem; }
 .render-mode-popover strong, .render-mode-popover small { display: block; }
 .render-mode-popover strong { font-size: 0.75rem; }
 .render-mode-popover small { margin-top: 1px; color: var(--muted); font-size: 0.625rem; }
+.prompt-preparation { margin: 2px 0 0; border: 0; }
+.prompt-preparation button { background: transparent; }
+.prompt-preparation button.active { background: var(--brand-soft); }
+.prompt-preparation-meta { margin: 0 10px 4px; display: grid; gap: 4px; border: 0; color: var(--muted); font-size: 0.5625rem; }
+.prompt-preparation button:disabled { opacity: .55; cursor: wait; }
 .render-choice.preview { --render-color: var(--brand); --render-hover: var(--brand-hover); --render-main-hover: color-mix(in srgb, var(--brand) 86%, white); --render-glow: color-mix(in srgb, var(--brand) 24%, transparent); }
 .render-choice select:disabled { cursor: wait; }
 .button.warning { border: 1px solid color-mix(in srgb, var(--warning) 55%, var(--line)); background: color-mix(in srgb, var(--warning) 11%, var(--surface)); color: var(--warning); }
@@ -620,6 +625,14 @@ pre { min-height: 280px; max-height: 50vh; margin: 0; padding: 15px; overflow-x:
 .director-shot strong { min-width: 0; overflow: hidden; color: var(--text); font-size: 0.6875rem; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
 .director-shot-action { min-width: 0; display: -webkit-box; overflow: hidden; color: var(--muted); font-size: 0.625rem; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .director-shot.active .director-shot-action { color: color-mix(in srgb, var(--brand) 60%, var(--muted)); }
+.shot-footer .prompt-button { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+.prompt-button .prompt-ai-indicator { position: absolute; left: 8px; }
+.prompt-ai-indicator { width: 12px; height: 12px; display: inline-grid; place-items: center; border-radius: 50%; background: var(--surface-3); color: var(--faint); font-size: 0.625rem; line-height: 1; }
+.prompt-ai-indicator.ready { background: color-mix(in srgb, var(--success) 16%, transparent); color: var(--success); }
+.prompt-ai-indicator.running { background: color-mix(in srgb, var(--brand) 16%, transparent); color: var(--brand); }
+.prompt-ai-indicator.pending { background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); }
+.prompt-ai-indicator.failed { background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); }
+.prompt-ai-indicator.disabled { background: var(--surface-3); color: var(--faint); }
 .director-editor { min-width: 0; overflow: hidden; container-type: inline-size; }
 .director-editor-head { min-height: 88px; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border-bottom: 1px solid var(--line); }
 .director-editor-head p:last-child { margin: 5px 0 0; color: var(--muted); font-size: 0.75rem; }
