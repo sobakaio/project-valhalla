@@ -1676,6 +1676,9 @@ async function pollJob() {
     rememberLoggerJob(state.job, !state.loggerJobId || state.loggerJobId === previousJobId);
     syncJobPendingGroups(state.job);
     addOutputs(state.job.outputs || []);
+    if (state.job.storyboard_id && state.storyboard?.id === state.job.storyboard_id) {
+      await syncPromptPreparation(state.job.render_tier);
+    }
     showJob();
     if (['queued', 'running'].includes(state.job.status)) {
       state.jobTimer = setTimeout(pollJob, 1000);
@@ -1882,15 +1885,15 @@ function promptPreparationText(payload) {
   return `${pending} need update · ${counts.ready || 0} ready`;
 }
 
-function updatePromptStatusIndicators(payload) {
+function updatePromptStatusIndicators(payload, tier = state.renderMode) {
   if (!state.storyboard || !Array.isArray(payload?.shot_statuses)) return;
   payload.shot_statuses.forEach((status, index) => {
     const shot = state.storyboard.shots[index];
     if (!shot) return;
     const enhancement = payload.shot_prompt_enhancements?.[index] || { status };
     shot.prompt_enhancement ||= {};
-    shot.prompt_enhancement[state.renderMode] = {
-      ...(shot.prompt_enhancement[state.renderMode] || {}),
+    shot.prompt_enhancement[tier] = {
+      ...(shot.prompt_enhancement[tier] || {}),
       ...enhancement,
     };
     if (state.promptShot?.number === shot.number) {
@@ -1908,19 +1911,19 @@ function updatePromptStatusIndicators(payload) {
   });
 }
 
-async function syncPromptPreparation() {
+async function syncPromptPreparation(tierOverride = null) {
   const board = state.storyboard;
   if (!board) {
     $$('[data-prompt-preparation]').forEach((button) => { button.disabled = true; });
     $$('[data-prompt-preparation-status]').forEach((status) => { status.textContent = 'Not prepared'; });
     return;
   }
-  const tier = state.renderMode;
+  const tier = tierOverride || state.renderMode;
   try {
     const payload = await api(`/api/prompt-preparation?storyboard_id=${encodeURIComponent(board.id)}&tier=${tier}`);
     if (state.storyboard?.id !== board.id) return;
     state.promptPreparation[tier] = payload;
-    updatePromptStatusIndicators(payload);
+    updatePromptStatusIndicators(payload, tier);
     const running = payload.status === 'running';
     const unavailable = ['disabled', 'unavailable'].includes(payload.status);
     const previousPromptJob = state.promptJob;

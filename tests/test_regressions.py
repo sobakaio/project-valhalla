@@ -4011,6 +4011,8 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("alreadyActive ? 'Added to render queue'", js)
         self.assertIn("queuedJob.queue_position", js)
         self.assertIn("session.active_job.id !== job.id", js)
+        self.assertIn("await syncPromptPreparation(state.job.render_tier);", js)
+        self.assertIn("function updatePromptStatusIndicators(payload, tier = state.renderMode)", js)
 
     def test_job_dock_exposes_queue_pause_and_resume(self):
         root = Path(app.__file__).parent
@@ -4630,11 +4632,11 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("function setRenderAction(action)", javascript)
         self.assertIn("data-render-action-choice", javascript)
         self.assertIn("if (state.renderAction === 'enhance') preparePrompts(button)", javascript)
-        self.assertIn("function updatePromptStatusIndicators(payload)", javascript)
+        self.assertIn("function updatePromptStatusIndicators(payload, tier = state.renderMode)", javascript)
         self.assertIn("data-prompt-ai", javascript)
         self.assertIn("state.promptJob", javascript)
         self.assertIn("/api/prompt-preparation/${state.promptJob.id}/cancel", javascript)
-        self.assertIn("Enhancing ${tierTitle(job.render_tier).toLowerCase()} prompts", javascript)
+        self.assertIn("? 'Enhancing prompts'", javascript)
         self.assertIn('data-prompt="optimized"', html)
         self.assertIn("optimized: optimized ||", javascript)
         self.assertNotIn("class=\"card-status llm", javascript)
