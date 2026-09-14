@@ -4632,6 +4632,9 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("if (state.renderAction === 'enhance') preparePrompts(button)", javascript)
         self.assertIn("function updatePromptStatusIndicators(payload)", javascript)
         self.assertIn("data-prompt-ai", javascript)
+        self.assertIn("state.promptJob", javascript)
+        self.assertIn("/api/prompt-preparation/${state.promptJob.id}/cancel", javascript)
+        self.assertIn("Enhancing ${tierTitle(job.render_tier).toLowerCase()} prompts", javascript)
         self.assertIn('data-prompt="optimized"', html)
         self.assertIn("optimized: optimized ||", javascript)
         self.assertNotIn("class=\"card-status llm", javascript)
@@ -5355,6 +5358,20 @@ class PromptPreparationTests(unittest.TestCase):
             payload = state.prompt_preparation_payload("board", "production")
         self.assertEqual(payload["status"], "running")
         self.assertEqual(payload["shot_prompt_enhancements"][0]["optimized_positive"], optimized)
+
+    def test_prompt_preparation_job_can_request_cancellation(self):
+        state = app.WebState()
+        state._prompt_preparation_jobs["job"] = {
+            "id": "job", "kind": "prompt_preparation", "storyboard_id": "board",
+            "render_tier": "production", "status": "running", "total": 3,
+            "completed": 1, "skipped": 0, "failed": 0, "current_shot": 2,
+            "progress": 33.3, "cancel_requested": False, "eta_seconds": None,
+            "started_at": "now", "finished_at": None, "error": None,
+            "_durations": [], "_shot_started_monotonic": None,
+        }
+        payload = state.cancel_prompt_preparation("job")
+        self.assertTrue(payload["cancel_requested"])
+        self.assertEqual(payload["status"], "running")
 
 
 class WorkflowProfileTests(unittest.TestCase):

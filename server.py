@@ -6906,18 +6906,20 @@ class WebState:
             "disabled": sum(item["status"] == "disabled" for item in statuses),
         }
         with self.lock:
+            matching_jobs = [
+                item for item in self._prompt_preparation_jobs.values()
+                if item["storyboard_id"] == storyboard_id
+                and item["render_tier"] == render_tier
+            ]
             job = next(
-                (
-                    item for item in self._prompt_preparation_jobs.values()
-                    if item["storyboard_id"] == storyboard_id
-                    and item["render_tier"] == render_tier
-                    and item["status"] == "running"
-                ),
-                None,
+                (item for item in matching_jobs if item["status"] == "running"),
+                max(matching_jobs, key=lambda item: item.get("started_at", ""), default=None),
             )
-            job_payload = copy.deepcopy(job) if job else None
-        if job_payload:
+            job_payload = self.prompt_preparation_job_payload(job) if job else None
+        if job and job["status"] == "running":
             status = "running"
+        elif job and job["status"] == "cancelled":
+            status = "cancelled"
         elif counts["unavailable"] or counts["disabled"] == len(statuses):
             status = "unavailable" if counts["unavailable"] else "disabled"
         elif counts["ready"] == len(statuses):
@@ -6937,6 +6939,31 @@ class WebState:
             "job": job_payload,
         }
 
+    def prompt_preparation_job_payload(self, job: dict[str, Any]) -> dict[str, Any]:
+        payload = {key: value for key, value in job.items() if not key.startswith("_")}
+        payload["queue_paused"] = self._queue_paused
+        if job.get("status") == "running":
+            started = job.get("_shot_started_monotonic")
+            durations = job.get("_durations", [])
+            average = (
+                sum(durations) / len(durations)
+                if durations else None
+            )
+            remaining = max(0, job["total"] - job["completed"])
+            if average is not None:
+                payload["eta_seconds"] = round(average * remaining, 1)
+            elif started is not None:
+                payload["eta_seconds"] = None
+            else:
+                payload["eta_seconds"] = None
+            if started is not None:
+                payload["current_elapsed_seconds"] = round(
+                    max(0.0, time.monotonic() - started), 1
+                )
+        else:
+            payload["eta_seconds"] = 0
+        return payload
+
     def start_prompt_preparation(
         self, storyboard_id: str, render_tier: str
     ) -> dict[str, Any]:
@@ -6949,6 +6976,8 @@ class WebState:
             return self.prompt_preparation_payload(storyboard_id, render_tier)
         if not context["enabled"]:
             return self.prompt_preparation_payload(storyboard_id, render_tier)
+        if self.has_active_render():
+            raise AppError("Prompt enhancement cannot start while a render is active")
         with self.lock:
             active_job = self._prompt_preparation_jobs.get(self._prompt_preparation_running or "")
             if active_job and active_job.get("status") == "running":
@@ -6972,6 +7001,7 @@ class WebState:
             job_id = uuid.uuid4().hex
             job = {
                 "id": job_id,
+                "kind": "prompt_preparation",
                 "storyboard_id": storyboard_id,
                 "render_tier": render_tier,
                 "status": "running",
@@ -6981,9 +7011,13 @@ class WebState:
                 "failed": 0,
                 "current_shot": None,
                 "progress": 0,
+                "cancel_requested": False,
+                "eta_seconds": None,
                 "started_at": _iso_now(),
                 "finished_at": None,
                 "error": None,
+                "_durations": [],
+                "_shot_started_monotonic": None,
             }
             self._prompt_preparation_jobs[job_id] = job
             self._prompt_preparation_running = job_id
@@ -7001,6 +7035,18 @@ class WebState:
             return
         try:
             for shot in shots:
+                if not self.wait_for_queue_resume(job):
+                    with self.lock:
+                        job["status"] = "cancelled"
+                        job["finished_at"] = _iso_now()
+                        job["eta_seconds"] = 0
+                    break
+                with self.lock:
+                    if job.get("cancel_requested"):
+                        job["status"] = "cancelled"
+                        job["finished_at"] = _iso_now()
+                        job["eta_seconds"] = 0
+                        break
                 positive, _, _ = compile_scene(record["db"], shot["scene"])
                 context = prompt_enhancer_context(job["render_tier"])
                 fingerprint = prompt_enhancer_fingerprint(positive, job["render_tier"], context)
@@ -7013,6 +7059,7 @@ class WebState:
                         job["progress"] = round(job["completed"] * 100 / job["total"], 1)
                         continue
                     job["current_shot"] = shot["number"]
+                    job["_shot_started_monotonic"] = time.monotonic()
                     self._prompt_cache[key] = {
                         "fingerprint": fingerprint,
                         "compiled_positive": positive,
@@ -7038,18 +7085,32 @@ class WebState:
                             error=None,
                         )
                 with self.lock:
+                    started = job.get("_shot_started_monotonic")
+                    if started is not None:
+                        job.setdefault("_durations", []).append(
+                            max(0.0, time.monotonic() - started)
+                        )
                     job["completed"] += 1
                     job["progress"] = round(job["completed"] * 100 / job["total"], 1)
                     job["current_shot"] = None
+                    job["_shot_started_monotonic"] = None
+                    if job.get("cancel_requested"):
+                        job["status"] = "cancelled"
+                        job["finished_at"] = _iso_now()
+                        job["eta_seconds"] = 0
+                        break
             with self.lock:
-                job["status"] = "failed" if job["failed"] else "completed"
-                job["finished_at"] = _iso_now()
-                job["progress"] = 100
+                if job["status"] == "running":
+                    job["status"] = "failed" if job["failed"] else "completed"
+                    job["finished_at"] = _iso_now()
+                    job["progress"] = 100
+                    job["eta_seconds"] = 0
         except Exception as exc:
             with self.lock:
                 job["status"] = "failed"
                 job["error"] = str(exc)
                 job["finished_at"] = _iso_now()
+                job["eta_seconds"] = 0
         finally:
             with self.lock:
                 if self._prompt_preparation_running == job_id:
@@ -8586,6 +8647,8 @@ class WebState:
 
     def create_job(self, storyboard_id: str, fast: bool, shot_numbers: list[int] | None = None) -> dict[str, Any]:
         record = self.get_storyboard(storyboard_id)
+        if self.has_active_prompt_preparation():
+            raise AppError("Wait for prompt enhancement to finish or cancel it first")
         _, db_path = load_database()
         profile_mode = "preview" if fast else "production"
         source = workflow_source()
@@ -8778,6 +8841,8 @@ class WebState:
         self, storyboard_id: str, number: int, fast: bool
     ) -> dict[str, Any]:
         record = self.get_storyboard(storyboard_id)
+        if self.has_active_prompt_preparation():
+            raise AppError("Wait for prompt enhancement to finish or cancel it first")
         _, db_path = load_database()
         source = workflow_source()
         live_workflow = live_mapping = None
@@ -9196,6 +9261,13 @@ class WebState:
                 preview["status"] in {"queued", "running"} for preview in self.previews.values()
             )
 
+    def has_active_prompt_preparation(self) -> bool:
+        with self.lock:
+            return any(
+                job["status"] == "running"
+                for job in self._prompt_preparation_jobs.values()
+            )
+
     def cancel_job(self, job_id: str) -> dict[str, Any]:
         with self.lock:
             job = self.jobs.get(job_id)
@@ -9224,6 +9296,15 @@ class WebState:
                         "position": job["completed"], "total": job["total"],
                     })
             return self.job_payload(job)
+
+    def cancel_prompt_preparation(self, job_id: str) -> dict[str, Any]:
+        with self.lock:
+            job = self._prompt_preparation_jobs.get(job_id)
+            if job is None:
+                raise AppError("Prompt preparation job not found or expired")
+            if job["status"] == "running" and not job.get("cancel_requested"):
+                job["cancel_requested"] = True
+            return self.prompt_preparation_job_payload(job)
 
     def _run_job_queue(self) -> None:
         while True:
@@ -10211,6 +10292,8 @@ class ValhallaHandler(BaseHTTPRequestHandler):
                 )
             elif path.endswith("/cancel") and path.startswith("/api/jobs/"):
                 self.send_json(WEB_STATE.cancel_job(path.split("/")[3]))
+            elif path.endswith("/cancel") and path.startswith("/api/prompt-preparation/"):
+                self.send_json(WEB_STATE.cancel_prompt_preparation(path.split("/")[3]))
             elif path == "/api/videos":
                 payload = self.read_json()
                 self.send_json(WEB_STATE.create_video_job(

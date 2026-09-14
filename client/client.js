@@ -51,6 +51,7 @@ const state = {
   previewJobTimer: null,
   job: null,
   jobTimer: null,
+  promptJob: null,
   queuePaused: false,
   promptPreparation: { production: null, preview: null },
   promptPreparationTimer: null,
@@ -1606,12 +1607,14 @@ function renderLogger() {
 }
 
 function showJob() {
-  const job = state.job;
+  const promptJob = state.promptJob?.status === 'running' ? state.promptJob : null;
+  const job = promptJob || state.job;
   if (!job) return;
+  const isPromptPreparation = job.kind === 'prompt_preparation';
   const mediaTitle = job.kind === 'video' || job.generation_mode === 'video' ? 'Video' : 'Image';
   if (typeof job.queue_paused === 'boolean') state.queuePaused = job.queue_paused;
   const queuePaused = state.queuePaused;
-  const allImagesRendered = job.total > 0 && job.completed >= job.total;
+  const allImagesRendered = !isPromptPreparation && job.total > 0 && job.completed >= job.total;
   const estimatingVideo = job.generation_mode === 'video'
     && job.status === 'running'
     && job.estimated_frame_seconds == null;
@@ -1623,23 +1626,32 @@ function showJob() {
   syncJobDockLayer();
   jobDock.classList.remove('hidden');
   jobDock.classList.toggle('video-progress-estimating', estimatingVideo);
+  $('#job-title').textContent = isPromptPreparation
+    ? `Enhancing ${tierTitle(job.render_tier).toLowerCase()} prompts`
+    : `Rendering ${tierTitle(job.render_tier).toLowerCase()}`;
   $('#job-percent').textContent = estimatingVideo ? '…' : `${job.progress || 0}%`;
   $('#job-progress').style.width = estimatingVideo ? '' : `${job.progress || 0}%`;
-  $('#job-detail').textContent = job.cancel_requested
-    ? `Cancelling… current ${mediaTitle.toLowerCase()} will finish`
-    : (job.status === 'queued'
-      ? `Waiting to start${queueSuffix}`
-      : (allImagesRendered
-        ? `Finalizing ${tierTitle(job.render_tier).toLowerCase()}…${queueSuffix}`
-        : `${mediaTitle} ${job.completed} of ${job.total} · ${formatTime(job.eta_seconds)}${queueSuffix}${queueStateSuffix}`));
+  $('#job-detail').textContent = isPromptPreparation
+    ? (job.cancel_requested
+      ? 'Cancelling… current prompt will finish'
+      : (queuePaused
+        ? `Queue paused · ${job.completed} of ${job.total} prompts ready`
+        : `${job.completed} of ${job.total} prompts ready · ${formatTime(job.eta_seconds)}${job.current_shot ? ` · Shot ${job.current_shot}` : ''}`))
+    : (job.cancel_requested
+      ? `Cancelling… current ${mediaTitle.toLowerCase()} will finish`
+      : (job.status === 'queued'
+        ? `Waiting to start${queueSuffix}`
+        : (allImagesRendered
+          ? `Finalizing ${tierTitle(job.render_tier).toLowerCase()}…${queueSuffix}`
+          : `${mediaTitle} ${job.completed} of ${job.total} · ${formatTime(job.eta_seconds)}${queueSuffix}${queueStateSuffix}`)));
   if (job.status === 'queued' && queuePaused) $('#job-detail').textContent = `Queue paused${queueSuffix}`;
   $('#pause-queue').textContent = queuePaused ? 'Resume' : 'Pause';
-  $('#pause-queue').title = queuePaused ? 'Resume render queue' : 'Pause render queue';
-  $('#pause-queue').setAttribute('aria-label', queuePaused ? 'Resume render queue' : 'Pause render queue');
+  $('#pause-queue').title = queuePaused ? 'Resume queue' : 'Pause queue';
+  $('#pause-queue').setAttribute('aria-label', queuePaused ? 'Resume queue' : 'Pause queue');
   $('#pause-queue').disabled = !['queued', 'running'].includes(job.status);
   $('#cancel-job').classList.toggle('hidden', allImagesRendered);
   $('#cancel-job').disabled = Boolean(job.cancel_requested) || allImagesRendered;
-  renderLogger();
+  if (!isPromptPreparation) renderLogger();
 }
 
 function syncJobDockLayer() {
@@ -1857,8 +1869,9 @@ function promptPreparationText(payload) {
   const counts = payload.counts || {};
   if (payload.status === 'running' && payload.job) {
     const current = payload.job.current_shot ? ` · Shot ${payload.job.current_shot}` : '';
-    return `Preparing ${payload.job.completed} / ${payload.job.total}${current}`;
+    return `Enhancing ${payload.job.completed} / ${payload.job.total}${current}`;
   }
+  if (payload.status === 'cancelled') return `${counts.ready || 0} / ${payload.total} ready · Cancelled`;
   if (payload.status === 'disabled') return 'Enhancer disabled';
   if (payload.status === 'unavailable') return 'Instructions unavailable';
   if (payload.status === 'ready') return `${counts.ready} / ${payload.total} ready`;
@@ -1908,6 +1921,23 @@ async function syncPromptPreparation() {
     updatePromptStatusIndicators(payload);
     const running = payload.status === 'running';
     const unavailable = ['disabled', 'unavailable'].includes(payload.status);
+    const previousPromptJob = state.promptJob;
+    if (running && payload.job) {
+      state.promptJob = payload.job;
+      showJob();
+    } else {
+      state.promptJob = null;
+      if (previousPromptJob) {
+        if (!isRenderActive()) jobDock.classList.add('hidden');
+        if (payload.status === 'cancelled') {
+          toast('Prompt enhancement cancelled', `${payload.counts?.ready || 0} of ${payload.total} prompts ready.`);
+        } else if (payload.status === 'failed') {
+          toast('Prompt enhancement finished with errors', `${payload.counts?.failed || 0} prompts failed.`, 'error');
+        } else {
+          toast('Prompt enhancement complete', `${payload.counts?.ready || 0} of ${payload.total} prompts ready.`, 'success');
+        }
+      }
+    }
     $$('[data-prompt-preparation-status]').forEach((status) => {
       status.textContent = promptPreparationText(payload);
     });
@@ -1941,6 +1971,10 @@ async function syncPromptPreparation() {
 
 async function preparePrompts(button) {
   if (!state.storyboard) return;
+  if (isRenderActive()) {
+    toast('Prompt enhancement unavailable', 'Wait for the active render to finish or cancel it first.', 'error');
+    return;
+  }
   const menu = button.closest('[data-render-mode]');
   if (menu) menu.open = false;
   button.disabled = true;
@@ -1949,6 +1983,10 @@ async function preparePrompts(button) {
       method: 'POST',
       body: JSON.stringify({ storyboard_id: state.storyboard.id, render_tier: state.renderMode }),
     });
+    if (payload.job?.status === 'running') {
+      state.promptJob = payload.job;
+      showJob();
+    }
     await syncPromptPreparation();
     if (payload.status === 'disabled') {
       toast('Prompt enhancer is disabled', 'Enable it for this render tier in System settings.', 'error');
@@ -1963,6 +2001,7 @@ async function preparePrompts(button) {
 
 function syncRenderControls() {
   const active = Boolean(isRenderActive());
+  const promptActive = state.promptJob?.status === 'running';
   const preview = state.renderMode === 'preview';
   const enhancing = state.renderAction === 'enhance';
   const baseLabel = enhancing ? 'Enhance prompts' : (preview ? 'Preview storyboard' : 'Render storyboard');
@@ -1976,14 +2015,16 @@ function syncRenderControls() {
     const selected = button.dataset.renderModeChoice === state.renderMode;
     button.classList.toggle('active', selected);
     button.setAttribute('aria-pressed', String(selected));
+    button.disabled = active || promptActive;
   });
   $$('[data-render-action-choice]').forEach((button) => {
     const selected = button.dataset.renderActionChoice === state.renderAction;
     button.classList.toggle('active', selected);
     button.setAttribute('aria-pressed', String(selected));
+    button.disabled = active || promptActive;
   });
   $$('[data-render-action]').forEach((button) => {
-    button.disabled = enhancing && active;
+    button.disabled = promptActive || (enhancing && active);
     button.textContent = idleLabel;
     button.title = active
       ? 'Add this storyboard after the current render jobs'
@@ -4588,6 +4629,16 @@ $('#director-groups').addEventListener('change', (event) => {
   if (select) applyDirectorChange(select);
 });
 $('#cancel-job').addEventListener('click', async () => {
+  if (state.promptJob?.id) {
+    try {
+      state.promptJob = await api(`/api/prompt-preparation/${state.promptJob.id}/cancel`, {
+        method: 'POST', body: '{}',
+      });
+      showJob();
+      await syncPromptPreparation();
+    } catch (error) { toast('Could not cancel prompt enhancement', error.message, 'error'); }
+    return;
+  }
   if (!state.job) return;
   try {
     state.job = await api(`/api/jobs/${state.job.id}/cancel`, { method: 'POST', body: '{}' });
@@ -4598,7 +4649,7 @@ $('#cancel-job').addEventListener('click', async () => {
 });
 
 $('#pause-queue').addEventListener('click', async () => {
-  if (!state.job) return;
+  if (!state.job && !state.promptJob) return;
   const paused = !state.queuePaused;
   const button = $('#pause-queue');
   setBusy(button, true, paused ? 'Pausing…' : 'Resuming…');
@@ -4609,12 +4660,17 @@ $('#pause-queue').addEventListener('click', async () => {
     });
     state.queuePaused = Boolean(session.queue_paused);
     syncQueuePlaceholders(session.jobs || []);
-    const current = session.jobs?.find((job) => job.id === state.job.id);
-    state.job = current || { ...state.job, queue_paused: state.queuePaused };
-    rememberLoggerJob(state.job);
+    if (state.promptJob) {
+      state.promptJob = { ...state.promptJob, queue_paused: state.queuePaused };
+    } else {
+      const current = session.jobs?.find((job) => job.id === state.job.id);
+      state.job = current || { ...state.job, queue_paused: state.queuePaused };
+      rememberLoggerJob(state.job);
+    }
+    await syncPromptPreparation();
     toast(
-      state.queuePaused ? 'Render queue paused' : 'Render queue resumed',
-      state.queuePaused ? 'The current render will finish; queued jobs are waiting.' : 'Queued jobs will continue in FIFO order.',
+      state.queuePaused ? 'Queue paused' : 'Queue resumed',
+      state.queuePaused ? 'The current operation will finish; the next prompt or render is waiting.' : 'Queued work will continue in FIFO order.',
       'success',
     );
   } catch (error) {
