@@ -52,6 +52,9 @@ const state = {
   job: null,
   jobTimer: null,
   queuePaused: false,
+  sessionLog: [],
+  loggerJobId: null,
+  loggerJobPinned: false,
   loggerInspection: null,
   outputs: [],
   pendingGroups: [],
@@ -1225,15 +1228,25 @@ function updatePromptContent() {
 }
 
 async function trackQueuedJob(queuedJob, previousActiveId) {
+  const previousJobId = state.job?.id;
+  const followCurrentJob = !state.loggerJobPinned
+    && (!state.loggerJobId || state.loggerJobId === previousJobId);
   let session = null;
   try { session = await api('/api/jobs'); } catch { /* regular polling will retry */ }
   if (!session && previousActiveId) return;
-  if (session) syncQueuePlaceholders(session.jobs || []);
+  if (session) {
+    syncQueuePlaceholders(session.jobs || []);
+    mergeSessionLog(session.jobs || [], session.session_log || []);
+  }
   const active = session?.active_job || null;
-  if (previousActiveId && active?.id === previousActiveId) return;
+  if (previousActiveId && active?.id === previousActiveId) {
+    if (active) rememberLoggerJob(active);
+    return;
+  }
   const submitted = session?.jobs?.find((job) => job.id === queuedJob.id) || queuedJob;
   if (!session) syncQueuePlaceholders([submitted]);
   state.job = active || submitted;
+  rememberLoggerJob(state.job, followCurrentJob);
   showJob();
   pollJob();
 }
@@ -1318,6 +1331,67 @@ function formatLoggedPrompt(prompt) {
   return prompt ? String(prompt).replaceAll(', ', ',\n') : 'Waiting for a frame…';
 }
 
+function mergeSessionLog(jobs = [], sessionLog = []) {
+  const merged = new Map();
+  [...sessionLog, ...jobs].forEach((job) => {
+    if (job?.id) merged.set(job.id, job);
+  });
+  if (state.job?.id) merged.set(state.job.id, state.job);
+  state.sessionLog = [...merged.values()].sort((left, right) => {
+    return new Date(right.created_at || 0) - new Date(left.created_at || 0);
+  });
+  if (!state.loggerJobId || !state.sessionLog.some((job) => job.id === state.loggerJobId)) {
+    state.loggerJobId = state.job?.id || state.sessionLog[0]?.id || null;
+  }
+}
+
+function rememberLoggerJob(job, select = false) {
+  if (!job?.id) return;
+  const existing = state.sessionLog.findIndex((item) => item.id === job.id);
+  if (existing >= 0) state.sessionLog[existing] = job;
+  else state.sessionLog.push(job);
+  state.sessionLog.sort((left, right) => {
+    return new Date(right.created_at || 0) - new Date(left.created_at || 0);
+  });
+  if (select || !state.loggerJobId) state.loggerJobId = job.id;
+}
+
+function loggerJobs() {
+  const jobs = state.sessionLog.slice();
+  if (state.job?.id && !jobs.some((job) => job.id === state.job.id)) jobs.unshift(state.job);
+  return jobs;
+}
+
+function selectedLoggerJob() {
+  const jobs = loggerJobs();
+  return jobs.find((job) => job.id === state.loggerJobId) || state.job || jobs[0] || null;
+}
+
+function loggerJobStatus(job) {
+  if (job.status === 'completed') return 'Complete';
+  if (job.status === 'failed') return 'Failed';
+  if (job.status === 'cancelled') return 'Cancelled';
+  if (job.status === 'running') return 'Rendering';
+  return 'Queued';
+}
+
+function renderLoggerSession() {
+  const jobs = loggerJobs();
+  const list = $('#logger-session-list');
+  if (!list) return;
+  $('#logger-session-count').textContent = `${jobs.length} job${jobs.length === 1 ? '' : 's'}`;
+  list.innerHTML = jobs.map((job) => {
+    const isVideo = job.kind === 'video' || job.generation_mode === 'video';
+    const label = isVideo ? 'Video' : modeTitle(job.generation_mode);
+    const time = job.created_at
+      ? new Date(job.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : '—';
+    const selected = job.id === state.loggerJobId ? ' selected' : '';
+    const progress = `${job.completed || 0}/${job.total || 0}`;
+    return `<button class="logger-session-entry${selected}" type="button" data-logger-job-id="${escapeHtml(job.id)}"><strong><span>${escapeHtml(label)}</span><span>${escapeHtml(loggerJobStatus(job))}</span></strong><small>${escapeHtml(time)} · ${escapeHtml(job.workflow_profile || 'Workflow')}</small><em>${escapeHtml(progress)} ${isVideo ? 'video' : 'images'}</em></button>`;
+  }).join('');
+}
+
 function inspectedJobPrompt(job) {
   if (state.loggerInspection?.jobId !== job?.id) return job?.current_prompt || null;
   const entry = job.logs?.[state.loggerInspection.logIndex];
@@ -1326,8 +1400,10 @@ function inspectedJobPrompt(job) {
 
 function displayedLoggerPrompt() {
   const preview = state.previewJob;
-  const usePreview = preview && (!state.job || new Date(preview.created_at) >= new Date(state.job.created_at));
-  return usePreview ? preview : inspectedJobPrompt(state.job);
+  const job = selectedLoggerJob();
+  const usePreview = preview && !state.loggerJobPinned
+    && (!job || new Date(preview.created_at) >= new Date(job.created_at));
+  return usePreview ? preview : inspectedJobPrompt(job);
 }
 
 let loggerImageColumnFrame = null;
@@ -1432,12 +1508,17 @@ function renderLoggerImage(prompt) {
 
 function renderLogger() {
   const preview = state.previewJob;
-  const usePreview = preview && (!state.job || new Date(preview.created_at) >= new Date(state.job.created_at));
-  const job = usePreview ? null : state.job;
+  const selectedJob = selectedLoggerJob();
+  const usePreview = preview && !state.loggerJobPinned
+    && (!selectedJob || new Date(preview.created_at) >= new Date(selectedJob.created_at));
+  const job = usePreview ? null : selectedJob;
   const empty = $('#logger-empty');
+  const session = $('#logger-session');
   const workspace = $('#logger-workspace');
+  renderLoggerSession();
   if (!job && !preview) {
     empty.classList.remove('hidden');
+    session.classList.add('hidden');
     workspace.classList.add('hidden');
     updateNavigationCount('log-count', 0, 'log entry', 'log entries');
     $('#clear-logger').disabled = false;
@@ -1445,10 +1526,11 @@ function renderLogger() {
     return;
   }
   empty.classList.add('hidden');
+  session.classList.toggle('hidden', loggerJobs().length === 0);
   workspace.classList.remove('hidden');
   if (usePreview) {
     $('#clear-logger').disabled = ['queued', 'running'].includes(preview.status);
-    updateNavigationCount('log-count', 1, 'log entry', 'log entries');
+    updateNavigationCount('log-count', Math.max(1, loggerJobs().reduce((count, item) => count + (item.logs?.length || 0), 0)), 'log entry', 'log entries');
     $('#logger-progress').textContent = 'Preview';
     $('#logger-percent').textContent = preview.status === 'completed' ? 'Ready' : 'Rendering one shot';
     $('#logger-elapsed').textContent = formatDuration(preview.elapsed_seconds);
@@ -1466,7 +1548,7 @@ function renderLogger() {
   }
   const logs = job.logs || [];
   $('#clear-logger').disabled = ['queued', 'running'].includes(job.status);
-  updateNavigationCount('log-count', logs.length, 'log entry', 'log entries');
+  updateNavigationCount('log-count', loggerJobs().reduce((count, item) => count + (item.logs?.length || 0), 0), 'log entry', 'log entries');
   const visiblePosition = job.current_prompt?.position || job.completed || 0;
   $('#logger-progress').textContent = `${visiblePosition} / ${job.total}`;
   $('#logger-percent').textContent = `${job.progress || 0}% complete`;
@@ -1551,7 +1633,9 @@ async function pollJob() {
   clearTimeout(state.jobTimer);
   if (!state.job) return;
   try {
+    const previousJobId = state.job.id;
     state.job = await api(`/api/jobs/${state.job.id}`);
+    rememberLoggerJob(state.job, !state.loggerJobId || state.loggerJobId === previousJobId);
     syncJobPendingGroups(state.job);
     addOutputs(state.job.outputs || []);
     showJob();
@@ -1568,6 +1652,7 @@ async function pollJob() {
 
 async function finishJob() {
   const job = state.job;
+  rememberLoggerJob(job);
   syncJobPendingGroups(job);
   syncRenderControls();
   $('#job-dock').classList.add('hidden');
@@ -1584,8 +1669,10 @@ async function finishJob() {
   try {
     const session = await api('/api/jobs');
     syncQueuePlaceholders(session.jobs || []);
+    mergeSessionLog(session.jobs || [], session.session_log || []);
     if (session.active_job && session.active_job.id !== job.id) {
       state.job = session.active_job;
+      rememberLoggerJob(state.job, state.loggerJobId === job.id);
       showJob();
       pollJob();
     }
@@ -1937,7 +2024,11 @@ async function restoreApplication() {
     const session = await api('/api/jobs');
     state.queuePaused = Boolean(session.queue_paused);
     state.previewJob = session.latest_preview || null;
+    mergeSessionLog(session.jobs || [], session.session_log || []);
     state.job = session.active_job || session.jobs?.[0] || session.session_log?.[0] || null;
+    if (session.active_job?.id) state.loggerJobId = session.active_job.id;
+    state.loggerJobPinned = false;
+    rememberLoggerJob(state.job);
     syncQueuePlaceholders(session.jobs || []);
     (session.jobs || []).forEach((job) => addOutputs(job.outputs || []));
     renderLogger();
@@ -4331,6 +4422,7 @@ $('#cancel-job').addEventListener('click', async () => {
   if (!state.job) return;
   try {
     state.job = await api(`/api/jobs/${state.job.id}/cancel`, { method: 'POST', body: '{}' });
+    rememberLoggerJob(state.job);
     syncJobPendingGroups(state.job);
     showJob();
   } catch (error) { toast('Could not cancel', error.message, 'error'); }
@@ -4350,6 +4442,7 @@ $('#pause-queue').addEventListener('click', async () => {
     syncQueuePlaceholders(session.jobs || []);
     const current = session.jobs?.find((job) => job.id === state.job.id);
     state.job = current || { ...state.job, queue_paused: state.queuePaused };
+    rememberLoggerJob(state.job);
     toast(
       state.queuePaused ? 'Render queue paused' : 'Render queue resumed',
       state.queuePaused ? 'The current render will finish; queued jobs are waiting.' : 'Queued jobs will continue in FIFO order.',
@@ -4533,13 +4626,23 @@ document.addEventListener('keydown', (event) => {
 });
 
 function inspectLoggerEvent(element) {
-  if (!state.job || !element?.dataset.logIndex) return;
+  const job = selectedLoggerJob();
+  if (!job || !element?.dataset.logIndex) return;
   const logIndex = Number(element.dataset.logIndex);
-  const alreadySelected = state.loggerInspection?.jobId === state.job.id
+  const alreadySelected = state.loggerInspection?.jobId === job.id
     && state.loggerInspection.logIndex === logIndex;
-  state.loggerInspection = alreadySelected ? null : { jobId: state.job.id, logIndex };
+  state.loggerInspection = alreadySelected ? null : { jobId: job.id, logIndex };
   renderLogger();
 }
+
+$('#logger-session-list').addEventListener('click', (event) => {
+  const button = event.target.closest('[data-logger-job-id]');
+  if (!button) return;
+  state.loggerJobId = button.dataset.loggerJobId;
+  state.loggerJobPinned = true;
+  state.loggerInspection = null;
+  renderLogger();
+});
 
 $('#logger-view').addEventListener('click', async (event) => {
   const timelineEvent = event.target.closest('.logger-event.inspectable');
@@ -4593,6 +4696,9 @@ $('#clear-logger').addEventListener('click', async () => {
   try {
     await api('/api/logger', { method: 'DELETE' });
     state.job = null;
+    state.sessionLog = [];
+    state.loggerJobId = null;
+    state.loggerJobPinned = false;
     state.previewJob = null;
     state.loggerInspection = null;
     renderLogger();
