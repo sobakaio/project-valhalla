@@ -4013,6 +4013,8 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("session.active_job.id !== job.id", js)
         self.assertIn("await syncPromptPreparation(state.job.render_tier);", js)
         self.assertIn("function updatePromptStatusIndicators(payload, tier = state.renderMode)", js)
+        self.assertIn("function hydratePromptShots(shots, tier = state.renderMode)", js)
+        self.assertIn("const restoreStoryboardJob = session.active_job", js)
 
     def test_job_dock_exposes_queue_pause_and_resume(self):
         root = Path(app.__file__).parent
@@ -4633,6 +4635,8 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("data-render-action-choice", javascript)
         self.assertIn("if (state.renderAction === 'enhance') preparePrompts(button)", javascript)
         self.assertIn("function updatePromptStatusIndicators(payload, tier = state.renderMode)", javascript)
+        self.assertIn("/api/prompt-preparation/shots?storyboard_id=", javascript)
+        self.assertIn("hydratePromptShots(openShots)", javascript)
         self.assertIn("data-prompt-ai", javascript)
         self.assertIn("state.promptJob", javascript)
         self.assertIn("/api/prompt-preparation/${state.promptJob.id}/cancel", javascript)
@@ -5360,6 +5364,22 @@ class PromptPreparationTests(unittest.TestCase):
             payload = state.prompt_preparation_payload("board", "production")
         self.assertEqual(payload["status"], "running")
         self.assertEqual(payload["shot_prompt_enhancements"][0]["optimized_positive"], optimized)
+
+    def test_lazy_prompt_shot_payload_returns_cached_optimized_text(self):
+        state = app.WebState()
+        state.storyboards["board"] = {
+            "id": "board", "db": {}, "shots": [{"number": 1, "scene": {}}],
+        }
+        with (
+            patch.object(app, "prompt_enhancer_context", return_value=self.context),
+            patch.object(app, "compile_scene", return_value=("compiled", "", [])),
+        ):
+            state._prompt_cache[("board", "production", 1)] = {
+                "fingerprint": app.prompt_enhancer_fingerprint("compiled", "production", self.context),
+                "status": "ready", "optimized_positive": "optimized lazy",
+            }
+            payload = state.prompt_preparation_shots_payload("board", "production", [1])
+        self.assertEqual(payload["shots"][0]["prompt_enhancement"]["optimized_positive"], "optimized lazy")
 
     def test_prompt_preparation_job_can_request_cancellation(self):
         state = app.WebState()

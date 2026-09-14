@@ -6955,6 +6955,36 @@ class WebState:
             "job": job_payload,
         }
 
+    def prompt_preparation_shots_payload(
+        self, storyboard_id: str, render_tier: str, shot_numbers: list[int]
+    ) -> dict[str, Any]:
+        if render_tier not in {"production", "preview"}:
+            raise AppError("Prompt preparation render tier must be production or preview")
+        record = self.get_storyboard(storyboard_id)
+        if not shot_numbers or any(
+            number < 1 or number > len(record["shots"]) for number in shot_numbers
+        ):
+            raise AppError("Prompt preparation selection contains an invalid shot")
+        try:
+            context = prompt_enhancer_context(render_tier)
+        except AppError as exc:
+            context = {"enabled": False, "settings": {}, "error": str(exc)}
+        shots = []
+        for number in dict.fromkeys(shot_numbers):
+            shot = record["shots"][number - 1]
+            positive, _, _ = compile_scene(record["db"], shot["scene"])
+            shots.append({
+                "number": number,
+                "prompt_enhancement": self._prompt_status(
+                    storyboard_id, shot, render_tier, context, positive
+                ),
+            })
+        return {
+            "storyboard_id": storyboard_id,
+            "render_tier": render_tier,
+            "shots": shots,
+        }
+
     def prompt_preparation_job_payload(self, job: dict[str, Any]) -> dict[str, Any]:
         payload = {key: value for key, value in job.items() if not key.startswith("_")}
         payload["queue_paused"] = self._queue_paused
@@ -10216,6 +10246,18 @@ class ValhallaHandler(BaseHTTPRequestHandler):
                 self.send_json(application_status())
             elif path == "/api/prompt-enhancer/settings":
                 self.send_json(prompt_enhancer_settings())
+            elif path == "/api/prompt-preparation/shots":
+                query = parse_qs(urlparse(self.path).query)
+                shot_text = query.get("shots", [""])[0]
+                shot_numbers = [
+                    _safe_int(value, "Shot", 1, 10_000)
+                    for value in shot_text.split(",") if value.strip()
+                ]
+                self.send_json(WEB_STATE.prompt_preparation_shots_payload(
+                    query.get("storyboard_id", [""])[0],
+                    query.get("tier", ["production"])[0],
+                    shot_numbers,
+                ))
             elif path == "/api/prompt-preparation":
                 query = parse_qs(urlparse(self.path).query)
                 render_tier = query.get("tier", ["production"])[0]

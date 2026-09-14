@@ -55,6 +55,7 @@ const state = {
   queuePaused: false,
   promptPreparation: { production: null, preview: null },
   promptPreparationTimer: null,
+  promptHydration: new Set(),
   sessionLog: [],
   loggerJobId: null,
   loggerJobPinned: false,
@@ -1163,6 +1164,10 @@ function renderStoryboard() {
   shotGrid.classList.remove('hidden');
   syncPendingState();
   syncPromptPreparation();
+  const openShots = board.config.mode === 'photoshoot'
+    ? board.shots.filter((shot) => shot.photoshoot_index === state.storyboardOpenSet)
+    : board.shots;
+  hydratePromptShots(openShots);
 }
 
 function updateNavigationCount(id, count, singular, plural = `${singular}s`) {
@@ -1227,6 +1232,7 @@ function openPrompt(shot) {
     $('#dialog-title').textContent = `${level[0].toUpperCase()}${level.slice(1)} composition`;
     $$('.prompt-tabs button').forEach((button) => button.classList.toggle('active', button.dataset.prompt === 'optimized'));
     updatePromptContent();
+    hydratePromptShots([shot]);
     if (promptDialog.open) promptDialog.close();
     if (typeof promptDialog.showModal === 'function') promptDialog.showModal();
     else promptDialog.setAttribute('open', '');
@@ -1891,24 +1897,57 @@ function updatePromptStatusIndicators(payload, tier = state.renderMode) {
     const shot = state.storyboard.shots[index];
     if (!shot) return;
     const enhancement = payload.shot_prompt_enhancements?.[index] || { status };
-    shot.prompt_enhancement ||= {};
-    shot.prompt_enhancement[tier] = {
-      ...(shot.prompt_enhancement[tier] || {}),
-      ...enhancement,
-    };
-    if (state.promptShot?.number === shot.number) {
-      state.promptShot = shot;
-      if (promptDialog.open) updatePromptContent();
-    }
-    const promptButton = $(`.shot-card[data-shot="${shot.number}"] [data-action="inspect"]`);
-    if (promptButton) {
-      const [className, label] = promptStatusPresentation(status);
-      const promptIcon = $('[data-prompt-ai]', promptButton);
-      if (promptIcon) promptIcon.className = `prompt-ai-indicator ${className}`;
-      promptButton.title = label;
-      promptButton.setAttribute('aria-label', `Inspect prompt · ${label}`);
-    }
+    applyPromptEnhancement(shot, enhancement, tier);
   });
+}
+
+function applyPromptEnhancement(shot, enhancement, tier = state.renderMode) {
+  if (!shot || !enhancement) return;
+  const status = enhancement.status || 'not_prepared';
+  shot.prompt_enhancement ||= {};
+  shot.prompt_enhancement[tier] = {
+    ...(shot.prompt_enhancement[tier] || {}),
+    ...enhancement,
+  };
+  if (state.promptShot?.number === shot.number) {
+    state.promptShot = shot;
+    if (promptDialog.open) updatePromptContent();
+  }
+  const promptButton = $(`.shot-card[data-shot="${shot.number}"] [data-action="inspect"]`);
+  if (promptButton) {
+    const [className, label] = promptStatusPresentation(status);
+    const promptIcon = $('[data-prompt-ai]', promptButton);
+    if (promptIcon) promptIcon.className = `prompt-ai-indicator ${className}`;
+    promptButton.title = label;
+    promptButton.setAttribute('aria-label', `Inspect prompt · ${label}`);
+  }
+}
+
+async function hydratePromptShots(shots, tier = state.renderMode) {
+  const board = state.storyboard;
+  const numbers = [...new Set((shots || []).map((shot) => Number(shot?.number)))]
+    .filter((number) => Number.isInteger(number) && number > 0)
+    .filter((number) => {
+      const shot = board?.shots.find((item) => item.number === number);
+      return shot && !shot.prompt_enhancement?.[tier]?.optimized_positive;
+    });
+  if (!board || !numbers.length) return;
+  const requestKey = `${board.id}:${tier}:${numbers.join(',')}`;
+  if (state.promptHydration.has(requestKey)) return;
+  state.promptHydration.add(requestKey);
+  try {
+    const payload = await api(
+      `/api/prompt-preparation/shots?storyboard_id=${encodeURIComponent(board.id)}&tier=${tier}&shots=${numbers.join(',')}`,
+    );
+    if (state.storyboard?.id !== board.id) return;
+    (payload.shots || []).forEach((item) => {
+      const shot = state.storyboard.shots.find((candidate) => candidate.number === item.number);
+      if (shot) applyPromptEnhancement(shot, item.prompt_enhancement, tier);
+    });
+  } catch {
+    state.promptHydration.delete(requestKey);
+    /* aggregate status polling remains the fallback */
+  }
 }
 
 async function syncPromptPreparation(tierOverride = null) {
@@ -2231,11 +2270,14 @@ async function restoreApplication() {
     syncQueuePlaceholders(session.jobs || []);
     (session.jobs || []).forEach((job) => addOutputs(job.outputs || []));
     renderLogger();
+    const restoreStoryboardJob = session.active_job || (!savedStoryboardId ? state.job : null);
+    const restoreJobIsVideo = restoreStoryboardJob?.kind === 'video'
+      || restoreStoryboardJob?.generation_mode === 'video';
     const videoJob = state.job?.kind === 'video' || state.job?.generation_mode === 'video';
-    if (state.job && !videoJob) {
+    if (restoreStoryboardJob && !restoreJobIsVideo) {
       try {
-        state.storyboard = await api(`/api/storyboards/${state.job.storyboard_id}`);
-        restoreConfig(state.storyboard.config, state.job);
+        state.storyboard = await api(`/api/storyboards/${restoreStoryboardJob.storyboard_id}`);
+        restoreConfig(state.storyboard.config, restoreStoryboardJob);
         renderStoryboard();
       } catch (error) {
         toast('Storyboard recovery limited', error.message, 'error');
@@ -4716,6 +4758,9 @@ shotGrid.addEventListener('toggle', (event) => {
     return;
   }
   state.storyboardOpenSet = Number(opened.dataset.storyboardSet);
+  hydratePromptShots(
+    state.storyboard?.shots.filter((shot) => shot.photoshoot_index === state.storyboardOpenSet),
+  );
   $$('.storyboard-set', shotGrid).forEach((set) => {
     if (set !== opened) set.open = false;
   });
