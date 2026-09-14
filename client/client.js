@@ -1503,14 +1503,18 @@ function showJob() {
   if (!job) return;
   const mediaTitle = job.kind === 'video' || job.generation_mode === 'video' ? 'Video' : 'Image';
   const allImagesRendered = job.total > 0 && job.completed >= job.total;
+  const estimatingVideo = job.generation_mode === 'video'
+    && job.status === 'running'
+    && job.estimated_frame_seconds == null;
   const queueSuffix = job.queued_after
     ? ` · ${job.queued_after} job${job.queued_after === 1 ? '' : 's'} queued`
     : '';
   syncRenderControls();
   syncJobDockLayer();
   jobDock.classList.remove('hidden');
-  $('#job-percent').textContent = `${job.progress || 0}%`;
-  $('#job-progress').style.width = `${job.progress || 0}%`;
+  jobDock.classList.toggle('video-progress-estimating', estimatingVideo);
+  $('#job-percent').textContent = estimatingVideo ? '…' : `${job.progress || 0}%`;
+  $('#job-progress').style.width = estimatingVideo ? '' : `${job.progress || 0}%`;
   $('#job-detail').textContent = job.cancel_requested
     ? `Cancelling… current ${mediaTitle.toLowerCase()} will finish`
     : (job.status === 'queued'
@@ -1543,7 +1547,7 @@ async function pollJob() {
     addOutputs(state.job.outputs || []);
     showJob();
     if (['queued', 'running'].includes(state.job.status)) {
-      state.jobTimer = setTimeout(pollJob, 1200);
+      state.jobTimer = setTimeout(pollJob, 1000);
       return;
     }
     finishJob();
@@ -1657,7 +1661,11 @@ function syncJobPendingGroups(job, { render = true } = {}) {
   const active = ['queued', 'running'].includes(job.status);
   const before = state.pendingGroups.filter((group) => group.job_id === job.id);
   state.pendingGroups = state.pendingGroups.filter((group) => group.job_id !== job.id);
-  if (active) state.pendingGroups.push(...(job.pending_groups || []));
+  if (active) {
+    const pendingGroups = job.pending_groups || [];
+    if (job.status === 'running') state.pendingGroups.unshift(...pendingGroups);
+    else state.pendingGroups.push(...pendingGroups);
+  }
   if (!active) {
     state.outputs = state.outputs.map((item) => item.queue_job_id === job.id
       ? Object.fromEntries(Object.entries(item).filter(([key]) => !['queue_job_id', 'queue_group_key'].includes(key)))
@@ -1670,7 +1678,13 @@ function syncJobPendingGroups(job, { render = true } = {}) {
 }
 
 function syncQueuePlaceholders(jobs) {
-  const active = (jobs || []).filter((job) => ['queued', 'running'].includes(job.status));
+  const active = (jobs || [])
+    .filter((job) => ['queued', 'running'].includes(job.status))
+    .sort((left, right) => {
+      if (left.status !== right.status) return left.status === 'running' ? -1 : 1;
+      return (left.queue_position ?? Number.MAX_SAFE_INTEGER)
+        - (right.queue_position ?? Number.MAX_SAFE_INTEGER);
+    });
   const activeIds = new Set(active.map((job) => job.id));
   const beforeGroupCount = state.pendingGroups.length;
   const beforeTaggedCount = state.outputs.filter((item) => item.queue_job_id).length;
@@ -2023,17 +2037,20 @@ function outputDisplayShot(item, group = null) {
 }
 
 function outputCardHtml(item, index, layout, position, group = null) {
-  const displayShot = outputDisplayShot(item, group);
-  const shotLabel = displayShot == null ? 'Output' : `Shot ${displayShot}`;
+  const pendingVideo = item.pending && item.generation_mode === 'video';
+  const displayShot = pendingVideo ? null : outputDisplayShot(item, group);
+  const shotLabel = pendingVideo
+    ? `Video ${item.shot ?? item.position ?? 1}`
+    : (displayShot == null ? 'Output' : `Shot ${displayShot}`);
   if (item.pending) {
     const rendering = item.status === 'rendering';
     const tier = tierTitle(item.render_tier);
-    const status = `Shot ${displayShot} (${tier.toLowerCase()})`;
+    const status = `${shotLabel} (${tier.toLowerCase()})`;
     const deadline = item.eta_seconds != null && Number.isFinite(Number(item.eta_seconds))
       ? new Date(item.observed_at).getTime() + Number(item.eta_seconds) * 1000
       : '';
     return `<article class="output-card pending-output" data-pending-key="${escapeHtml(item.key)}"
-      aria-label="${escapeHtml(shotLabel)} ${escapeHtml(status)}">
+      aria-label="${escapeHtml(status)}">
       <div class="render-placeholder" aria-hidden="true"><span>${escapeHtml(status)}</span><em${rendering ? ` data-pending-deadline="${deadline}"` : ''}>${rendering ? (deadline ? `ETA ${formatDuration(item.eta_seconds)}` : 'ETA estimating') : 'Queued'}</em></div>
     </article>`;
   }

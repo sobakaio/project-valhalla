@@ -469,7 +469,7 @@
   },
   "398:350": {
     "inputs": {
-      "img_compression": 18,
+      "img_compression": 0,
       "image": [
         "398:351",
         0

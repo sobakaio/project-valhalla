@@ -8736,6 +8736,14 @@ class WebState:
         if job["status"] == "running" and job.get("_started_monotonic") is not None:
             elapsed = time.monotonic() - job["_started_monotonic"]
             payload["elapsed_seconds"] = round(elapsed, 1)
+        if (
+            job.get("generation_mode") == "video"
+            and job["status"] == "running"
+            and estimate is not None
+            and job.get("_shot_started_monotonic") is not None
+        ):
+            video_elapsed = time.monotonic() - job["_shot_started_monotonic"]
+            payload["progress"] = min(99.0, round(max(0.0, video_elapsed) / estimate * 100, 1))
         active_group = next(
             (group for group in payload["pending_groups"] if group["status"] == "rendering"),
             None,

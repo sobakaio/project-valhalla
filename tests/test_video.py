@@ -355,6 +355,8 @@ class VideoWorkflowTests(unittest.TestCase):
         payload = state.job_payload(job)
 
         self.assertEqual(payload["estimated_frame_seconds"], 30.0)
+        self.assertGreaterEqual(payload["progress"], 16.0)
+        self.assertLessEqual(payload["progress"], 18.0)
         self.assertGreaterEqual(payload["eta_seconds"], 24.0)
         self.assertLessEqual(payload["eta_seconds"], 30.0)
 

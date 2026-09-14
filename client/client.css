@@ -483,6 +483,8 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: .42; }
 .job-copy p { margin: 2px 0 7px; color: var(--muted); font-size: 0.5625rem; }
 .progress-track { height: 4px; overflow: hidden; border-radius: 99px; background: var(--surface-3); }
 .progress-track i { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--brand); transition: width .35s ease; }
+.job-dock.video-progress-estimating .progress-track i { width: 34%; animation: video-progress-sweep 1.2s ease-in-out infinite alternate; }
+@keyframes video-progress-sweep { from { transform: translateX(-115%); } to { transform: translateX(315%); } }
 .job-dock.in-lightbox { z-index: 30; }
 
  dialog { width: min(720px, calc(100vw - 36px)); padding: 0; border: 1px solid var(--line-strong); border-radius: 15px; background: var(--surface); color: var(--text); box-shadow: var(--shadow-lg); }
