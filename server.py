@@ -171,6 +171,43 @@ def load_config() -> tuple[dict[str, Any], Path]:
     for key in ("url", "workflows_dir"):
         if not isinstance(comfy.get(key), str) or not comfy[key]:
             raise AppError(f"config.comfy.{key} must be a non-empty string")
+    prompt_enhancer = config.get("prompt_enhancer", {})
+    if not isinstance(prompt_enhancer, dict):
+        raise AppError("config.prompt_enhancer must be an object")
+    for tier in ("production", "preview"):
+        if not isinstance(prompt_enhancer.get(tier, False), bool):
+            raise AppError(f"config.prompt_enhancer.{tier} must be true or false")
+    for key in ("url", "model", "instructions_path", "api_key_env"):
+        if not isinstance(prompt_enhancer.get(key), str) or not prompt_enhancer[key]:
+            raise AppError(f"config.prompt_enhancer.{key} must be a non-empty string")
+    enhancer_timeout = prompt_enhancer.get("timeout_seconds")
+    if (
+        not isinstance(enhancer_timeout, (int, float))
+        or isinstance(enhancer_timeout, bool)
+        or not 0.1 <= enhancer_timeout <= 3600
+    ):
+        raise AppError("config.prompt_enhancer.timeout_seconds must be a number from 0.1 to 3600")
+    enhancer_max_tokens = prompt_enhancer.get("max_tokens")
+    if (
+        not isinstance(enhancer_max_tokens, int)
+        or isinstance(enhancer_max_tokens, bool)
+        or not 1 <= enhancer_max_tokens <= 32768
+    ):
+        raise AppError("config.prompt_enhancer.max_tokens must be an integer from 1 to 32768")
+    enhancer_temperature = prompt_enhancer.get("temperature")
+    if (
+        not isinstance(enhancer_temperature, (int, float))
+        or isinstance(enhancer_temperature, bool)
+        or not 0 <= enhancer_temperature <= 2
+    ):
+        raise AppError("config.prompt_enhancer.temperature must be a number from 0 to 2")
+    enhancer_top_p = prompt_enhancer.get("top_p")
+    if (
+        not isinstance(enhancer_top_p, (int, float))
+        or isinstance(enhancer_top_p, bool)
+        or not 0 < enhancer_top_p <= 1
+    ):
+        raise AppError("config.prompt_enhancer.top_p must be a number greater than 0 and at most 1")
     storage = config.get("storage")
     if not isinstance(storage, dict):
         raise AppError("config.storage must be an object")
@@ -4273,6 +4310,72 @@ def comfy_session(db: dict[str, Any]) -> tuple[Any, str, float]:
     return session, url, timeout
 
 
+def enhance_compiled_prompt(positive: str, render_tier: str) -> tuple[str, bool]:
+    """Optionally rewrite one compiled image prompt through the local LLM server."""
+    if render_tier not in {"production", "preview"}:
+        raise AppError("Prompt enhancer render tier must be production or preview")
+    config, config_file = load_config()
+    settings = config.get("prompt_enhancer", {})
+    if not settings.get(render_tier, False):
+        return positive, False
+    module = require_requests()
+    instructions_path = resolve_path(config_file.parent, settings["instructions_path"])
+    try:
+        instructions = instructions_path.read_text(encoding="utf-8").strip()
+    except OSError as exc:
+        raise AppError(
+            f"Could not read prompt enhancer instructions {instructions_path}: {exc}"
+        ) from exc
+    if not instructions:
+        raise AppError(f"Prompt enhancer instructions are empty: {instructions_path}")
+    messages = [
+        {"role": "system", "content": instructions},
+        {
+            "role": "user",
+            "content": f"<compiled_prompt>\n{positive}\n</compiled_prompt>",
+        },
+    ]
+    headers = {"Content-Type": "application/json"}
+    api_key = os.environ.get(settings["api_key_env"], "").strip()
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    endpoint = settings["url"].rstrip("/") + "/v1/chat/completions"
+    try:
+        response = module.post(
+            endpoint,
+            headers=headers,
+            json={
+                "model": settings["model"],
+                "messages": messages,
+                "temperature": settings["temperature"],
+                "top_p": settings["top_p"],
+                "max_tokens": settings["max_tokens"],
+                "stream": False,
+            },
+            timeout=float(settings["timeout_seconds"]),
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except Exception as exc:
+        raise AppError(f"Prompt enhancer request failed: {exc}") from exc
+    try:
+        content = payload["choices"][0]["message"]["content"]
+        if isinstance(content, list):
+            content = "".join(
+                part.get("text", "")
+                for part in content
+                if isinstance(part, dict) and isinstance(part.get("text"), str)
+            )
+        result = str(content).strip()
+    except (KeyError, IndexError, TypeError) as exc:
+        raise AppError("Prompt enhancer returned an invalid chat completion") from exc
+    result = re.sub(r"^```(?:text|markdown)?\s*", "", result, flags=re.IGNORECASE)
+    result = re.sub(r"\s*```$", "", result).strip()
+    if not result:
+        raise AppError("Prompt enhancer returned an empty prompt")
+    return result, True
+
+
 def comfy_history_from_valhalla(item: dict[str, Any]) -> bool:
     prompt_record = item.get("prompt", [])
     if len(prompt_record) < 4 or not isinstance(prompt_record[3], dict):
@@ -4414,6 +4517,26 @@ def save_workflow_profile_registry(
         media["source"] = source
     config["comfy"]["media_profiles"][media_type] = media
     save_config(config)
+
+
+def prompt_enhancer_settings() -> dict[str, bool]:
+    config, _ = load_config()
+    settings = config["prompt_enhancer"]
+    return {
+        "production": settings["production"],
+        "preview": settings["preview"],
+    }
+
+
+def save_prompt_enhancer_settings(production: Any, preview: Any) -> dict[str, bool]:
+    if not isinstance(production, bool) or not isinstance(preview, bool):
+        raise AppError("Prompt enhancer production and preview must be true or false")
+    config, _ = load_config()
+    settings = config["prompt_enhancer"]
+    settings["production"] = production
+    settings["preview"] = preview
+    save_config(config)
+    return prompt_enhancer_settings()
 
 
 def list_workflow_profiles(
@@ -7381,8 +7504,9 @@ class WebState:
         recalculate_stages = False
         preserve_photography = False
         clear_custom = payload.get("clear_custom") is True
-        if clear_custom and not field.startswith("shot."):
+        if clear_custom:
             context.setdefault("custom_values", {}).pop(field, None)
+            shot.setdefault("custom_values", {}).pop(field, None)
 
         if value == "__director_random__" and "custom_value" not in payload:
             director = self.director_payload(storyboard_id, number)
@@ -7419,8 +7543,8 @@ class WebState:
             if len(custom_value) > 600:
                 raise AppError("Custom value cannot exceed 600 characters")
             custom_scope = payload.get("custom_scope", "current")
-            if custom_scope not in {"current", "all"}:
-                raise AppError("Custom scope must be current or all")
+            if custom_scope not in {"current", "current_shot", "current_set", "all"}:
+                raise AppError("Custom scope must be current_shot, current_set, or all")
             parts = field.split(".")
             valid = (
                 (len(parts) == 2 and parts[0] == "human" and parts[1] in db["human_model_parts"])
@@ -7442,50 +7566,73 @@ class WebState:
             )
             if not valid:
                 raise AppError("Unknown Director field")
-            if custom_scope == "all" and field.startswith("shot."):
-                raise AppError("Shot-scoped custom values cannot be applied to all sets")
-            if not field.startswith("shot."):
-                if custom_scope == "all":
-                    if record["args"].mode == "random":
-                        targets = range(len(record["shots"]))
-                    else:
-                        seen_sets = set()
-                        targets = []
-                        for target_position, candidate in enumerate(record["shots"]):
-                            set_index = candidate["photoshoot_index"]
-                            if set_index not in seen_sets:
-                                seen_sets.add(set_index)
-                                targets.append(target_position)
-                    for target_position in targets:
-                        target_context = (
-                            context
-                            if target_position == position
-                            else copy.deepcopy(record["shots"][target_position]["context"])
-                        )
-                        target_custom_values = target_context.setdefault("custom_values", {})
-                        if custom_value:
-                            target_custom_values[field] = custom_value
-                        else:
-                            target_custom_values.pop(field, None)
-                        self._replace_director_context(
-                            record, target_position, target_context, manual_field=field
-                        )
-                else:
-                    custom_values = context.setdefault("custom_values", {})
-                    if custom_value:
-                        custom_values[field] = custom_value
-                    else:
-                        custom_values.pop(field, None)
-                    self._replace_director_context(
-                        record, position, context, manual_field=field
-                    )
+            if custom_scope == "current":
+                custom_scope = "current_set" if not field.startswith("shot.") else "current_shot"
+            if record["args"].mode == "random" and custom_scope == "current_set":
+                custom_scope = "current_shot"
+            if custom_scope == "current_shot":
+                target_positions = [position]
+            elif custom_scope == "current_set":
+                target_positions = [
+                    target_position
+                    for target_position, candidate in enumerate(record["shots"])
+                    if candidate["photoshoot_index"] == shot["photoshoot_index"]
+                ]
             else:
-                custom_values = shot.setdefault("custom_values", {})
-                if custom_value:
-                    custom_values[field] = custom_value
-                else:
-                    custom_values.pop(field, None)
-                self._apply_director_customs(shot, shot["scene"], shot["context"])
+                target_positions = list(range(len(record["shots"])))
+
+            if field.startswith("shot.") or custom_scope == "current_shot":
+                for target_position in target_positions:
+                    target_shot = record["shots"][target_position]
+                    target_custom_values = target_shot.setdefault("custom_values", {})
+                    if custom_value:
+                        target_custom_values[field] = custom_value
+                    else:
+                        target_custom_values.pop(field, None)
+                    self._apply_director_customs(
+                        target_shot, target_shot["scene"], target_shot["context"]
+                    )
+                    target_fields = set(target_shot.get("manual_fields", []))
+                    target_fields.add(field)
+                    target_shot["manual_fields"] = sorted(target_fields)
+            else:
+                seen_sets = set()
+                set_sources = []
+                for target_position in target_positions:
+                    set_index = (
+                        target_position
+                        if record["args"].mode == "random"
+                        else record["shots"][target_position]["photoshoot_index"]
+                    )
+                    if set_index in seen_sets:
+                        continue
+                    seen_sets.add(set_index)
+                    set_sources.append(target_position)
+                for target_position in set_sources:
+                    if record["args"].mode == "random":
+                        affected_positions = [target_position]
+                    else:
+                        set_index = record["shots"][target_position]["photoshoot_index"]
+                        affected_positions = [
+                            candidate_position
+                            for candidate_position, candidate in enumerate(record["shots"])
+                            if candidate["photoshoot_index"] == set_index
+                        ]
+                    for affected_position in affected_positions:
+                        record["shots"][affected_position].setdefault("custom_values", {}).pop(field, None)
+                    target_context = (
+                        context
+                        if target_position == position
+                        else copy.deepcopy(record["shots"][target_position]["context"])
+                    )
+                    target_custom_values = target_context.setdefault("custom_values", {})
+                    if custom_value:
+                        target_custom_values[field] = custom_value
+                    else:
+                        target_custom_values.pop(field, None)
+                    self._replace_director_context(
+                        record, target_position, target_context, manual_field=field
+                    )
             fields = set(shot.get("manual_fields", []))
             fields.add(field)
             shot["manual_fields"] = sorted(fields)
@@ -8317,6 +8464,7 @@ class WebState:
             raise AppError("Shot number is out of range")
         shot = record["shots"][number - 1]
         positive, negative, _ = compile_scene(record["db"], shot["scene"])
+        positive, prompt_enhanced = enhance_compiled_prompt(positive, "preview")
         debug_positive, _, _ = compile_scene(
             record["db"], shot["scene"], include_age=False
         )
@@ -8337,6 +8485,7 @@ class WebState:
             "db": record["db"],
             "positive": positive,
             "negative": negative,
+            "prompt_enhanced": prompt_enhanced,
             "_debug_positive": debug_positive,
             "_scene": shot["scene"],
             "seed": shot["inference_seed"],
@@ -8375,6 +8524,7 @@ class WebState:
             "type": "preview",
             "positive": preview["positive"],
             "negative": preview["negative"],
+            "prompt_enhanced": preview.get("prompt_enhanced", False),
             "seed": preview["seed"],
             "started_at": preview["started_at"],
             "elapsed_seconds": preview["elapsed_seconds"],
@@ -8448,8 +8598,13 @@ class WebState:
                 "prompt_id": prompt_id,
                 "workflow_profile": preview["workflow_profile"],
                 "workflow_source": preview["workflow_source"],
-                "positive": preview["_debug_positive"],
+                "positive": (
+                    preview["positive"]
+                    if preview.get("prompt_enhanced", False)
+                    else preview["_debug_positive"]
+                ),
                 "auxiliary_negative": preview["negative"],
+                "prompt_enhanced": preview.get("prompt_enhanced", False),
                 "lora_rules": applied_lora_rules,
             })
             with self.lock:
@@ -8825,6 +8980,10 @@ class WebState:
                     job["current_shot"] = shot["number"]
                     job["_shot_started_monotonic"] = shot_started
                 positive, negative, _ = compile_scene(db, shot["scene"])
+                compiled_positive = positive
+                positive, prompt_enhanced = enhance_compiled_prompt(
+                    positive, job["render_tier"]
+                )
                 debug_positive, _, _ = compile_scene(
                     db, shot["scene"], include_age=False
                 )
@@ -8832,6 +8991,8 @@ class WebState:
                     job["current_prompt"] = {
                         "shot": shot["number"], "position": completed_index,
                         "positive": positive, "negative": negative,
+                        "prompt_enhanced": prompt_enhanced,
+                        "compiled_positive": compiled_positive if prompt_enhanced else None,
                         "seed": shot["inference_seed"],
                     }
                     shot_log = {
@@ -8840,6 +9001,8 @@ class WebState:
                         "shot": shot["number"], "position": completed_index,
                         "total": len(selected_shots), "seed": shot["inference_seed"],
                         "positive": positive, "negative": negative,
+                        "prompt_enhanced": prompt_enhanced,
+                        "compiled_positive": compiled_positive if prompt_enhanced else None,
                     }
                     job["logs"].append(shot_log)
                 applied_lora_rules: list[dict[str, Any]] = []
@@ -8868,8 +9031,9 @@ class WebState:
                         "prompt_id": prompt_id,
                         "workflow_profile": job["workflow_profile"],
                         "workflow_source": job["workflow_source"],
-                        "positive": debug_positive,
+                        "positive": positive if prompt_enhanced else debug_positive,
                         "auxiliary_negative": negative,
+                        "prompt_enhanced": prompt_enhanced,
                         "lora_rules": applied_lora_rules,
                     })
                 elapsed = time.monotonic() - started
@@ -9508,6 +9672,8 @@ class ValhallaHandler(BaseHTTPRequestHandler):
             path = urlparse(self.path).path
             if path == "/api/status":
                 self.send_json(application_status())
+            elif path == "/api/prompt-enhancer/settings":
+                self.send_json(prompt_enhancer_settings())
             elif path == "/api/workflow/profiles":
                 media_type = parse_qs(urlparse(self.path).query).get("media", ["image"])[0]
                 db, db_path = load_database()
@@ -9612,6 +9778,11 @@ class ValhallaHandler(BaseHTTPRequestHandler):
                     payload.get("source_metadata") if isinstance(payload.get("source_metadata"), dict) else None,
                     payload.get("prompt_enhancement", False),
                 ), HTTPStatus.ACCEPTED)
+            elif path == "/api/prompt-enhancer/settings":
+                payload = self.read_json()
+                self.send_json(save_prompt_enhancer_settings(
+                    payload.get("production"), payload.get("preview")
+                ))
             elif path == "/api/workflow/capture":
                 if WEB_STATE.has_active_render():
                     raise AppError("Workflow profiles cannot be captured while rendering is active")

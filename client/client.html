@@ -405,7 +405,7 @@
 
   <dialog id="director-custom-dialog" class="small-dialog">
     <div class="dialog-header"><div><p class="eyebrow">Local prompt override</p><h2 id="director-custom-title">Custom value</h2></div><button class="icon-button director-custom-close" aria-label="Close">×</button></div>
-    <div class="dialog-body director-custom-body"><p id="director-custom-scope">Overrides this field without changing the preset database.</p><label for="director-custom-value">Prompt value</label><textarea id="director-custom-value" maxlength="600" rows="6" placeholder="Describe exactly what the renderer should use for this field…"></textarea><fieldset class="director-custom-propagation hidden" id="director-custom-propagation"><legend>Apply custom value to</legend><label><input type="radio" name="director-custom-scope" value="current" checked> <span id="director-custom-current-label">Current set</span></label><label><input type="radio" name="director-custom-scope" value="all"> <span id="director-custom-all-label">All sets</span></label></fieldset><small>Stored only with this storyboard. The selected compatible preset and its rules remain intact.</small></div>
+    <div class="dialog-body director-custom-body"><p id="director-custom-scope">Overrides this field without changing the preset database.</p><label for="director-custom-value">Prompt value</label><textarea id="director-custom-value" maxlength="600" rows="6" placeholder="Describe exactly what the renderer should use for this field…"></textarea><fieldset class="director-custom-propagation hidden" id="director-custom-propagation"><legend>Apply custom value to</legend><label id="director-custom-current-shot-option"><input type="radio" name="director-custom-scope" value="current_shot" checked> <span>Current shot</span></label><label id="director-custom-current-set-option"><input type="radio" name="director-custom-scope" value="current_set"> <span>Current set</span></label><label id="director-custom-all-option"><input type="radio" name="director-custom-scope" value="all"> <span id="director-custom-all-label">All sets</span></label></fieldset><small>Stored only with this storyboard. The selected compatible preset and its rules remain intact.</small></div>
     <div class="dialog-footer"><button class="button ghost" id="director-custom-clear">Clear custom</button><button class="button ghost director-custom-close">Cancel</button><button class="button primary" id="director-custom-apply">Apply custom</button></div>
   </dialog>
 
@@ -430,8 +430,16 @@
         <div id="image-profile-settings">
           <label class="switch-row"><span><strong>Live Image workflow</strong><small>Use the latest successful external image workflow</small></span><input type="checkbox" id="live-workflow-source"><i></i></label>
           <div id="workflow-profile-selectors">
-            <label class="field"><span>Production rendering</span><select id="production-profile"></select></label>
-            <label class="field"><span>Preview rendering</span><select id="preview-profile"></select></label>
+            <div class="workflow-profile-selector-group">
+              <div class="field workflow-profile-selector-heading"><span>Production rendering</span></div>
+              <label class="switch-row" title="Enhance image prompts before production rendering"><span><strong>Prompt enhance</strong></span><input type="checkbox" id="prompt-enhancer-production"><i></i></label>
+              <label class="field"><select id="production-profile"></select></label>
+            </div>
+            <div class="workflow-profile-selector-group">
+              <div class="field workflow-profile-selector-heading"><span>Preview rendering</span></div>
+              <label class="switch-row" title="Enhance image prompts before preview rendering"><span><strong>Prompt enhance</strong></span><input type="checkbox" id="prompt-enhancer-preview"><i></i></label>
+              <label class="field"><select id="preview-profile"></select></label>
+            </div>
           </div>
           <p class="field-help hidden" id="live-workflow-help">Preview size and node bypass limits still apply.</p>
           <div class="workflow-profile-list" id="workflow-profile-list"></div>

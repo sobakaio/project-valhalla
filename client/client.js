@@ -3458,16 +3458,15 @@ function openDirectorCustom(key) {
   $("#director-custom-title").textContent = field.label;
   const propagation = $("#director-custom-propagation");
   const isRandom = state.storyboard?.config?.mode === "random";
-  const canPropagate = field.scope === "set" && (
-    isRandom ? state.storyboard?.total > 1 : Number(state.storyboard?.config?.photoshoots) > 1
-  );
-  $("#director-custom-scope").textContent = field.scope === "set"
-    ? (isRandom ? "Overrides this field for this independent shot." : "Overrides this field across the current set.")
-    : "Overrides this field only for this shot.";
+  const canPropagate = Number(state.storyboard?.total) > 1;
+  const currentSetOption = $("#director-custom-current-set-option");
+  $("#director-custom-scope").textContent = "Overrides this field without changing the preset database.";
   propagation.classList.toggle("hidden", !canPropagate);
-  $("#director-custom-current-label").textContent = isRandom ? "Current shot" : "Current set";
+  $("#director-custom-current-shot-option").classList.toggle("hidden", !canPropagate);
+  currentSetOption.classList.toggle("hidden", isRandom || !canPropagate);
   $("#director-custom-all-label").textContent = isRandom ? "All shots" : "All sets";
-  $("#director-custom-propagation input[value=\"current\"]").checked = true;
+  const defaultScope = isRandom || field.scope === "shot" ? "current_shot" : "current_set";
+  $(`#director-custom-propagation input[value="${defaultScope}"]`).checked = true;
   $("#director-custom-value").value = field.custom || "";
   $("#director-custom-clear").disabled = !field.custom;
   directorCustomDialog.showModal();
@@ -3479,9 +3478,11 @@ async function saveDirectorCustom(clear = false) {
   if (!field || !state.storyboard) return;
   const value = clear ? "" : $("#director-custom-value").value.trim();
   const propagation = $("#director-custom-propagation");
-  const customScope = field.scope === "set" && !propagation.classList.contains("hidden")
-    ? $("#director-custom-propagation input:checked")?.value || "current"
-    : "current";
+  const isRandom = state.storyboard.config?.mode === "random";
+  const defaultScope = isRandom || field.scope === "shot" ? "current_shot" : "current_set";
+  const customScope = !propagation.classList.contains("hidden")
+    ? $("#director-custom-propagation input:checked")?.value || defaultScope
+    : defaultScope;
   const button = clear ? $("#director-custom-clear") : $("#director-custom-apply");
   setBusy(button, true, clear ? "Clearing…" : "Applying…");
   try {
@@ -4020,9 +4021,52 @@ async function openWorkflowProfiles() {
   await Promise.allSettled([
     loadWorkflowProfileMedia('image'),
     loadWorkflowProfileMedia('video'),
+    loadPromptEnhancerSettings(),
   ]);
   await loadWorkflowCaptureCandidate(state.profileMedia);
 }
+
+function renderPromptEnhancerSettings(settings) {
+  if (!settings) return;
+  $('#prompt-enhancer-production').checked = settings.production === true;
+  $('#prompt-enhancer-preview').checked = settings.preview === true;
+}
+
+async function loadPromptEnhancerSettings() {
+  try {
+    renderPromptEnhancerSettings(await api('/api/prompt-enhancer/settings'));
+  } catch (error) {
+    toast('Could not load prompt enhance settings', error.message, 'error');
+  }
+}
+
+let promptEnhancerSettingsSaving = false;
+async function savePromptEnhancerSettings() {
+  if (promptEnhancerSettingsSaving) return;
+  promptEnhancerSettingsSaving = true;
+  const controls = [$('#prompt-enhancer-production'), $('#prompt-enhancer-preview')];
+  controls.forEach((control) => { control.disabled = true; });
+  try {
+    const settings = await api('/api/prompt-enhancer/settings', {
+      method: 'POST',
+      body: JSON.stringify({
+        production: controls[0].checked,
+        preview: controls[1].checked,
+      }),
+    });
+    renderPromptEnhancerSettings(settings);
+    refreshStatus();
+  } catch (error) {
+    toast('Could not save prompt enhance settings', error.message, 'error');
+    await loadPromptEnhancerSettings();
+  } finally {
+    promptEnhancerSettingsSaving = false;
+    controls.forEach((control) => { control.disabled = false; });
+  }
+}
+
+$('#prompt-enhancer-production').addEventListener('change', savePromptEnhancerSettings);
+$('#prompt-enhancer-preview').addEventListener('change', savePromptEnhancerSettings);
 
 const workflowSettingsSaving = new Set();
 

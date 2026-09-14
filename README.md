@@ -240,6 +240,7 @@ Runtime settings live in `config.json`. Relative paths are resolved from the pro
 |---|---|
 | `server` | listen host and port; keep loopback unless trusted-LAN access is required |
 | `comfy` | ComfyUI URL, image/video workflow sources and profiles, timeouts, Preview size |
+| `prompt_enhancer` | optional local OpenAI-compatible prompt rewrite with independent `production` and `preview` flags; instructions are read from `instructions_path`, sampling uses `temperature`/`top_p`, and authentication uses `LLAMA_API_KEY` |
 | `storage` | output directory, additional proof directories, PNG/JPEG output, JPEG quality, EXIF stripping, optional age-free prompt/result JSONL debug log |
 | `gallery` | thumbnail size and bounded in-memory thumbnail cache |
 | `interface` | privacy auto-cover intervals |
@@ -253,6 +254,14 @@ uses `adult woman` in place of the configured exact age; rendering still receive
 the original age prompt. Relative log paths are resolved from `config.json`.
 
 Restart the server after editing `config.json`. The application has no authentication, so do not bind it to an untrusted network.
+
+When `prompt_enhancer.production` or `prompt_enhancer.preview` is `true`, the
+compiled image prompt for that render tier is sent to the configured local
+`/v1/chat/completions` endpoint before being submitted to ComfyUI. The system
+instruction is read fresh from `instructions_path` for each request and is not
+duplicated in the application code. Set `LLAMA_API_KEY` before starting the
+server when the local LLM endpoint requires authentication. Video prompts and
+the optional LTX Gemma workflow branch are not changed by this setting.
 
 Creative records and selection rules live in `database.json`, not `config.json`. Records can be temporarily removed from selection with `"disabled": true`.
 

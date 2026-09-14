@@ -2039,18 +2039,96 @@ class DirectorRegressionTests(unittest.TestCase):
             for shot in record["shots"]
         ))
 
-    def test_shot_scoped_custom_value_rejects_all_scope(self):
-        state, storyboard_id = self.make_storyboard()
-        with self.assertRaisesRegex(app.AppError, "Shot-scoped"):
-            state.update_director(
-                storyboard_id,
-                {
-                    "shot": 1,
-                    "field": "shot.pose",
-                    "custom_value": "custom pose",
-                    "custom_scope": "all",
-                },
-            )
+    def test_shot_scoped_custom_value_can_propagate_to_current_set(self):
+        state, storyboard_id = self.make_storyboard(photoshoots=2, count=2)
+        marker = "custom pose for this set"
+        state.update_director(
+            storyboard_id,
+            {
+                "shot": 1,
+                "field": "shot.pose",
+                "custom_value": marker,
+                "custom_scope": "current_set",
+            },
+        )
+        record = state.get_storyboard(storyboard_id)
+        first_set = [shot for shot in record["shots"] if shot["photoshoot_index"] == 0]
+        second_set = [shot for shot in record["shots"] if shot["photoshoot_index"] == 1]
+        self.assertTrue(all(shot["custom_values"]["shot.pose"] == marker for shot in first_set))
+        self.assertTrue(all("shot.pose" not in shot.get("custom_values", {}) for shot in second_set))
+
+    def test_shot_scoped_custom_value_can_propagate_to_all_photoshoots(self):
+        state, storyboard_id = self.make_storyboard(photoshoots=2, count=2)
+        marker = "custom pose for every set"
+        state.update_director(
+            storyboard_id,
+            {
+                "shot": 1,
+                "field": "shot.pose",
+                "custom_value": marker,
+                "custom_scope": "all",
+            },
+        )
+        record = state.get_storyboard(storyboard_id)
+        self.assertTrue(all(
+            shot["custom_values"]["shot.pose"] == marker
+            and marker in app.serialize_shot(record["db"], shot)["positive_prompt"]
+            for shot in record["shots"]
+        ))
+
+    def test_set_scoped_custom_value_can_be_limited_to_current_shot(self):
+        state, storyboard_id = self.make_storyboard(photoshoots=1, count=2)
+        marker = "custom age for one shot"
+        state.update_director(
+            storyboard_id,
+            {
+                "shot": 1,
+                "field": "human.age",
+                "custom_value": marker,
+                "custom_scope": "current_shot",
+            },
+        )
+        record = state.get_storyboard(storyboard_id)
+        self.assertEqual(record["shots"][0]["custom_values"]["human.age"], marker)
+        self.assertNotIn("human.age", record["shots"][1].get("custom_values", {}))
+        self.assertIn(marker, app.serialize_shot(record["db"], record["shots"][0])["positive_prompt"])
+        self.assertNotIn(marker, app.serialize_shot(record["db"], record["shots"][1])["positive_prompt"])
+
+    def test_preset_selection_clears_shot_override_for_set_scoped_field(self):
+        state, storyboard_id = self.make_storyboard(photoshoots=1, count=2)
+        marker = "custom age override before preset"
+        state.update_director(
+            storyboard_id,
+            {
+                "shot": 1,
+                "field": "human.age",
+                "custom_value": marker,
+                "custom_scope": "current_shot",
+            },
+        )
+        payload = state.director_payload(storyboard_id, 1)
+        age_field = director_fields(payload)["human.age"]
+        preset = next(
+            option for option in age_field["options"]
+            if option["id"] != age_field["value"]
+        )
+
+        state.update_director(
+            storyboard_id,
+            {
+                "shot": 1,
+                "field": "human.age",
+                "value": preset["id"],
+                "clear_custom": True,
+            },
+        )
+
+        record = state.get_storyboard(storyboard_id)
+        self.assertNotIn("human.age", record["shots"][0].get("custom_values", {}))
+        self.assertNotIn(
+            marker,
+            app.serialize_shot(record["db"], record["shots"][0])["positive_prompt"],
+        )
 
     def test_custom_skin_marking_is_used_when_that_identity_detail_is_visible(self):
         state, storyboard_id = self.make_storyboard(content_mode="xxx")
@@ -2976,6 +3054,10 @@ class PromptDebugLogTests(unittest.TestCase):
             output.write_bytes(b"image")
             with (
                 patch.object(app, "load_workflow_runtime", return_value=({}, {})),
+                patch.object(
+                    app, "enhance_compiled_prompt",
+                    side_effect=lambda prompt, _tier: (prompt, False),
+                ),
                 patch.object(app, "generate_one", return_value=("prompt-id", [output])),
                 patch.object(app, "output_payload", return_value={"url": "/rendered.png"}),
                 patch.object(app, "append_prompt_debug_record") as append,
@@ -2995,6 +3077,31 @@ class PromptDebugLogTests(unittest.TestCase):
         self.assertNotRegex(record["positive"], r"\b(?:21|22|23)-year-old\b")
         self.assertIn("adult woman", record["positive"])
         self.assertEqual(record["lora_rules"], [])
+
+    def test_production_result_logs_enhanced_prompt_when_enabled(self):
+        state = app.WebState()
+        board = state.create_storyboard({
+            "count": 1, "prompt_seed": 717, "inference_seed": 818,
+        })
+        with patch.object(app.threading, "Thread"):
+            job = state.create_job(board["id"], False)
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "enhanced.png"
+            output.write_bytes(b"image")
+            with (
+                patch.object(app, "load_workflow_runtime", return_value=({}, {})),
+                patch.object(
+                    app, "enhance_compiled_prompt",
+                    return_value=("enhanced prompt", True),
+                ),
+                patch.object(app, "generate_one", return_value=("prompt-id", [output])),
+                patch.object(app, "output_payload", return_value={"url": "/enhanced.png"}),
+                patch.object(app, "append_prompt_debug_record") as append,
+            ):
+                state._run_job(job["id"])
+        record = append.call_args.args[0]
+        self.assertEqual(record["positive"], "enhanced prompt")
+        self.assertTrue(record["prompt_enhanced"])
 
 
 class PreviewRegressionTests(unittest.TestCase):
@@ -4311,6 +4418,8 @@ class FrontendContractTests(unittest.TestCase):
         js = (root / "client" / "client.js").read_text(encoding="utf-8")
 
         self.assertIn('id="director-custom-propagation"', html)
+        self.assertIn('value="current_shot"', html)
+        self.assertIn('value="current_set"', html)
         self.assertIn('value="all"', html)
         self.assertIn("custom_scope: customScope", js)
         self.assertIn('isRandom ? "All shots" : "All sets"', js)
@@ -5181,7 +5290,10 @@ class WorkflowProfileTests(unittest.TestCase):
     def test_operational_settings_live_only_in_root_config(self):
         config, _ = app.load_config()
         database, _ = app.load_database()
-        self.assertEqual(set(config), {"server", "comfy", "storage", "gallery", "interface", "limits"})
+        self.assertEqual(
+            set(config),
+            {"server", "comfy", "prompt_enhancer", "storage", "gallery", "interface", "limits"},
+        )
         self.assertEqual(set(config["server"]), {"host", "port"})
         self.assertEqual(
             set(config["storage"]),
@@ -5214,6 +5326,143 @@ class WorkflowProfileTests(unittest.TestCase):
         self.assertTrue(comfy_operational.isdisjoint(database["settings"]))
         self.assertTrue(comfy_operational.isdisjoint(config))
         self.assertNotIn("comfy_url", config)
+
+    def test_prompt_enhancer_reads_instructions_from_file_and_sends_compiled_prompt(self):
+        config, _ = app.load_config()
+
+        class Response:
+            def raise_for_status(self):
+                pass
+
+            def json(self):
+                return {"choices": [{"message": {"content": "optimized scene"}}]}
+
+        class Requests:
+            def __init__(self):
+                self.calls = []
+
+            def post(self, url, **kwargs):
+                self.calls.append((url, kwargs))
+                return Response()
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            instructions = root / "ENCHANCER.md"
+            instructions.write_text("instructions from disk", encoding="utf-8")
+            config["prompt_enhancer"].update(
+                production=True,
+                instructions_path="ENCHANCER.md",
+            )
+            config_file = root / "config.json"
+            config_file.write_text(app.json.dumps(config), encoding="utf-8")
+            fake_requests = Requests()
+            with (
+                patch.object(app, "config_path", return_value=config_file),
+                patch.object(app, "requests", fake_requests),
+            ):
+                enhanced, applied = app.enhance_compiled_prompt(
+                    "compiled details", "production"
+                )
+
+        self.assertTrue(applied)
+        self.assertEqual(enhanced, "optimized scene")
+        self.assertEqual(
+            fake_requests.calls[0][0],
+            "http://127.0.0.1:1234/v1/chat/completions",
+        )
+        request = fake_requests.calls[0][1]
+        self.assertEqual(request["json"]["model"], "qwen3.5-4b-enhancer")
+        self.assertEqual(request["json"]["temperature"], config["prompt_enhancer"]["temperature"])
+        self.assertEqual(request["json"]["top_p"], config["prompt_enhancer"]["top_p"])
+        self.assertEqual(request["json"]["max_tokens"], config["prompt_enhancer"]["max_tokens"])
+        self.assertEqual(
+            request["json"]["messages"][0]["content"],
+            "instructions from disk",
+        )
+        self.assertEqual(
+            request["json"]["messages"][1]["content"],
+            "<compiled_prompt>\ncompiled details\n</compiled_prompt>",
+        )
+
+    def test_prompt_enhancer_flags_are_independent(self):
+        config, _ = app.load_config()
+        config["prompt_enhancer"].update(production=False, preview=True)
+
+        class Response:
+            def raise_for_status(self):
+                pass
+
+            def json(self):
+                return {"choices": [{"message": {"content": "preview scene"}}]}
+
+        class Requests:
+            def post(self, *_args, **_kwargs):
+                return Response()
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "ENCHANCER.md").write_text("instructions", encoding="utf-8")
+            config["prompt_enhancer"]["instructions_path"] = "ENCHANCER.md"
+            config_file = root / "config.json"
+            config_file.write_text(app.json.dumps(config), encoding="utf-8")
+            with (
+                patch.object(app, "config_path", return_value=config_file),
+                patch.object(app, "requests", Requests()),
+            ):
+                production, production_applied = app.enhance_compiled_prompt(
+                    "compiled details", "production"
+                )
+                preview, preview_applied = app.enhance_compiled_prompt(
+                    "compiled details", "preview"
+                )
+        self.assertEqual(production, "compiled details")
+        self.assertEqual(preview, "preview scene")
+        self.assertFalse(production_applied)
+        self.assertTrue(preview_applied)
+
+    def test_prompt_enhancer_settings_can_be_read_and_saved(self):
+        config, _ = app.load_config()
+        with tempfile.TemporaryDirectory() as temporary:
+            config_file = Path(temporary) / "config.json"
+            config_file.write_text(app.json.dumps(config), encoding="utf-8")
+            with patch.object(app, "config_path", return_value=config_file):
+                self.assertEqual(
+                    app.prompt_enhancer_settings(), {
+                        "production": config["prompt_enhancer"]["production"],
+                        "preview": config["prompt_enhancer"]["preview"],
+                    }
+                )
+                saved = app.save_prompt_enhancer_settings(False, True)
+                self.assertEqual(saved, {"production": False, "preview": True})
+                reloaded = app.json.loads(config_file.read_text(encoding="utf-8"))
+        self.assertFalse(reloaded["prompt_enhancer"]["production"])
+        self.assertTrue(reloaded["prompt_enhancer"]["preview"])
+
+    def test_prompt_enhancer_settings_ui_has_independent_switches(self):
+        root = Path(app.__file__).parent
+        html = (root / "client" / "client.html").read_text(encoding="utf-8")
+        javascript = (root / "client" / "client.js").read_text(encoding="utf-8")
+        self.assertIn('id="prompt-enhancer-production"', html)
+        self.assertIn('id="prompt-enhancer-preview"', html)
+        self.assertLess(
+            html.index("Production rendering"),
+            html.index('id="prompt-enhancer-production"'),
+        )
+        self.assertLess(
+            html.index('id="prompt-enhancer-production"'),
+            html.index('id="production-profile"'),
+        )
+        self.assertLess(
+            html.index("Preview rendering"),
+            html.index('id="prompt-enhancer-preview"'),
+        )
+        self.assertLess(
+            html.index('id="prompt-enhancer-preview"'),
+            html.index('id="preview-profile"'),
+        )
+        self.assertIn("/api/prompt-enhancer/settings", javascript)
+        self.assertIn("production: controls[0].checked", javascript)
+        self.assertIn("preview: controls[1].checked", javascript)
 
     def test_legacy_workflow_config_is_rejected(self):
         config, _ = app.load_config()

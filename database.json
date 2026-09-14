@@ -147,7 +147,7 @@
       }
     ],
     "dressed_panties_reveal": {
-      "chance": 0.18,
+      "chance": 0.5,
       "outer_slots": ["lowerwear", "full_body"],
       "compatible_outer_ids": [
         "lower_pleated_skirt",

@@ -203,9 +203,12 @@ h3 { margin-bottom: 6px; font-size: 1rem; }
 .profile-media-tabs button.active { background: var(--brand); color: white; }
 .profile-capture { padding-top: 18px; }
 .profile-capture .setup-section-title, .profile-capture .field-help { margin: 0; }
+.workflow-profile-selector-group { display: grid; gap: 8px; }
+.workflow-profile-selector-group .switch-row { margin: 0; }
 .workflow-profile-list { display: grid; gap: 6px; margin-top: 8px; }
-#workflow-profile-selectors { display: grid; gap: 12px; }
-#workflow-profile-selectors.disabled { opacity: 0.5; }
+#workflow-profile-selectors { display: grid; gap: 14px; padding-top: 6px; }
+#workflow-profile-selectors.disabled .workflow-profile-selector-group > .field:last-child { opacity: 0.5; }
+.workflow-profile-selector-heading > span { margin-bottom: 0; color: var(--text); font-size: 0.8125rem; font-weight: 750; }
 .workflow-profile-item { min-width: 0; padding: 9px 10px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); }
 .workflow-profile-item strong, .workflow-profile-item small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .workflow-profile-item strong { font-size: 0.75rem; text-transform: capitalize; }
