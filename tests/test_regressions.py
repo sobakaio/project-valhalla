@@ -3953,9 +3953,9 @@ class FrontendContractTests(unittest.TestCase):
         html = (Path(app.__file__).parent / "client" / "client.html").read_text(
             encoding="utf-8"
         )
-        self.assertEqual(app.APP_VERSION, "1.6.1")
-        self.assertEqual(app.ValhallaHandler.server_version, "Valhalla/1.6.1")
-        self.assertIn('Photo Studio <span class="brand-version">1.6.1</span>', html)
+        self.assertEqual(app.APP_VERSION, "1.7.0")
+        self.assertEqual(app.ValhallaHandler.server_version, "Valhalla/1.7.0")
+        self.assertIn('Photo Studio <span class="brand-version">1.7.0</span>', html)
         self.assertNotIn('Local workspace', html)
 
     def test_primary_workspace_names_and_headers_use_photography_terms(self):

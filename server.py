@@ -31,7 +31,7 @@ class AppError(RuntimeError):
     """An expected, user-facing application error."""
 
 
-APP_VERSION = "1.6.1"
+APP_VERSION = "1.7.0"
 MEDIA_TYPES = {"image", "video"}
 UI_SEED_MIN = 100_000_000_000_000
 UI_SEED_MAX = 999_999_999_999_999
