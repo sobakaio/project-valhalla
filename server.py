@@ -6762,8 +6762,15 @@ class WebState:
         self.lock = threading.RLock()
         self.storyboards: dict[str, dict[str, Any]] = {}
         self.jobs: dict[str, dict[str, Any]] = {}
+        # Completed production jobs remain available to the in-memory Logbook
+        # for the lifetime of this Valhalla process. This is intentionally
+        # separate from the optional prompt debug log and stores no disk state.
+        self.session_log: list[dict[str, Any]] = []
         self.previews: dict[str, dict[str, Any]] = {}
         self._job_worker_running = False
+        self._queue_paused = False
+        self._queue_resume_event = threading.Event()
+        self._queue_resume_event.set()
         self._render_timings: dict[tuple[bool, str], list[float]] = {}
         self._video_queue_reference_seconds: float | None = None
 
@@ -8364,7 +8371,7 @@ class WebState:
                     raise AppError(f"Render queue is full ({max_jobs} jobs)")
                 self.jobs.pop(removable)
             self.jobs[job_id] = job
-            if not self._job_worker_running:
+            if not self._job_worker_running and not self._queue_paused:
                 self._job_worker_running = True
                 start_worker = True
             payload = self.job_payload(job)
@@ -8453,7 +8460,7 @@ class WebState:
                     raise AppError(f"Render queue is full ({max_jobs} jobs)")
                 self.jobs.pop(removable)
             self.jobs[job_id] = job
-            if not self._job_worker_running:
+            if not self._job_worker_running and not self._queue_paused:
                 self._job_worker_running = True
                 start_worker = True
             payload = self.job_payload(job)
@@ -8731,6 +8738,7 @@ class WebState:
         payload = {key: value for key, value in job.items() if not key.startswith("_")}
         estimate = self.job_frame_seconds(job)
         payload["observed_at"] = _iso_now()
+        payload["queue_paused"] = self._queue_paused
         payload["estimated_frame_seconds"] = estimate
         payload["pending_groups"] = self.pending_groups_payload(job)
         if job["status"] == "running" and job.get("_started_monotonic") is not None:
@@ -8756,9 +8764,51 @@ class WebState:
             )
         return payload
 
+    def remember_session_job(self, job: dict[str, Any]) -> None:
+        """Keep one completed job snapshot for the current-process Logbook."""
+        snapshot = copy.deepcopy(self.job_payload(job))
+        self.session_log = [
+            item for item in self.session_log if item.get("id") != snapshot.get("id")
+        ]
+        self.session_log.append(snapshot)
+
+    def set_queue_paused(self, paused: bool) -> dict[str, Any]:
+        """Pause starting queued jobs without interrupting the running job."""
+        start_worker = False
+        with self.lock:
+            self._queue_paused = paused
+            if paused:
+                self._queue_resume_event.clear()
+            else:
+                self._queue_resume_event.set()
+            if (
+                not paused
+                and not self._job_worker_running
+                and any(job["status"] == "queued" for job in self.jobs.values())
+            ):
+                self._job_worker_running = True
+                start_worker = True
+            payload = self.jobs_payload()
+        if start_worker:
+            threading.Thread(target=self._run_job_queue, daemon=True).start()
+        return payload
+
+    def wait_for_queue_resume(self, job: dict[str, Any]) -> bool:
+        """Wait between render units while the queue is paused."""
+        while not self._queue_resume_event.wait(0.1):
+            with self.lock:
+                if job.get("cancel_requested"):
+                    return False
+        return True
+
     def get_job(self, job_id: str) -> dict[str, Any]:
         with self.lock:
             job = self.jobs.get(job_id)
+            if job is None:
+                job = next(
+                    (item for item in self.session_log if item.get("id") == job_id),
+                    None,
+                )
             if job is None:
                 raise AppError("Render job not found or expired")
             payload = self.job_payload(job)
@@ -8781,6 +8831,7 @@ class WebState:
                 self.job_payload(job)
                 for job in self.jobs.values()
             ]
+            session_log = [copy.deepcopy(item) for item in self.session_log]
             visible_previews = [
                 preview for preview in self.previews.values()
                 if not preview.get("logger_hidden", False)
@@ -8803,6 +8854,8 @@ class WebState:
             "active_job": active,
             "jobs": list(reversed(jobs)),
             "queued_jobs": queued,
+            "session_log": list(reversed(session_log)),
+            "queue_paused": self._queue_paused,
             "latest_preview": latest_preview,
         }
 
@@ -8817,13 +8870,15 @@ class WebState:
                 raise AppError("Logger cannot be cleared while a preview render is active")
             cleared_jobs = len(self.jobs)
             self.jobs.clear()
+            cleared_session_log = len(self.session_log)
+            self.session_log.clear()
             visible_previews = 0
             for preview in self.previews.values():
                 if not preview.get("logger_hidden", False):
                     visible_previews += 1
                 preview["logger_hidden"] = True
             return {
-                "cleared": cleared_jobs + visible_previews,
+                "cleared": max(cleared_jobs, cleared_session_log) + visible_previews,
                 "jobs": cleared_jobs,
                 "previews": visible_previews,
             }
@@ -8866,6 +8921,9 @@ class WebState:
     def _run_job_queue(self) -> None:
         while True:
             with self.lock:
+                if self._queue_paused:
+                    self._job_worker_running = False
+                    return
                 next_job = next(
                     (job for job in self.jobs.values() if job["status"] == "queued"),
                     None,
@@ -8997,10 +9055,24 @@ class WebState:
             with self.lock:
                 job["_run_id"] = run_id
             if job.get("_media_type") == "video":
+                if not self.wait_for_queue_resume(job):
+                    with self.lock:
+                        job["status"] = "cancelled"
+                    return
                 self._run_video_job(job, job_id, db, db_path, started)
                 return
             selected_shots = job["_shots"]
             for completed_index, shot in enumerate(selected_shots, 1):
+                if not self.wait_for_queue_resume(job):
+                    with self.lock:
+                        job["status"] = "cancelled"
+                        job["logs"].append({
+                            "time": _iso_now(), "type": "cancelled",
+                            "message": "Render job cancelled",
+                            "shot": job.get("current_shot"),
+                            "position": job["completed"], "total": job["total"],
+                        })
+                    break
                 shot_started = time.monotonic()
                 with self.lock:
                     if job["cancel_requested"]:
@@ -9132,6 +9204,7 @@ class WebState:
                 job["finished_at"] = _iso_now()
                 job["current_shot"] = None
                 job.pop("_shot_started_monotonic", None)
+                self.remember_session_job(job)
 
 
 WEB_STATE = WebState()
@@ -9808,6 +9881,12 @@ class ValhallaHandler(BaseHTTPRequestHandler):
                     WEB_STATE.create_job(str(payload.get("storyboard_id", "")), bool(payload.get("fast", False))),
                     HTTPStatus.ACCEPTED,
                 )
+            elif path == "/api/queue":
+                payload = self.read_json()
+                paused = payload.get("paused")
+                if not isinstance(paused, bool):
+                    raise AppError("Queue paused state must be true or false")
+                self.send_json(WEB_STATE.set_queue_paused(paused))
             elif path == "/api/previews":
                 payload = self.read_json()
                 self.send_json(

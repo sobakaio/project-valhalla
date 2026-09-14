@@ -300,7 +300,7 @@
   <section class="job-dock hidden" id="job-dock" aria-live="polite">
     <div class="job-icon"><div class="spinner small"></div></div>
     <div class="job-copy"><div><strong id="job-title">Rendering production</strong><span id="job-percent">0%</span></div><p id="job-detail">Preparing workflow…</p><div class="progress-track"><i id="job-progress"></i></div></div>
-    <button class="button ghost danger" id="cancel-job">Cancel</button>
+    <div class="job-dock-actions"><button class="button ghost" id="pause-queue" type="button">Pause</button><button class="button ghost danger" id="cancel-job" type="button">Cancel</button></div>
   </section>
 
   <section class="shot-preview-window hidden" id="shot-preview-window" role="dialog" aria-labelledby="shot-preview-title">

@@ -51,6 +51,7 @@ const state = {
   previewJobTimer: null,
   job: null,
   jobTimer: null,
+  queuePaused: false,
   loggerInspection: null,
   outputs: [],
   pendingGroups: [],
@@ -1502,6 +1503,8 @@ function showJob() {
   const job = state.job;
   if (!job) return;
   const mediaTitle = job.kind === 'video' || job.generation_mode === 'video' ? 'Video' : 'Image';
+  if (typeof job.queue_paused === 'boolean') state.queuePaused = job.queue_paused;
+  const queuePaused = state.queuePaused;
   const allImagesRendered = job.total > 0 && job.completed >= job.total;
   const estimatingVideo = job.generation_mode === 'video'
     && job.status === 'running'
@@ -1509,6 +1512,7 @@ function showJob() {
   const queueSuffix = job.queued_after
     ? ` · ${job.queued_after} job${job.queued_after === 1 ? '' : 's'} queued`
     : '';
+  const queueStateSuffix = queuePaused ? ' · Queue paused' : '';
   syncRenderControls();
   syncJobDockLayer();
   jobDock.classList.remove('hidden');
@@ -1521,7 +1525,12 @@ function showJob() {
       ? `Waiting to start${queueSuffix}`
       : (allImagesRendered
         ? `Finalizing ${tierTitle(job.render_tier).toLowerCase()}…${queueSuffix}`
-        : `${mediaTitle} ${job.completed} of ${job.total} · ${formatTime(job.eta_seconds)}${queueSuffix}`));
+        : `${mediaTitle} ${job.completed} of ${job.total} · ${formatTime(job.eta_seconds)}${queueSuffix}${queueStateSuffix}`));
+  if (job.status === 'queued' && queuePaused) $('#job-detail').textContent = `Queue paused${queueSuffix}`;
+  $('#pause-queue').textContent = queuePaused ? 'Resume' : 'Pause';
+  $('#pause-queue').title = queuePaused ? 'Resume render queue' : 'Pause render queue';
+  $('#pause-queue').setAttribute('aria-label', queuePaused ? 'Resume render queue' : 'Pause render queue');
+  $('#pause-queue').disabled = !['queued', 'running'].includes(job.status);
   $('#cancel-job').classList.toggle('hidden', allImagesRendered);
   $('#cancel-job').disabled = Boolean(job.cancel_requested) || allImagesRendered;
   renderLogger();
@@ -1926,8 +1935,9 @@ async function restoreApplication() {
   }
   try {
     const session = await api('/api/jobs');
+    state.queuePaused = Boolean(session.queue_paused);
     state.previewJob = session.latest_preview || null;
-    state.job = session.active_job || session.jobs?.[0] || null;
+    state.job = session.active_job || session.jobs?.[0] || session.session_log?.[0] || null;
     syncQueuePlaceholders(session.jobs || []);
     (session.jobs || []).forEach((job) => addOutputs(job.outputs || []));
     renderLogger();
@@ -4324,6 +4334,33 @@ $('#cancel-job').addEventListener('click', async () => {
     syncJobPendingGroups(state.job);
     showJob();
   } catch (error) { toast('Could not cancel', error.message, 'error'); }
+});
+
+$('#pause-queue').addEventListener('click', async () => {
+  if (!state.job) return;
+  const paused = !state.queuePaused;
+  const button = $('#pause-queue');
+  setBusy(button, true, paused ? 'Pausing…' : 'Resuming…');
+  try {
+    const session = await api('/api/queue', {
+      method: 'POST',
+      body: JSON.stringify({ paused }),
+    });
+    state.queuePaused = Boolean(session.queue_paused);
+    syncQueuePlaceholders(session.jobs || []);
+    const current = session.jobs?.find((job) => job.id === state.job.id);
+    state.job = current || { ...state.job, queue_paused: state.queuePaused };
+    toast(
+      state.queuePaused ? 'Render queue paused' : 'Render queue resumed',
+      state.queuePaused ? 'The current render will finish; queued jobs are waiting.' : 'Queued jobs will continue in FIFO order.',
+      'success',
+    );
+  } catch (error) {
+    toast('Could not change queue state', error.message, 'error');
+  } finally {
+    setBusy(button, false);
+    showJob();
+  }
 });
 
 shotGrid.addEventListener('click', (event) => {

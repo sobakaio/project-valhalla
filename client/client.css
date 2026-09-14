@@ -481,6 +481,7 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: .42; }
 .job-copy > div { display: flex; justify-content: space-between; font-size: 0.6875rem; }
 .job-copy > div strong, .job-copy p { min-width: 0; overflow-wrap: anywhere; word-break: break-word; }
 .job-copy p { margin: 2px 0 7px; color: var(--muted); font-size: 0.5625rem; }
+.job-dock-actions { display: flex; align-items: center; gap: 8px; }
 .progress-track { height: 4px; overflow: hidden; border-radius: 99px; background: var(--surface-3); }
 .progress-track i { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--brand); transition: width .35s ease; }
 .job-dock.video-progress-estimating .progress-track i { width: 34%; animation: video-progress-sweep 1.2s ease-in-out infinite alternate; }
@@ -795,7 +796,7 @@ pre { min-height: 280px; max-height: 50vh; margin: 0; padding: 15px; overflow-x:
   .gallery-view-toggle button { padding: 5px 6px; font-size: 0.5625rem; }
   .job-dock { right: 10px; bottom: calc(73px + env(safe-area-inset-bottom)); width: calc(100vw - 20px); grid-template-columns: 32px 1fr; }
   .shot-preview-window { right: 10px; bottom: calc(73px + env(safe-area-inset-bottom)); width: calc(100vw - 20px); height: min(520px, calc(100vh - 93px)); min-width: 280px; min-height: 300px; }
-  .job-dock .button { grid-column: 1 / -1; }
+  .job-dock-actions { grid-column: 1 / -1; justify-content: flex-end; }
   .image-viewer-shell { grid-template-rows: 104px minmax(0, 1fr); }
   .image-viewer-shell:is(:fullscreen, .fallback-fullscreen) .image-viewer-bar { height: calc(104px + env(safe-area-inset-top)); }
   .image-viewer-bar { padding: 7px 10px; display: grid; grid-template-columns: 1fr; justify-items: center; gap: 5px; }

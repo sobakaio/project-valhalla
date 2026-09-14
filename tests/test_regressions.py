@@ -1815,6 +1815,57 @@ class DirectorRegressionTests(unittest.TestCase):
         self.assertEqual(preview_job["render_tier"], "preview")
         self.assertNotIn("render_kind", random_job)
 
+    def test_session_log_keeps_completed_image_and_video_jobs_in_memory(self):
+        state = app.WebState()
+        image_job = {
+            "id": "image-session-job",
+            "status": "completed",
+            "workflow_profile": "image-profile",
+            "generation_mode": "random",
+            "render_tier": "production",
+            "total": 1,
+            "completed": 1,
+            "shot_numbers": [1],
+            "progress": 100,
+            "elapsed_seconds": 4.2,
+            "eta_seconds": 0,
+            "outputs": [{"media_type": "image", "image_url": "/image.jpg"}],
+            "current_prompt": {"positive": "image prompt", "negative": ""},
+            "logs": [{"type": "shot_completed", "media_type": "image"}],
+            "cancel_requested": False,
+        }
+        video_job = {
+            "id": "video-session-job",
+            "status": "completed",
+            "workflow_profile": "video-profile",
+            "generation_mode": "video",
+            "render_tier": "production",
+            "total": 1,
+            "completed": 1,
+            "shot_numbers": [],
+            "progress": 100,
+            "elapsed_seconds": 8.7,
+            "eta_seconds": 0,
+            "outputs": [{"media_type": "video", "video_prompt": "video prompt"}],
+            "current_prompt": {"media_type": "video", "positive": "video prompt", "negative": ""},
+            "logs": [{"type": "shot_completed", "media_type": "video"}],
+            "cancel_requested": False,
+        }
+
+        state.remember_session_job(image_job)
+        state.remember_session_job(video_job)
+        state.jobs.clear()
+
+        session = state.jobs_payload()
+        self.assertEqual(
+            [job["id"] for job in session["session_log"]],
+            ["video-session-job", "image-session-job"],
+        )
+        self.assertEqual(
+            state.get_job("video-session-job")["current_prompt"]["positive"],
+            "video prompt",
+        )
+
     def test_render_jobs_queue_in_fifo_order_and_snapshot_the_storyboard(self):
         state, storyboard_id = self.make_storyboard()
         original_prompt = state.get_storyboard(storyboard_id)["shots"][0]["scene"]["pose"]["prompt"]
@@ -1837,6 +1888,42 @@ class DirectorRegressionTests(unittest.TestCase):
             state._run_job_queue()
         self.assertEqual(order, [first["id"], second["id"]])
         self.assertFalse(state._job_worker_running)
+
+    def test_queue_pause_holds_queued_jobs_until_resume(self):
+        state, storyboard_id = self.make_storyboard()
+        with patch.object(app.threading, "Thread") as thread:
+            first = state.create_job(storyboard_id, False, [1])
+            state._job_worker_running = True
+            paused = state.set_queue_paused(True)
+            self.assertTrue(paused["queue_paused"])
+
+            state._run_job_queue()
+            self.assertEqual(state.jobs[first["id"]]["status"], "queued")
+            self.assertFalse(state._job_worker_running)
+
+            resumed = state.set_queue_paused(False)
+
+        self.assertFalse(resumed["queue_paused"])
+        self.assertTrue(state._job_worker_running)
+        self.assertEqual(thread.call_count, 2)
+
+    def test_paused_render_waits_between_units_until_resumed(self):
+        state = app.WebState()
+        job = {"cancel_requested": False}
+        state.set_queue_paused(True)
+        released = threading.Event()
+
+        def wait_for_resume():
+            if state.wait_for_queue_resume(job):
+                released.set()
+
+        worker = threading.Thread(target=wait_for_resume)
+        worker.start()
+        self.assertFalse(released.wait(0.15))
+        state.set_queue_paused(False)
+        self.assertTrue(released.wait(1))
+        worker.join(timeout=1)
+        self.assertFalse(worker.is_alive())
 
     def test_render_jobs_expose_logical_pending_groups_without_queued_eta(self):
         state, storyboard_id = self.make_storyboard()
@@ -3923,6 +4010,17 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("alreadyActive ? 'Added to render queue'", js)
         self.assertIn("queuedJob.queue_position", js)
         self.assertIn("session.active_job.id !== job.id", js)
+
+    def test_job_dock_exposes_queue_pause_and_resume(self):
+        root = Path(app.__file__).parent
+        html = (root / "client" / "client.html").read_text(encoding="utf-8")
+        js = (root / "client" / "client.js").read_text(encoding="utf-8")
+        css = (root / "client" / "client.css").read_text(encoding="utf-8")
+        self.assertIn('id="pause-queue"', html)
+        self.assertIn("/api/queue", js)
+        self.assertIn("state.queuePaused", js)
+        self.assertIn("session.queue_paused", js)
+        self.assertIn(".job-dock-actions", css)
 
     def test_active_render_progress_dock_is_visible_inside_open_lightbox(self):
         js = (Path(app.__file__).parent / "client" / "client.js").read_text(encoding="utf-8")

@@ -327,6 +327,34 @@ class VideoWorkflowTests(unittest.TestCase):
             )
             thread.assert_called_once()
 
+    def test_paused_video_job_waits_before_submitting_to_comfy(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output_dir = Path(temporary)
+            source = output_dir / "frame.png"
+            source.write_bytes(b"source")
+            config_file = output_dir / "config.json"
+            config = {"limits": {"max_jobs": 4}, "storage": {"output_dir": "."}}
+            with (
+                patch.object(app, "load_database", return_value=({"settings": {}}, output_dir / "database.json")),
+                patch.object(app, "load_config", return_value=(config, config_file)),
+                patch.object(app, "proof_directories", return_value=[("output", output_dir)]),
+                patch.object(app, "workflow_source", return_value="profiles"),
+                patch.object(app, "load_workflow_profile_registry", return_value={"production": "ltx-2.5"}),
+                patch.object(app.threading, "Thread"),
+            ):
+                state = app.WebState()
+                payload = state.create_video_job("output", "frame.png", "camera movement", 5)
+                state.set_queue_paused(True)
+                with (
+                    patch.object(app, "load_workflow_runtime", return_value=({}, {})),
+                    patch.object(state, "wait_for_queue_resume", return_value=False),
+                    patch.object(state, "_run_video_job") as run_video,
+                ):
+                    state._run_job(payload["id"])
+
+            run_video.assert_not_called()
+            self.assertEqual(state.jobs[payload["id"]]["status"], "cancelled")
+
     def test_video_eta_uses_first_completed_video_as_queue_reference(self):
         state = app.WebState()
         state._video_queue_reference_seconds = 30.0

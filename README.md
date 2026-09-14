@@ -214,7 +214,8 @@ thousands of DOM cards. Inside a group cards read `Shot N` with `Production` or
 `Preview`, followed by the active frame ETA or `Queued`. At gallery root they read
 `Photoshoot N` or `Random N`, with the tier and the active logical-group ETA. The
 job dock estimates the whole active job; later FIFO jobs remain honestly labeled
-`Queued`.
+`Queued`. The queue can be paused from the job dock: the active render continues,
+while queued image and video jobs wait until the queue is resumed.
 Completed outputs replace their pending positions in place. Pending cards never enter
 filesystem proof listings, request thumbnail bytes, expose prompt metadata, or enable
 fullscreen/download/delete.
@@ -323,6 +324,6 @@ tests/          deterministic regression and stress tests
 
 - Everything runs locally unless `config.json` points to another trusted ComfyUI host.
 - The privacy cover hides images and prompts in the UI; it is not encryption or access control.
-- Server and storyboard state is held in memory; generated media files remain on disk. Video prompts and render mappings are retained in the optional prompt debug log.
+- Server, storyboard, and current-session Logbook state is held in memory; generated media files remain on disk. The optional prompt debug log is a separate diagnostic record and is not used to restore Logbook state.
 - Valhalla does not include an image-quality detector or identity/reference-image pipeline.
 - ComfyUI errors and invalid workflows are reported before or during the affected job without silently skipping failed frames.
