@@ -109,41 +109,10 @@ class VideoWorkflowTests(unittest.TestCase):
 
         self.assertEqual(mapping["image_targets"], [{"node": "395", "input": "image"}])
         self.assertEqual(mapping["prompt"], {"node": "398:376", "input": "value"})
+        self.assertNotIn("prompt_enhancement", mapping)
         self.assertEqual(len(mapping["inference_seed"]), 2)
         self.assertEqual(mapping["duration"], {"node": "398:362", "input": "value"})
         self.assertEqual(mapping["output_nodes"], ["75"])
-
-    def test_video_mapping_detects_optional_prompt_enhancement_switch(self):
-        workflow = copy.deepcopy(VIDEO_WORKFLOW)
-        workflow.update({
-            "enhancer": {
-                "class_type": "TextGenerateLTX2Prompt",
-                "inputs": {"prompt": ["398:376", 0]},
-            },
-            "enhance-switch": {
-                "class_type": "PrimitiveBoolean",
-                "inputs": {"value": False},
-            },
-            "prompt-switch": {
-                "class_type": "ComfySwitchNode",
-                "inputs": {
-                    "switch": ["enhance-switch", 0],
-                    "on_false": ["398:376", 0],
-                    "on_true": ["enhancer", 0],
-                },
-            },
-        })
-
-        mapping = app.detect_video_node_mapping(workflow)
-
-        self.assertEqual(
-            mapping["prompt_enhancement"],
-            {
-                "switch": {"node": "enhance-switch", "input": "value"},
-                "switch_node": "prompt-switch",
-                "enhanced_output": {"node": "enhancer", "output": 0},
-            },
-        )
 
     def test_video_workflow_patch_changes_only_detected_controls(self):
         workflow = copy.deepcopy(VIDEO_WORKFLOW)
@@ -159,45 +128,6 @@ class VideoWorkflowTests(unittest.TestCase):
         self.assertEqual(workflow["398:338"]["inputs"]["noise_seed"], 99)
         self.assertEqual(workflow["398:362"]["inputs"]["value"], 8)
 
-    def test_video_workflow_patch_toggles_optional_prompt_enhancement(self):
-        workflow = copy.deepcopy(VIDEO_WORKFLOW)
-        workflow.update({
-            "enhancer": {
-                "class_type": "TextGenerateLTX2Prompt",
-                "inputs": {"prompt": ["398:376", 0]},
-            },
-            "enhance-switch": {
-                "class_type": "PrimitiveBoolean",
-                "inputs": {"value": False},
-            },
-            "prompt-switch": {
-                "class_type": "ComfySwitchNode",
-                "inputs": {
-                    "switch": ["enhance-switch", 0],
-                    "on_false": ["398:376", 0],
-                    "on_true": ["enhancer", 0],
-                },
-            },
-        })
-        mapping = app.detect_video_node_mapping(workflow)
-
-        app.patch_video_workflow(
-            workflow, mapping, "uploaded.png", "new motion", 99, 8, True
-        )
-        self.assertTrue(workflow["enhance-switch"]["inputs"]["value"])
-
-        app.patch_video_workflow(
-            workflow, mapping, "uploaded.png", "new motion", 99, 8, False
-        )
-        self.assertFalse(workflow["enhance-switch"]["inputs"]["value"])
-
-    def test_video_workflow_patch_rejects_unsupported_prompt_enhancement(self):
-        with self.assertRaisesRegex(app.AppError, "does not support prompt enhancement"):
-            app.patch_video_workflow(
-                copy.deepcopy(VIDEO_WORKFLOW),
-                app.detect_video_node_mapping(VIDEO_WORKFLOW),
-                "uploaded.png", "new motion", 99, 8, True,
-            )
 
     def test_video_generation_links_output_to_source_media_id_in_filename(self):
         class Response:

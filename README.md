@@ -196,8 +196,10 @@ Production jobs are immutable snapshots placed in a shared FIFO queue. Image
 jobs contain one output per shot; a Video job contains one LTX 2.5 image-to-video
 render from a selected proof image. Cancellation takes effect between images,
 and a queued video can be cancelled before it is submitted to ComfyUI.
-Generated images and videos are written to `storage.output_dir`; temporary shot
-previews remain in memory and are discarded when closed.
+Generated images and videos are written to `storage.output_dir`; each generated
+image also gets a hidden `.image-name.json` sidecar containing only the final image
+prompt needed by downstream video prompt generation. Temporary shot previews
+remain in memory and are discarded when closed.
 
 Rendering has two independent dimensions: generation mode (`Photoshoot` or `Random`)
 and render tier (`Production` or `Preview`). Both tiers use the same grouping,
@@ -221,12 +223,19 @@ Output deletion is permanent and requires confirmation. Deletion is disabled whi
 
 ### Creating videos
 
-Open an image in the Proof Gallery and choose **Create video**. Enter the
-motion/camera prompt and a whole-number duration from 1 to 60 seconds. The
+Open an image in the Proof Gallery and choose **Create video**. Enter optional
+motion/camera guidance, then choose **Create prompt**. The generated LTX prompt
+is editable in the second textarea; review it and choose **Queue video** with a
+whole-number duration from 1 to 60 seconds. The
 video uses the selected Video Production profile, is added to the same FIFO GPU
 queue as image renders, and appears in the **Motion** gallery view when ready. While
 the source lightbox remains open, the shared job dock is shown inside it immediately
 after queueing and continues to report progress.
+The prompt enhancer reads the selected image's hidden `.image-name.json` sidecar,
+inserts the image prompt into `{{INPUT_DATA}}`, the first textarea into
+`{{USER_GUIDANCE}}`, and the selected duration into `{{VIDEO_LENGTH}}` in
+`instructions_video`. The final generated prompt is sent to LTX only after it is
+reviewed in the second textarea.
 ComfyUI video outputs are copied without re-encoding, so audio tracks returned
 by the workflow remain embedded. Each generated video filename includes the
 source proof media ID, for example `..._video_from_6909363532413516788_image_01_...`;
@@ -240,11 +249,17 @@ Runtime settings live in `config.json`. Relative paths are resolved from the pro
 |---|---|
 | `server` | listen host and port; keep loopback unless trusted-LAN access is required |
 | `comfy` | ComfyUI URL, image/video workflow sources and profiles, timeouts, Preview size |
-| `prompt_enhancer` | optional local OpenAI-compatible prompt rewrite with independent `production` and `preview` flags; instructions are read from `instructions_path`, sampling uses `temperature`/`top_p`, and authentication uses `LLAMA_API_KEY` |
-| `storage` | output directory, additional proof directories, PNG/JPEG output, JPEG quality, EXIF stripping, optional age-free prompt/result JSONL debug log |
+| `prompt_enhancer` | optional local OpenAI-compatible prompt rewrite with independent `production` and `preview` flags; image instructions are read from `instructions_image`, video instructions are read from `instructions_video`, sampling uses `temperature`/`top_p`, and authentication uses `LLAMA_API_KEY` |
+| `storage` | output directory, additional proof directories, PNG/JPEG output, JPEG quality, and optional age-free prompt/result JSONL debug log |
 | `gallery` | thumbnail size and bounded in-memory thumbnail cache |
 | `interface` | privacy auto-cover intervals |
 | `limits` | scene retries and retained in-memory storyboards, jobs, and previews |
+
+The repository includes safe starter templates at
+`instructions/image-inference.md.example` and
+`instructions/video-inference.md.example`. Copy either template to the matching
+`.md` filename and customize it locally; active instruction files remain ignored
+so private prompt policies are not committed.
 
 Set `storage.prompt_debug_log.enabled` to `true` to append one compact JSONL
 record after every successful render, saved shot preview, or in-memory
@@ -258,10 +273,10 @@ Restart the server after editing `config.json`. The application has no authentic
 When `prompt_enhancer.production` or `prompt_enhancer.preview` is `true`, the
 compiled image prompt for that render tier is sent to the configured local
 `/v1/chat/completions` endpoint before being submitted to ComfyUI. The system
-instruction is read fresh from `instructions_path` for each request and is not
+instruction is read fresh from `instructions_image` for each request and is not
 duplicated in the application code. Set `LLAMA_API_KEY` before starting the
-server when the local LLM endpoint requires authentication. Video prompts and
-the optional LTX Gemma workflow branch are not changed by this setting.
+server when the local LLM endpoint requires authentication. This setting applies
+only to image renders.
 
 Creative records and selection rules live in `database.json`, not `config.json`. Records can be temporarily removed from selection with `"disabled": true`.
 

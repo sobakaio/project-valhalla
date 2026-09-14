@@ -177,7 +177,7 @@ def load_config() -> tuple[dict[str, Any], Path]:
     for tier in ("production", "preview"):
         if not isinstance(prompt_enhancer.get(tier, False), bool):
             raise AppError(f"config.prompt_enhancer.{tier} must be true or false")
-    for key in ("url", "model", "instructions_path", "api_key_env"):
+    for key in ("url", "model", "instructions_image", "instructions_video", "api_key_env"):
         if not isinstance(prompt_enhancer.get(key), str) or not prompt_enhancer[key]:
             raise AppError(f"config.prompt_enhancer.{key} must be a non-empty string")
     enhancer_timeout = prompt_enhancer.get("timeout_seconds")
@@ -218,8 +218,6 @@ def load_config() -> tuple[dict[str, Any], Path]:
     jpeg_quality = storage.get("jpeg_quality")
     if not isinstance(jpeg_quality, int) or isinstance(jpeg_quality, bool) or not 1 <= jpeg_quality <= 100:
         raise AppError("config.storage.jpeg_quality must be an integer from 1 to 100")
-    if not isinstance(storage.get("strip_exif"), bool):
-        raise AppError("config.storage.strip_exif must be true or false")
     prompt_debug_log = storage.get("prompt_debug_log", {})
     if not isinstance(prompt_debug_log, dict):
         raise AppError("config.storage.prompt_debug_log must be an object")
@@ -1457,36 +1455,11 @@ def detect_video_node_mapping(workflow: dict[str, Any]) -> dict[str, Any]:
             prompt_targets.append({"node": node_id, "input": "value"})
     if not prompt_targets:
         raise AppError("Video workflow must expose a text prompt input")
-    # Prefer the explicit prompt primitive over optional prompt-enhancement nodes.
+    # Prefer the explicit prompt primitive over generated prompt nodes.
     prompt_target = next(
         (target for target in prompt_targets if "primitive" in str(workflow[target["node"]].get("class_type", "")).casefold()),
         prompt_targets[0],
     )
-    prompt_enhancement = None
-    enhancement_candidates = []
-    for node_id, node in workflow.items():
-        if not isinstance(node, dict) or "switch" not in str(node.get("class_type", "")).casefold():
-            continue
-        inputs = node.get("inputs") if isinstance(node.get("inputs"), dict) else {}
-        on_false = inputs.get("on_false")
-        on_true = inputs.get("on_true")
-        switch_link = inputs.get("switch")
-        if on_false != [prompt_target["node"], 0] or not (
-            isinstance(on_true, list) and len(on_true) == 2
-            and isinstance(switch_link, list) and len(switch_link) == 2
-        ):
-            continue
-        switch_node = workflow.get(str(switch_link[0]))
-        switch_inputs = switch_node.get("inputs") if isinstance(switch_node, dict) else None
-        if not isinstance(switch_inputs, dict) or not isinstance(switch_inputs.get("value"), bool):
-            continue
-        enhancement_candidates.append({
-            "switch": {"node": str(switch_link[0]), "input": "value"},
-            "switch_node": str(node_id),
-            "enhanced_output": {"node": str(on_true[0]), "output": on_true[1]},
-        })
-    if len(enhancement_candidates) == 1:
-        prompt_enhancement = enhancement_candidates[0]
     seed_targets = []
     for node_id, node in workflow.items():
         if not isinstance(node, dict):
@@ -1551,7 +1524,6 @@ def detect_video_node_mapping(workflow: dict[str, Any]) -> dict[str, Any]:
         "media_type": "video",
         "image_targets": image_targets,
         "prompt": prompt_target,
-        "prompt_enhancement": prompt_enhancement,
         "inference_seed": seed_targets,
         "duration": duration,
         "output_nodes": output_nodes,
@@ -4319,20 +4291,20 @@ def enhance_compiled_prompt(positive: str, render_tier: str) -> tuple[str, bool]
     if not settings.get(render_tier, False):
         return positive, False
     module = require_requests()
-    instructions_path = resolve_path(config_file.parent, settings["instructions_path"])
+    instructions_image_path = resolve_path(config_file.parent, settings["instructions_image"])
     try:
-        instructions = instructions_path.read_text(encoding="utf-8").strip()
+        instructions = instructions_image_path.read_text(encoding="utf-8").strip()
     except OSError as exc:
         raise AppError(
-            f"Could not read prompt enhancer instructions {instructions_path}: {exc}"
+            f"Could not read prompt enhancer instructions {instructions_image_path}: {exc}"
         ) from exc
     if not instructions:
-        raise AppError(f"Prompt enhancer instructions are empty: {instructions_path}")
+        raise AppError(f"Prompt enhancer instructions are empty: {instructions_image_path}")
     messages = [
         {"role": "system", "content": instructions},
         {
             "role": "user",
-            "content": f"<compiled_prompt>\n{positive}\n</compiled_prompt>",
+            "content": f"<input_data>\n{positive}\n</input_data>",
         },
     ]
     headers = {"Content-Type": "application/json"}
@@ -4374,6 +4346,83 @@ def enhance_compiled_prompt(positive: str, render_tier: str) -> tuple[str, bool]
     if not result:
         raise AppError("Prompt enhancer returned an empty prompt")
     return result, True
+
+
+def enhance_video_prompt(
+    source: str, relative_path: str, user_guidance: str, video_length: int
+) -> str:
+    """Build an LTX prompt from the selected image sidecar and user guidance."""
+    source_path = proof_image_path(relative_path, source)
+    if source_path.suffix.lower() not in IMAGE_SUFFIXES or not source_path.is_file():
+        raise AppError("Video prompt enhancement requires an existing image source")
+    metadata_path = output_metadata_path(source_path)
+    try:
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise AppError(f"Image prompt metadata is not available for {source_path.name}") from exc
+    except (OSError, json.JSONDecodeError) as exc:
+        raise AppError(f"Could not read image prompt metadata {metadata_path}: {exc}") from exc
+    image_prompt = metadata.get("image_prompt") if isinstance(metadata, dict) else None
+    if not isinstance(image_prompt, str) or not image_prompt.strip():
+        raise AppError(f"Image prompt metadata is invalid: {metadata_path}")
+    if not isinstance(video_length, int) or isinstance(video_length, bool) or not 1 <= video_length <= 60:
+        raise AppError("Video duration must be a whole number from 1 to 60")
+
+    config, config_file = load_config()
+    settings = config.get("prompt_enhancer", {})
+    instructions_video_path = resolve_path(config_file.parent, settings["instructions_video"])
+    try:
+        instructions = instructions_video_path.read_text(encoding="utf-8").strip()
+    except OSError as exc:
+        raise AppError(
+            f"Could not read prompt enhancer instructions {instructions_video_path}: {exc}"
+        ) from exc
+    if not instructions:
+        raise AppError(f"Prompt enhancer instructions are empty: {instructions_video_path}")
+    instructions = instructions.replace("{{INPUT_DATA}}", image_prompt.strip())
+    instructions = instructions.replace("{{USER_GUIDANCE}}", user_guidance.strip())
+    instructions = instructions.replace("{{VIDEO_LENGTH}}", str(video_length))
+
+    module = require_requests()
+    headers = {"Content-Type": "application/json"}
+    api_key = os.environ.get(settings["api_key_env"], "").strip()
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    endpoint = settings["url"].rstrip("/") + "/v1/chat/completions"
+    try:
+        response = module.post(
+            endpoint,
+            headers=headers,
+            json={
+                "model": settings["model"],
+                "messages": [{"role": "system", "content": instructions}],
+                "temperature": settings["temperature"],
+                "top_p": settings["top_p"],
+                "max_tokens": settings["max_tokens"],
+                "stream": False,
+            },
+            timeout=float(settings["timeout_seconds"]),
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except Exception as exc:
+        raise AppError(f"Video prompt enhancer request failed: {exc}") from exc
+    try:
+        content = payload["choices"][0]["message"]["content"]
+        if isinstance(content, list):
+            content = "".join(
+                part.get("text", "")
+                for part in content
+                if isinstance(part, dict) and isinstance(part.get("text"), str)
+            )
+        result = str(content).strip()
+    except (KeyError, IndexError, TypeError) as exc:
+        raise AppError("Video prompt enhancer returned an invalid chat completion") from exc
+    result = re.sub(r"^```(?:text|markdown)?\s*", "", result, flags=re.IGNORECASE)
+    result = re.sub(r"\s*```$", "", result).strip()
+    if not result:
+        raise AppError("Video prompt enhancer returned an empty prompt")
+    return result
 
 
 def comfy_history_from_valhalla(item: dict[str, Any]) -> bool:
@@ -4559,11 +4608,9 @@ def list_workflow_profiles(
                 )
                 valid, error = True, None
                 negative_conditioning = mapping.get("negative_prompt") is not None if media_type == "image" else True
-                prompt_enhancement = mapping.get("prompt_enhancement") is not None
             except Exception as exc:
                 valid, error = False, str(exc)
                 negative_conditioning = False
-                prompt_enhancement = False
             profiles.append({
                 "id": profile_id,
                 "name": profile_id.replace("-", " ").title(),
@@ -4571,7 +4618,6 @@ def list_workflow_profiles(
                 "valid": valid,
                 "error": error,
                 "negative_conditioning": negative_conditioning,
-                "prompt_enhancement": prompt_enhancement,
             })
     ids = {item["id"] for item in profiles if item["valid"]}
     for mode in (("production", "preview") if media_type == "image" else ("production",)):
@@ -4583,16 +4629,6 @@ def list_workflow_profiles(
         "preview": registry.get("preview"),
         "source": workflow_source(media_type),
         "media_type": media_type,
-        "prompt_enhancement": bool(
-            next(
-                (
-                    item.get("prompt_enhancement")
-                    for item in profiles
-                    if item["valid"] and item["id"] == registry.get("production")
-                ),
-                False,
-            )
-        ) if media_type == "video" else False,
     }
 
 
@@ -4966,12 +5002,9 @@ def encode_output_image(content: bytes, storage: dict[str, Any]) -> tuple[bytes,
     try:
         with Image.open(BytesIO(content)) as source:
             source.load()
-            exif = source.info.get("exif")
-            image = ImageOps.exif_transpose(source) if storage["strip_exif"] else source.copy()
+            image = ImageOps.exif_transpose(source)
             output_format = storage["output_format"]
             save_options: dict[str, Any] = {}
-            if not storage["strip_exif"] and exif:
-                save_options["exif"] = exif
             if output_format in {"jpeg", "jpg"}:
                 if image.mode not in {"RGB", "L"}:
                     if "A" in image.getbands():
@@ -5055,6 +5088,11 @@ def generate_one(
             temporary = output_dir / f".{destination.name}.{uuid.uuid4().hex}.tmp"
             temporary.write_bytes(encoded)
             temporary.replace(destination)
+            try:
+                write_output_prompt_metadata(destination, positive)
+            except Exception:
+                destination.unlink(missing_ok=True)
+                raise
             saved.append(destination)
     if not saved:
         raise AppError(f"ComfyUI completed prompt_id {prompt_id} but returned no images")
@@ -5084,7 +5122,7 @@ def upload_comfy_image(
 
 def patch_video_workflow(
     workflow: dict[str, Any], mapping: dict[str, Any], image_name: str,
-    prompt: str, seed: int, duration: int, prompt_enhancement: bool = False,
+    prompt: str, seed: int, duration: int,
 ) -> None:
     targets = list(mapping.get("image_targets", []))
     try:
@@ -5096,12 +5134,6 @@ def patch_video_workflow(
             workflow[target["node"]]["inputs"][target["input"]] = seed
         target = mapping["duration"]
         workflow[target["node"]]["inputs"][target["input"]] = duration
-        enhancer = mapping.get("prompt_enhancement")
-        if prompt_enhancement and enhancer is None:
-            raise AppError("Selected Video workflow does not support prompt enhancement")
-        if enhancer is not None:
-            target = enhancer["switch"]
-            workflow[target["node"]]["inputs"][target["input"]] = prompt_enhancement
     except (KeyError, TypeError) as exc:
         raise AppError(f"Video workflow mapping is no longer valid: {exc}") from exc
 
@@ -5109,14 +5141,12 @@ def patch_video_workflow(
 def generate_video_one(
     db: dict[str, Any], source_path: Path, source_item: dict[str, Any],
     prompt: str, seed: int, duration: int, workflow_template: dict[str, Any],
-    mapping: dict[str, Any], run_id: str, prompt_enhancement: bool = False,
+    mapping: dict[str, Any], run_id: str,
 ) -> tuple[str, list[Path]]:
     workflow = copy.deepcopy(workflow_template)
     session, url, timeout = comfy_session(db)
     image_name = upload_comfy_image(session, url, timeout, source_path)
-    patch_video_workflow(
-        workflow, mapping, image_name, prompt, seed, duration, prompt_enhancement
-    )
+    patch_video_workflow(workflow, mapping, image_name, prompt, seed, duration)
     try:
         response = session.post(
             f"{url}/prompt", json=valhalla_prompt_request(workflow), timeout=timeout
@@ -8348,7 +8378,6 @@ class WebState:
     def create_video_job(
         self, source: str, relative_path: str, prompt: str, duration: int,
         source_metadata: dict[str, Any] | None = None,
-        prompt_enhancement: bool = False,
     ) -> dict[str, Any]:
         db, db_path = load_database()
         source = str(source)
@@ -8361,8 +8390,6 @@ class WebState:
             raise AppError("Video prompt is too long (maximum 6000 characters)")
         if isinstance(duration, bool) or not isinstance(duration, int) or not 1 <= duration <= 60:
             raise AppError("Video duration must be an integer from 1 to 60 seconds")
-        if not isinstance(prompt_enhancement, bool):
-            raise AppError("Video prompt enhancement must be a boolean")
         source_path = proof_image_path(str(relative_path), str(source))
         if source_path.suffix.lower() not in IMAGE_SUFFIXES or not source_path.is_file():
             raise AppError("Video source must be an existing generated image")
@@ -8377,14 +8404,6 @@ class WebState:
             workflow_profile = load_workflow_profile_registry(db, db_path, "video").get("production")
             if not workflow_profile:
                 raise AppError("No Video workflow profile is selected")
-        if prompt_enhancement:
-            mapping = live_mapping
-            if mapping is None:
-                _, mapping = load_workflow_runtime(
-                    db, db_path, False, workflow_profile, "video"
-                )
-            if mapping.get("prompt_enhancement") is None:
-                raise AppError("Selected Video workflow does not support prompt enhancement")
         seed = secrets.randbelow(2**63)
         job_id = uuid.uuid4().hex
         source_record = {
@@ -8421,8 +8440,6 @@ class WebState:
             "_shots": [], "_workflow_template": live_workflow, "_workflow_mapping": live_mapping,
             "_frame_durations": [], "_media_type": "video", "_video_source": source_record,
             "_video_prompt": prompt, "_video_duration": duration, "_video_seed": seed,
-            "prompt_enhancement": prompt_enhancement,
-            "_video_prompt_enhancement": prompt_enhancement,
         }
         start_worker = False
         with self.lock:
@@ -8864,18 +8881,16 @@ class WebState:
             job["current_prompt"] = {
                 "media_type": "video", "positive": prompt, "negative": "",
                 "seed": seed, "source_image": source["name"],
-                "prompt_enhancement": job.get("_video_prompt_enhancement", False),
             }
             job["logs"].append({
                 "time": _iso_now(), "type": "shot_started", "message": "Rendering video",
                 "shot": None, "position": 1, "total": 1, "positive": prompt,
                 "negative": "", "seed": seed, "source_image": source["name"],
-                "prompt_enhancement": job.get("_video_prompt_enhancement", False),
                 "media_type": "video",
             })
         prompt_id, paths = generate_video_one(
             db, source_path, source, prompt, seed, job["_video_duration"],
-            workflow, mapping, job["_run_id"], job.get("_video_prompt_enhancement", False),
+            workflow, mapping, job["_run_id"],
         )
         for path in paths:
             append_prompt_debug_record({
@@ -8883,7 +8898,6 @@ class WebState:
                 "render_tier": "production", "result": path.name, "job_id": job_id,
                 "source_image": source["name"], "source_key": f"{source['source']}:{source['relative_path']}",
                 "prompt": prompt, "seed": seed, "duration": job["_video_duration"],
-                "prompt_enhancement": job.get("_video_prompt_enhancement", False),
                 "prompt_id": prompt_id, "workflow_profile": job["workflow_profile"],
                 "workflow_source": job["workflow_source"],
             })
@@ -9175,8 +9189,27 @@ def output_directory() -> Path:
 
 
 def output_metadata_path(path: Path) -> Path:
-    """Return the legacy sidecar path so old files are cleaned up on deletion."""
-    return path.with_name(f".{path.name}.meta.json")
+    """Return the hidden sidecar path for generated media metadata."""
+    return path.with_name(f".{path.stem}.json")
+
+
+def write_output_prompt_metadata(path: Path, image_prompt: str) -> None:
+    """Persist only the image prompt needed by downstream media workflows."""
+    metadata_path = output_metadata_path(path)
+    temporary = metadata_path.with_name(f".{metadata_path.name}.{uuid.uuid4().hex}.tmp")
+    try:
+        temporary.write_text(
+            json.dumps(
+                {"image_prompt": image_prompt},
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ),
+            encoding="utf-8",
+        )
+        temporary.replace(metadata_path)
+    except OSError as exc:
+        temporary.unlink(missing_ok=True)
+        raise AppError(f"Could not write media metadata {metadata_path}: {exc}") from exc
 
 
 def proof_directories() -> list[tuple[str, Path]]:
@@ -9776,8 +9809,17 @@ class ValhallaHandler(BaseHTTPRequestHandler):
                     str(payload.get("prompt", "")),
                     _safe_int(payload.get("duration"), "Video duration", 1, 60),
                     payload.get("source_metadata") if isinstance(payload.get("source_metadata"), dict) else None,
-                    payload.get("prompt_enhancement", False),
                 ), HTTPStatus.ACCEPTED)
+            elif path == "/api/video-prompts":
+                payload = self.read_json()
+                self.send_json({
+                    "prompt": enhance_video_prompt(
+                        str(payload.get("source", "output")),
+                        str(payload.get("relative_path", "")),
+                        str(payload.get("user_guidance", "")),
+                        _safe_int(payload.get("video_length"), "Video duration", 1, 60),
+                    ),
+                })
             elif path == "/api/prompt-enhancer/settings":
                 payload = self.read_json()
                 self.send_json(save_prompt_enhancer_settings(

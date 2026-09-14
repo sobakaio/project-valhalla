@@ -29,7 +29,8 @@
     "preview": false,
     "url": "http://127.0.0.1:1234",
     "model": "gemma4-12b-q4",
-    "instructions_path": "./HERETIC.md",
+    "instructions_image": "./instructions/image-inference.md",
+    "instructions_video": "./instructions/video-inference.md",
     "api_key_env": "LLAMA_API_KEY",
     "timeout_seconds": 120,
     "max_tokens": 450,
@@ -41,7 +42,6 @@
     "proofs_dir": [],
     "output_format": "jpg",
     "jpeg_quality": 95,
-    "strip_exif": true,
     "prompt_debug_log": {
       "enabled": true,
       "path": "./outputs/prompt-debug.jsonl"

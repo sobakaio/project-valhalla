@@ -489,6 +489,7 @@ input[type="range"]:disabled { cursor: not-allowed; opacity: .42; }
 dialog:not(.image-viewer) { max-height: calc(100dvh - 36px); overflow: hidden; }
 dialog::backdrop { background: rgb(6 8 12 / 58%); backdrop-filter: blur(3px); }
 .small-dialog { width: min(480px, calc(100vw - 36px)); }
+@media (min-width: 821px) { #video-dialog { width: min(624px, calc(100vw - 36px)); } }
 dialog.image-viewer { width: 100vw; max-width: none; height: 100vh; max-height: none; margin: 0; padding: 0; border: 0; border-radius: 0; background: #050608; color: #f5f6f8; overflow: hidden; }
 dialog.image-viewer[open] { display: block; }
 dialog.image-viewer::backdrop { background: #050608; backdrop-filter: none; }
@@ -577,6 +578,7 @@ dialog.image-viewer::backdrop { background: #050608; backdrop-filter: none; }
 .dialog-footer .button { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 #video-dialog .dialog-body { display: grid; gap: 16px; }
 #video-dialog .field { min-width: 0; }
+.video-prompt-actions { display: flex; justify-content: flex-end; }
 .video-source { min-width: 0; display: grid; gap: 4px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); }
 .video-source > span { margin: 0; color: var(--muted); font-size: 0.6875rem; font-weight: 650; }
 .video-source > strong { min-width: 0; color: var(--faint); font-size: 0.6875rem; font-weight: 500; line-height: 1.45; overflow-wrap: anywhere; word-break: break-word; }

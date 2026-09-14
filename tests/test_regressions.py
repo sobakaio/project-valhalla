@@ -1,5 +1,6 @@
 import copy
 import concurrent.futures
+import json
 import threading
 import time
 import tempfile
@@ -3404,14 +3405,15 @@ class OutputDeletionRegressionTests(unittest.TestCase):
             self.assertTrue((output_dir / "nested" / "hidden.png").is_file())
             self.assertFalse((archive_dir / "same.png").exists())
 
-    def test_output_encoder_creates_jpeg_and_strips_exif(self):
+    @unittest.skipIf(app.Image is None, "Pillow is unavailable")
+    def test_output_encoder_always_strips_exif(self):
         source = app.Image.new("RGB", (12, 8), "#7357d8")
         exif = app.Image.Exif()
         exif[0x010E] = "private metadata"
         buffer = app.BytesIO()
         source.save(buffer, format="PNG", exif=exif)
         encoded, suffix = app.encode_output_image(buffer.getvalue(), {
-            "output_format": "jpeg", "jpeg_quality": 95, "strip_exif": True,
+            "output_format": "jpeg", "jpeg_quality": 95,
         })
         self.assertEqual(suffix, ".jpg")
         with app.Image.open(app.BytesIO(encoded)) as saved:
@@ -3419,18 +3421,36 @@ class OutputDeletionRegressionTests(unittest.TestCase):
             self.assertEqual(saved.size, (12, 8))
             self.assertFalse(saved.getexif())
 
-        retained, _ = app.encode_output_image(buffer.getvalue(), {
-            "output_format": "jpeg", "jpeg_quality": 95, "strip_exif": False,
-        })
-        with app.Image.open(app.BytesIO(retained)) as saved:
-            self.assertEqual(saved.getexif().get(0x010E), "private metadata")
-
         jpg_alias, suffix = app.encode_output_image(buffer.getvalue(), {
-            "output_format": "jpg", "jpeg_quality": 95, "strip_exif": True,
+            "output_format": "jpg", "jpeg_quality": 95,
         })
         self.assertEqual(suffix, ".jpg")
         with app.Image.open(app.BytesIO(jpg_alias)) as saved:
             self.assertEqual(saved.format, "JPEG")
+
+    def test_output_prompt_sidecar_contains_only_the_image_prompt(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "generated.jpg"
+            app.write_output_prompt_metadata(target, "a generated image prompt")
+            metadata = json.loads(app.output_metadata_path(target).read_text(encoding="utf-8"))
+
+        self.assertEqual(app.output_metadata_path(target).name, ".generated.json")
+        self.assertEqual(metadata, {"image_prompt": "a generated image prompt"})
+
+    def test_deleting_output_removes_prompt_sidecar(self):
+        state = app.WebState()
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "generated.jpg"
+            target.write_bytes(b"image")
+            app.write_output_prompt_metadata(target, "a generated image prompt")
+            with (
+                patch.object(app, "WEB_STATE", state),
+                patch.object(app, "output_directory", return_value=Path(directory)),
+            ):
+                app.delete_output_image(target.name)
+
+            self.assertFalse(target.exists())
+            self.assertFalse(app.output_metadata_path(target).exists())
 
     def test_gallery_benchmark_creates_synthetic_records_without_copying_files(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -3759,14 +3779,22 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn(".director-quick-actions button:hover { background: var(--surface-3); }", css)
         self.assertNotIn("director-quick-actions button.variation-action {", css)
 
-    def test_video_dialog_exposes_optional_gemma_prompt_enhancement(self):
+    def test_video_dialog_has_no_prompt_enhancement_controls(self):
         root = Path(app.__file__).parent
         html = (root / "client" / "client.html").read_text(encoding="utf-8")
         js = (root / "client" / "client.js").read_text(encoding="utf-8")
-        self.assertIn('id="video-prompt-enhancement-row"', html)
-        self.assertIn('id="video-prompt-enhancement"', html)
-        self.assertIn("prompt_enhancement: enhancementInput.checked", js)
-        self.assertIn("videoPromptEnhancementSupported", js)
+        css = (root / "client" / "client.css").read_text(encoding="utf-8")
+        self.assertIn('id="video-prompt-guidance"', html)
+        self.assertIn('id="video-create-prompt"', html)
+        self.assertIn("api('/api/video-prompts'", js)
+        self.assertIn("user_guidance: guidance", js)
+        self.assertIn("video_length: duration", js)
+        self.assertIn("localStorage.getItem('valhalla-video-prompt')", js)
+        self.assertIn("localStorage.setItem('valhalla-video-prompt',", js)
+        self.assertIn("#video-dialog { width: min(624px, calc(100vw - 36px)); }", css)
+        self.assertNotIn("video-prompt-enhancement", html)
+        self.assertNotIn("videoPromptEnhancement", js)
+        self.assertNotIn("prompt_enhancement", js)
 
     def test_storyboard_cards_show_subject_before_set_details(self):
         root = Path(app.__file__).parent
@@ -5299,7 +5327,7 @@ class WorkflowProfileTests(unittest.TestCase):
             set(config["storage"]),
             {
                 "output_dir", "proofs_dir", "output_format", "jpeg_quality",
-                "strip_exif", "prompt_debug_log",
+                "prompt_debug_log",
             },
         )
         self.assertEqual(
@@ -5329,6 +5357,11 @@ class WorkflowProfileTests(unittest.TestCase):
 
     def test_prompt_enhancer_reads_instructions_from_file_and_sends_compiled_prompt(self):
         config, _ = app.load_config()
+        self.assertNotIn("instructions_path", config["prompt_enhancer"])
+        self.assertEqual(
+            config["prompt_enhancer"]["instructions_video"],
+            "./instructions/video-inference.md",
+        )
 
         class Response:
             def raise_for_status(self):
@@ -5351,7 +5384,7 @@ class WorkflowProfileTests(unittest.TestCase):
             instructions.write_text("instructions from disk", encoding="utf-8")
             config["prompt_enhancer"].update(
                 production=True,
-                instructions_path="ENCHANCER.md",
+                instructions_image="ENCHANCER.md",
             )
             config_file = root / "config.json"
             config_file.write_text(app.json.dumps(config), encoding="utf-8")
@@ -5371,7 +5404,7 @@ class WorkflowProfileTests(unittest.TestCase):
             "http://127.0.0.1:1234/v1/chat/completions",
         )
         request = fake_requests.calls[0][1]
-        self.assertEqual(request["json"]["model"], "qwen3.5-4b-enhancer")
+        self.assertEqual(request["json"]["model"], config["prompt_enhancer"]["model"])
         self.assertEqual(request["json"]["temperature"], config["prompt_enhancer"]["temperature"])
         self.assertEqual(request["json"]["top_p"], config["prompt_enhancer"]["top_p"])
         self.assertEqual(request["json"]["max_tokens"], config["prompt_enhancer"]["max_tokens"])
@@ -5381,7 +5414,63 @@ class WorkflowProfileTests(unittest.TestCase):
         )
         self.assertEqual(
             request["json"]["messages"][1]["content"],
-            "<compiled_prompt>\ncompiled details\n</compiled_prompt>",
+            "<input_data>\ncompiled details\n</input_data>",
+        )
+
+    def test_video_prompt_enhancer_uses_image_sidecar_and_guidance(self):
+        config, _ = app.load_config()
+
+        class Response:
+            def raise_for_status(self):
+                pass
+
+            def json(self):
+                return {"choices": [{"message": {"content": "generated LTX motion"}}]}
+
+        class Requests:
+            def __init__(self):
+                self.calls = []
+
+            def post(self, url, **kwargs):
+                self.calls.append((url, kwargs))
+                return Response()
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            image = root / "frame.jpg"
+            image.write_bytes(b"image")
+            (root / ".frame.json").write_text(
+                json.dumps({"image_prompt": "optimized image scene"}),
+                encoding="utf-8",
+            )
+            instructions = root / "video-inference.md"
+            instructions.write_text(
+                "<input_data>\n{{INPUT_DATA}}\n</input_data>\n"
+                "<user_guidance>\n{{USER_GUIDANCE}}\n</user_guidance>\n"
+                "<video_length>\n{{VIDEO_LENGTH}}\n</video_length>",
+                encoding="utf-8",
+            )
+            config["prompt_enhancer"]["instructions_video"] = "video-inference.md"
+            config_file = root / "config.json"
+            config_file.write_text(json.dumps(config), encoding="utf-8")
+            fake_requests = Requests()
+            with (
+                patch.object(app, "config_path", return_value=config_file),
+                patch.object(app, "proof_directories", return_value=[("output", root)]),
+                patch.object(app, "output_directory", return_value=root),
+                patch.object(app, "requests", fake_requests),
+            ):
+                prompt = app.enhance_video_prompt(
+                    "output", "frame.jpg", "make her turn and speak softly", 7
+                )
+
+        self.assertEqual(prompt, "generated LTX motion")
+        request = fake_requests.calls[0][1]
+        self.assertEqual(
+            request["json"]["messages"][0]["content"],
+            "<input_data>\noptimized image scene\n</input_data>\n"
+            "<user_guidance>\nmake her turn and speak softly\n</user_guidance>\n"
+            "<video_length>\n7\n</video_length>",
         )
 
     def test_prompt_enhancer_flags_are_independent(self):
@@ -5402,7 +5491,7 @@ class WorkflowProfileTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             (root / "ENCHANCER.md").write_text("instructions", encoding="utf-8")
-            config["prompt_enhancer"]["instructions_path"] = "ENCHANCER.md"
+            config["prompt_enhancer"]["instructions_image"] = "ENCHANCER.md"
             config_file = root / "config.json"
             config_file.write_text(app.json.dumps(config), encoding="utf-8")
             with (
@@ -5645,7 +5734,7 @@ class WorkflowProfileTests(unittest.TestCase):
                 },
                 "storage": {
                     "output_dir": "./outputs", "proofs_dir": [],
-                    "output_format": "png", "jpeg_quality": 95, "strip_exif": True,
+                    "output_format": "png", "jpeg_quality": 95,
                 },
                 "gallery": {"thumbnail_cache_mb": 512, "thumbnail_max_edge": 512},
                 "interface": {"privacy": {"auto_cover_minutes": [5, 15]}},

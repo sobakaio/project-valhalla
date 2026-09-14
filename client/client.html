@@ -383,13 +383,10 @@
     <div class="dialog-header"><div><p class="eyebrow">LTX 2.5</p><h2>Create video</h2></div><button class="icon-button video-dialog-close" aria-label="Close">×</button></div>
     <div class="dialog-body">
       <div class="video-source"><span>Source image</span><strong id="video-source-label">—</strong></div>
-      <label class="field"><span>Video prompt</span><textarea id="video-prompt" rows="7" maxlength="6000" placeholder="Describe the motion, camera movement, and changes in the scene…"></textarea></label>
+      <label class="field"><span>Prompt guidance</span><textarea id="video-prompt-guidance" rows="4" maxlength="4000" placeholder="Describe the motion, camera movement, speech, timing, or changes you want…"></textarea></label>
+      <div class="video-prompt-actions"><button class="button ghost" id="video-create-prompt" type="button">Create prompt</button></div>
+      <label class="field"><span>Video prompt</span><textarea id="video-prompt" rows="7" maxlength="6000" placeholder="Generated LTX prompt; review or edit it before queueing…"></textarea></label>
       <label class="field"><span>Duration (seconds)</span><input id="video-duration" type="number" min="1" max="60" step="1" value="5"></label>
-      <label class="switch-row video-prompt-enhancement-row hidden" id="video-prompt-enhancement-row" title="Use the optional ComfyUI Gemma prompt enhancer">
-        <span><strong>Prompt enhance</strong></span>
-        <input id="video-prompt-enhancement" type="checkbox">
-        <i aria-hidden="true"></i>
-      </label>
     </div>
     <div class="dialog-footer"><button class="button ghost video-dialog-close">Cancel</button><button class="button primary" id="video-submit">Queue video</button></div>
   </dialog>
