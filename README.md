@@ -1,6 +1,6 @@
 # Valhalla Photo Studio
 
-Valhalla Photo Studio 1.7.1 is a local production workspace for generating coherent Covered, Revealing, and Explicit photoshoots of adult women with your own ComfyUI instance. It turns creative direction into complete, automatically composed prompts, keeps the subject and visual story consistent across a set, and sends the approved shots to ComfyUI for image inference and Motion proofs.
+Valhalla Photo Studio 1.7.2 is a local production workspace for generating coherent Covered, Revealing, and Explicit photoshoots of adult women with your own ComfyUI instance. It turns creative direction into complete, automatically composed prompts, keeps the subject and visual story consistent across a set, and sends the approved shots to ComfyUI for image inference and Motion proofs.
 
 The browser interface brings the full workflow together: storyboard planning, prompt automation, compatible scene and wardrobe selection, shot-level direction, Preview and Production rendering, progress tracking, and a built-in Proofs gallery for organizing and reviewing generated images and Motion outputs. Every rule-compatible storyboard is resolved before GPU work begins, so poses, wardrobe, scene geometry, camera direction, content progression, prompts, and seeds can be inspected or edited before an expensive render.
 
@@ -8,9 +8,9 @@ The application is designed for a private workstation or trusted LAN. It has no 
 
 > **Adult-content notice:** the production catalog supports Covered, Revealing, and Explicit solo-adult modes. All configured subjects are adults aged 21–23. Use the application only where its content is lawful and appropriate.
 
-## Version 1.7.1
+## Version 1.7.2
 
-This release adds the LTX 2.5 video workflow and keeps image and video render history together in the current-session Logbook. Queued renders remain separate when several videos share a source image, completed outputs retain their exact source identity, and Image and Video workflow profile updates can proceed independently.
+This release adds a universal Settings workspace with separate Image and Video workflow and prompt-enhancer configuration, supports multiple enhancer models and instruction files, and refines the settings and capture workflows. It also keeps the Covered, Revealing, and Explicit content terminology consistent across the product.
 
 ## Highlights
 
@@ -52,10 +52,10 @@ This release adds the LTX 2.5 video workflow and keeps image and video render hi
 
 ### Monitor and configure production
 
-| Production Logbook | Rendering profiles |
+| Production Logbook | Settings |
 |---|---|
-| [![Production Logbook with progress, rendered image, and prompts](screenshots/7-logbook.jpg)](screenshots/7-logbook.jpg) | [![ComfyUI rendering profile manager](screenshots/8-rendering-profiles.jpg)](screenshots/8-rendering-profiles.jpg) |
-| Track progress, timing, outputs, prompts, seeds, and generation events. | Capture and select independent ComfyUI workflows for Production and Preview. |
+| [![Production Logbook with progress, rendered image, and prompts](screenshots/7-logbook.jpg)](screenshots/7-logbook.jpg) | [![Settings with workflow profiles](screenshots/8-rendering-profiles.jpg)](screenshots/8-rendering-profiles.jpg) |
+| Track progress, timing, outputs, prompts, seeds, and generation events. | Configure independent ComfyUI workflows and prompt enhancement for each media type. |
 
 ## Requirements
 
@@ -82,7 +82,7 @@ ComfyUI defaults to `http://127.0.0.1:8188`. Valhalla defaults to port `8765` an
    ./launcher.sh
    ```
 
-3. Open **System → Rendering profiles** in Valhalla.
+3. Open **System → Settings** in Valhalla.
 4. Capture the latest successful ComfyUI workflow, give it a clear profile name, and select it for Production and Preview.
 5. Configure a batch in **Studio**, then choose **Resolve storyboard**.
 6. Review the planned shots or refine them in **Director**.
@@ -101,9 +101,9 @@ python3 server.py --no-browser
 
 Stop the server with `Ctrl+C`. Closing the browser does not stop the server or an active render job.
 
-## Rendering profiles
+## Settings
 
-Valhalla renders through named ComfyUI API workflows stored in `workflows/`. A profile is captured from the latest successful ComfyUI history entry and validated before it can be selected.
+The Settings dialog manages named ComfyUI API workflows stored in `workflows/`. A profile is captured from the latest successful ComfyUI history entry and validated before it can be selected.
 
 A usable profile must expose unambiguous nodes for:
 
@@ -273,11 +273,13 @@ Runtime settings live in `config.json`. Relative paths are resolved from the pro
 |---|---|
 | `server` | listen host and port; keep loopback unless trusted-LAN access is required |
 | `comfy` | ComfyUI URL, image/video workflow sources and profiles, timeouts, Preview size |
-| `prompt_enhancer` | optional local OpenAI-compatible prompt rewrite with independent `production` and `preview` flags; image instructions are read from `instructions_image`, video instructions are read from `instructions_video`, sampling uses `temperature`/`top_p`, and authentication uses `LLAMA_API_KEY` |
+| `prompt_enhancer` | optional local OpenAI-compatible prompt rewrite with independent `production` and `preview` flags; `models` is an array of `{ "model": "..." }` entries, while `image_model` and `video_model` select independently from it; image instructions are read from `instructions_image`, video instructions are read from `instructions_video`, sampling uses `temperature`/`top_p`, and authentication uses `LLAMA_API_KEY` |
 | `storage` | output directory, additional proof directories, PNG/JPEG output, JPEG quality, and optional age-free prompt/result JSONL debug log |
 | `gallery` | thumbnail size and bounded in-memory thumbnail cache |
 | `interface` | privacy auto-cover intervals |
 | `limits` | scene retries and retained in-memory storyboards, jobs, and previews |
+
+The **Settings → Prompt enhancer** tab lists the available Image and Video instruction files from `instructions/` and saves the selected paths back to `instructions_image` and `instructions_video`.
 
 The repository includes safe starter templates at
 `instructions/image-inference.md.example` and

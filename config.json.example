@@ -28,7 +28,16 @@
     "production": false,
     "preview": false,
     "url": "http://127.0.0.1:1234",
-    "model": "gemma4-12b-q4",
+    "models": [
+      {
+        "model": "qwen3.8-27b-q4-heretic"
+      },
+      {
+        "model": "gemma4-12b-q4-heretic"
+      }
+    ],
+    "image_model": "qwen3.8-27b-q4-heretic",
+    "video_model": "qwen3.8-27b-q4-heretic",
     "instructions_image": "./instructions/image-inference.md.example",
     "instructions_video": "./instructions/video-inference.md.example",
     "api_key_env": "LLAMA_API_KEY",

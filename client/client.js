@@ -55,6 +55,7 @@ const state = {
   queuePaused: false,
   promptPreparation: { production: null, preview: null },
   promptPreparationTimer: null,
+  promptPreparationRequestId: 0,
   promptHydration: new Set(),
   sessionLog: [],
   loggerJobId: null,
@@ -112,6 +113,7 @@ const state = {
   workflowProfiles: null,
   workflowProfilesByMedia: { image: null, video: null },
   profileMedia: sessionStorage.getItem('valhalla-profile-media') === 'video' ? 'video' : 'image',
+  promptEnhancerMedia: sessionStorage.getItem('valhalla-prompt-enhancer-media') === 'video' ? 'video' : 'image',
   videoSource: null,
   proofsPositions: (() => {
     try { return JSON.parse(sessionStorage.getItem('valhalla-proofs-positions') || '{}'); }
@@ -131,6 +133,7 @@ const storyboardMeta = $('#storyboard-meta');
 const imageDialog = $('#image-dialog');
 const videoDialog = $('#video-dialog');
 const deleteDialog = $('#delete-dialog');
+const settingsDialog = $('#settings-dialog');
 const promptDialog = $("#prompt-dialog");
 const directorCustomDialog = $("#director-custom-dialog");
 const updateStoryboardDialog = $('#update-storyboard-dialog');
@@ -1875,13 +1878,13 @@ function setRenderMode(mode) {
   state.renderAction = 'render';
   sessionStorage.setItem('valhalla-render-mode', state.renderMode);
   syncRenderControls();
-  syncPromptPreparation();
+  syncPromptPreparation(state.renderMode);
 }
 
 function setRenderAction(action) {
   state.renderAction = action === 'enhance' ? 'enhance' : 'render';
   syncRenderControls();
-  syncPromptPreparation();
+  syncPromptPreparation(state.renderMode);
 }
 
 function promptPreparationText(payload) {
@@ -1962,14 +1965,16 @@ async function hydratePromptShots(shots, tier = state.renderMode) {
 async function syncPromptPreparation(tierOverride = null) {
   const board = state.storyboard;
   if (!board) {
+    state.promptPreparationRequestId += 1;
     $$('[data-prompt-preparation]').forEach((button) => { button.disabled = true; });
     $$('[data-prompt-preparation-status]').forEach((status) => { status.textContent = 'Not prepared'; });
     return;
   }
   const tier = tierOverride || state.renderMode;
+  const requestId = ++state.promptPreparationRequestId;
   try {
     const payload = await api(`/api/prompt-preparation?storyboard_id=${encodeURIComponent(board.id)}&tier=${tier}`);
-    if (state.storyboard?.id !== board.id) return;
+    if (state.storyboard?.id !== board.id || requestId !== state.promptPreparationRequestId) return;
     state.promptPreparation[tier] = payload;
     updatePromptStatusIndicators(payload, tier);
     const running = payload.status === 'running';
@@ -1981,6 +1986,7 @@ async function syncPromptPreparation(tierOverride = null) {
     } else {
       state.promptJob = null;
       if (previousPromptJob) {
+        state.renderAction = 'render';
         if (!isRenderActive()) jobDock.classList.add('hidden');
         if (payload.status === 'cancelled') {
           toast('Prompt enhancement cancelled', `${payload.counts?.ready || 0} of ${payload.total} prompts ready.`);
@@ -1989,6 +1995,7 @@ async function syncPromptPreparation(tierOverride = null) {
         } else {
           toast('Prompt enhancement complete', `${payload.counts?.ready || 0} of ${payload.total} prompts ready.`, 'success');
         }
+        syncRenderControls();
       }
     }
     $$('[data-prompt-preparation-status]').forEach((status) => {
@@ -2015,9 +2022,10 @@ async function syncPromptPreparation(tierOverride = null) {
       state.promptPreparationTimer = null;
     }
     if (running) {
-      state.promptPreparationTimer = setTimeout(syncPromptPreparation, 1000);
+      state.promptPreparationTimer = setTimeout(() => syncPromptPreparation(tier), 1000);
     }
   } catch (error) {
+    if (state.storyboard?.id !== board.id || requestId !== state.promptPreparationRequestId) return;
     $$('[data-prompt-preparation-status]').forEach((status) => { status.textContent = 'Status unavailable'; });
   }
 }
@@ -2028,8 +2036,7 @@ async function preparePrompts(button) {
     toast('Prompt enhancement unavailable', 'Wait for the active render to finish or cancel it first.', 'error');
     return;
   }
-  const menu = button.closest('[data-render-mode]');
-  if (menu) menu.open = false;
+  closeRenderModeMenu(button);
   button.disabled = true;
   try {
     const payload = await api('/api/prompt-preparation', {
@@ -2040,16 +2047,29 @@ async function preparePrompts(button) {
       state.promptJob = payload.job;
       showJob();
     }
-    await syncPromptPreparation();
+    await syncPromptPreparation(state.renderMode);
     if (payload.status === 'disabled') {
+      state.renderAction = 'render';
+      syncRenderControls();
       toast('Prompt enhancer is disabled', 'Enable it for this render tier in System settings.', 'error');
     } else if (payload.status === 'unavailable') {
+      state.renderAction = 'render';
+      syncRenderControls();
       toast('Prompt enhancer is unavailable', 'Check the selected instructions file.', 'error');
     }
   } catch (error) {
     button.disabled = false;
+    state.renderAction = 'render';
+    syncRenderControls();
     toast('Prompt preparation failed', error.message, 'error');
   }
+}
+
+function closeRenderModeMenu(element) {
+  const menu = element?.closest('[data-render-mode]');
+  if (!menu) return;
+  menu.open = false;
+  menu.removeAttribute('open');
 }
 
 function syncRenderControls() {
@@ -2065,7 +2085,8 @@ function syncRenderControls() {
     control.classList.toggle('preview', preview);
   });
   $$('[data-render-mode-choice]').forEach((button) => {
-    const selected = button.dataset.renderModeChoice === state.renderMode;
+    const selected = state.renderAction !== 'enhance'
+      && button.dataset.renderModeChoice === state.renderMode;
     button.classList.toggle('active', selected);
     button.setAttribute('aria-pressed', String(selected));
     button.disabled = active || promptActive;
@@ -4407,10 +4428,11 @@ async function manageWorkflowProfile(button) {
 }
 
 async function openWorkflowProfiles() {
-  $('#system-settings').open = false;
   closeMobileSystem();
-  $('#capture-dialog').showModal();
+  settingsDialog.showModal();
+  setSettingsTab(sessionStorage.getItem('valhalla-settings-tab') || 'workflows');
   setProfileMedia(state.profileMedia);
+  setPromptEnhancerMedia(state.promptEnhancerMedia);
   await Promise.allSettled([
     loadWorkflowProfileMedia('image'),
     loadWorkflowProfileMedia('video'),
@@ -4421,6 +4443,25 @@ async function openWorkflowProfiles() {
 
 function renderPromptEnhancerSettings(settings) {
   if (!settings) return;
+  const models = Array.isArray(settings.models) ? settings.models : [];
+  const modelOptions = models.map((item) => {
+    const model = typeof item === 'string' ? item : item?.model;
+    return model ? `<option value="${escapeHtml(model)}">${escapeHtml(model)}</option>` : '';
+  }).join('');
+  const instructionOptions = settings.instruction_options || {};
+  ['image', 'video'].forEach((media) => {
+    const modelControl = $(`#prompt-enhancer-${media}-model`);
+    modelControl.innerHTML = modelOptions || '<option value="">No models configured</option>';
+    modelControl.value = settings[`${media}_model`] || '';
+    modelControl.disabled = !modelOptions;
+    const instructionsControl = $(`#prompt-enhancer-${media}-instructions`);
+    const choices = Array.isArray(instructionOptions[media]) ? instructionOptions[media] : [];
+    instructionsControl.innerHTML = choices.length
+      ? choices.map((item) => `<option value="${escapeHtml(item.path)}">${escapeHtml(item.label)}</option>`).join('')
+      : '<option value="">No instruction files</option>';
+    instructionsControl.value = settings[`instructions_${media}`] || '';
+    instructionsControl.disabled = !choices.length;
+  });
   $('#prompt-enhancer-production').checked = settings.production === true;
   $('#prompt-enhancer-preview').checked = settings.preview === true;
 }
@@ -4438,13 +4479,19 @@ async function savePromptEnhancerSettings() {
   if (promptEnhancerSettingsSaving) return;
   promptEnhancerSettingsSaving = true;
   const controls = [$('#prompt-enhancer-production'), $('#prompt-enhancer-preview')];
-  controls.forEach((control) => { control.disabled = true; });
+  const modelControls = [$('#prompt-enhancer-image-model'), $('#prompt-enhancer-video-model')];
+  const instructionControls = [$('#prompt-enhancer-image-instructions'), $('#prompt-enhancer-video-instructions')];
+  [...controls, ...modelControls, ...instructionControls].forEach((control) => { control.disabled = true; });
   try {
     const settings = await api('/api/prompt-enhancer/settings', {
       method: 'POST',
       body: JSON.stringify({
         production: controls[0].checked,
         preview: controls[1].checked,
+        image_model: modelControls[0].value || null,
+        video_model: modelControls[1].value || null,
+        instructions_image: instructionControls[0].value || null,
+        instructions_video: instructionControls[1].value || null,
       }),
     });
     renderPromptEnhancerSettings(settings);
@@ -4455,11 +4502,44 @@ async function savePromptEnhancerSettings() {
   } finally {
     promptEnhancerSettingsSaving = false;
     controls.forEach((control) => { control.disabled = false; });
+    [...modelControls, ...instructionControls].forEach((control) => {
+      control.disabled = ![...control.options].some((option) => option.value);
+    });
   }
 }
 
 $('#prompt-enhancer-production').addEventListener('change', savePromptEnhancerSettings);
 $('#prompt-enhancer-preview').addEventListener('change', savePromptEnhancerSettings);
+$('#prompt-enhancer-image-model').addEventListener('change', savePromptEnhancerSettings);
+$('#prompt-enhancer-video-model').addEventListener('change', savePromptEnhancerSettings);
+$('#prompt-enhancer-image-instructions').addEventListener('change', savePromptEnhancerSettings);
+$('#prompt-enhancer-video-instructions').addEventListener('change', savePromptEnhancerSettings);
+
+function setSettingsTab(tab) {
+  const next = ['workflows', 'enhancer', 'interface'].includes(tab) ? tab : 'workflows';
+  sessionStorage.setItem('valhalla-settings-tab', next);
+  $$('[data-settings-tab]').forEach((button) => {
+    const active = button.dataset.settingsTab === next;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-selected', String(active));
+  });
+  $$('[data-settings-panel]').forEach((panel) => {
+    panel.classList.toggle('hidden', panel.dataset.settingsPanel !== next);
+  });
+}
+
+function setPromptEnhancerMedia(media) {
+  const next = media === 'video' ? 'video' : 'image';
+  state.promptEnhancerMedia = next;
+  sessionStorage.setItem('valhalla-prompt-enhancer-media', next);
+  $$('[data-enhancer-media]').forEach((button) => {
+    const active = button.dataset.enhancerMedia === next;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-selected', String(active));
+  });
+  $('#prompt-enhancer-image-settings').classList.toggle('hidden', next !== 'image');
+  $('#prompt-enhancer-video-settings').classList.toggle('hidden', next !== 'video');
+}
 
 const workflowSettingsSaving = new Set();
 
@@ -4591,12 +4671,16 @@ document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') studioFilesMenu.open = false;
 });
 $$('[data-render-mode-choice]').forEach((button) => button.addEventListener('click', (event) => {
+  event.preventDefault();
+  event.stopPropagation();
   setRenderMode(event.currentTarget.dataset.renderModeChoice);
-  event.currentTarget.closest('[data-render-mode]').open = false;
+  closeRenderModeMenu(event.currentTarget);
 }));
 $$('[data-render-action-choice]').forEach((button) => button.addEventListener('click', (event) => {
+  event.preventDefault();
+  event.stopPropagation();
   setRenderAction(event.currentTarget.dataset.renderActionChoice);
-  event.currentTarget.closest('[data-render-mode]').open = false;
+  closeRenderModeMenu(event.currentTarget);
 }));
 document.addEventListener('click', (event) => {
   $$('[data-render-mode][open]').forEach((menu) => {
@@ -4860,9 +4944,15 @@ $('#copy-prompt').addEventListener('click', async () => {
   await navigator.clipboard.writeText($('#prompt-content').textContent);
 });
 
-$('#capture-button').addEventListener('click', openWorkflowProfiles);
-$$('.capture-close').forEach((button) => button.addEventListener('click', () => $('#capture-dialog').close()));
+$('#settings-button').addEventListener('click', openWorkflowProfiles);
+$$('.settings-close').forEach((button) => button.addEventListener('click', () => settingsDialog.close()));
 $('#capture-confirm').addEventListener('click', captureWorkflow);
+$$('[data-settings-tab]').forEach((button) => {
+  button.addEventListener('click', () => setSettingsTab(button.dataset.settingsTab));
+});
+$$('[data-enhancer-media]').forEach((button) => {
+  button.addEventListener('click', () => setPromptEnhancerMedia(button.dataset.enhancerMedia));
+});
 $$('.profile-media-tabs [data-profile-media]').forEach((button) => {
   button.addEventListener('click', () => setProfileMedia(button.dataset.profileMedia));
 });

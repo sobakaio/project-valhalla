@@ -13,7 +13,7 @@
   <div class="app-shell">
     <aside class="sidebar">
       <a class="brand" href="/" aria-label="Valhalla Photo Studio home">
-        <span><strong>Valhalla</strong><small>Photo Studio <span class="brand-version">1.7.1</span></small></span>
+        <span><strong>Valhalla</strong><small>Photo Studio <span class="brand-version">1.7.2</span></small></span>
       </a>
 
       <nav class="primary-nav" aria-label="Primary navigation">
@@ -31,52 +31,7 @@
         <div class="status-row workflow-status-row"><span><i class="status-dot" id="workflow-dot"></i>Image workflow</span><strong id="workflow-status">Checking</strong></div>
         <div class="status-row workflow-status-row"><span><i class="status-dot" id="video-workflow-dot"></i>Video workflow</span><strong id="video-workflow-status">Checking</strong></div>
         <div class="status-row"><span>Catalog</span><strong id="catalog-status">—</strong></div>
-        <details class="system-settings" id="system-settings">
-          <summary><span>Options</span><i aria-hidden="true">⌄</i></summary>
-          <div class="system-settings-body">
-        <button type="button" class="system-workflow-button" id="capture-button"><span><strong>Rendering profiles</strong><small>Capture and select ComfyUI workflows</small></span><i aria-hidden="true">›</i></button>
-        <div class="system-theme-row">
-          <span>Appearance</span>
-          <div class="system-choice-control theme-control" role="group" aria-label="Appearance theme">
-            <button type="button" data-theme-choice="system" aria-label="System theme" title="System">◐</button>
-            <button type="button" data-theme-choice="light" aria-label="Light theme" title="Light">☀</button>
-            <button type="button" data-theme-choice="dark" aria-label="Dark theme" title="Dark">☾</button>
-          </div>
-        </div>
-        <div class="system-type-row">
-          <span>Text size</span>
-          <div class="system-choice-control type-size-control" role="group" aria-label="Text size">
-            <button type="button" data-type-size="small" aria-label="Small text" title="Small">S</button>
-            <button type="button" data-type-size="normal" aria-label="Normal text" title="Normal">M</button>
-            <button type="button" data-type-size="large" aria-label="Large text" title="Large">L</button>
-          </div>
-        </div>
-        <div class="system-accent-row">
-          <span>Accent</span>
-          <div class="system-choice-control accent-control" role="group" aria-label="Accent color">
-            <button type="button" data-accent="lavender" aria-label="Lavender accent" title="Lavender"><i></i></button>
-            <button type="button" data-accent="azure" aria-label="Azure accent" title="Azure"><i></i></button>
-            <button type="button" data-accent="rose" aria-label="Rose accent" title="Rose"><i></i></button>
-          </div>
-        </div>
-        <div class="system-privacy-row">
-          <span>Privacy cover</span>
-          <div class="system-choice-control privacy-control" role="group" aria-label="Privacy cover shortcut">
-            <button type="button" data-privacy-shortcut="middle" aria-label="Middle click to cover, double middle click to reveal" title="Middle click to cover · Double middle click to reveal">M</button>
-            <button type="button" data-privacy-shortcut="shift-x" aria-label="Use Shift plus X" title="Shift+X">X</button>
-            <button type="button" data-privacy-shortcut="both" aria-label="Middle click to cover, double middle click to reveal, or use Shift plus X" title="Middle: click to cover, double-click to reveal · Shift+X: toggle">M+X</button>
-          </div>
-        </div>
-        <div class="system-privacy-idle-row">
-          <span>Auto cover</span>
-          <div class="system-choice-control privacy-idle-control" role="group" aria-label="Automatically cover after inactivity">
-            <button type="button" data-privacy-idle="0" aria-label="Disable automatic privacy cover" title="Auto cover off">Off</button>
-            <button type="button" data-privacy-idle-option="0" data-privacy-idle="5" aria-label="Cover after 5 minutes of inactivity" title="After 5 minutes idle">5</button>
-            <button type="button" data-privacy-idle-option="1" data-privacy-idle="15" aria-label="Cover after 15 minutes of inactivity" title="After 15 minutes idle">15</button>
-          </div>
-        </div>
-          </div>
-        </details>
+        <button type="button" class="system-settings-button" id="settings-button" aria-label="Open settings" title="Open settings"><span class="system-settings-icon" aria-hidden="true">⚙</span><span><strong>Settings</strong></span><i aria-hidden="true">›</i></button>
       </section>
     </aside>
 
@@ -405,7 +360,7 @@
       <div class="prompt-tabs"><button class="active" data-prompt="optimized">Optimized</button><button data-prompt="positive">Positive</button><button data-prompt="negative">Auxiliary negative</button><button data-prompt="ids">Selected IDs</button></div>
       <pre id="prompt-content"></pre>
     </div>
-    <div class="dialog-footer"><button class="button ghost" id="copy-prompt">Copy to clipboard</button><button class="button ghost dialog-close">Done</button></div>
+    <div class="dialog-footer"><button class="button ghost" id="copy-prompt">Copy to clipboard</button><button class="button ghost dialog-close">Close</button></div>
   </dialog>
 
   <dialog id="director-custom-dialog" class="small-dialog">
@@ -426,44 +381,80 @@
     <div class="dialog-footer"><button class="button ghost update-storyboard-cancel">Cancel</button><button class="button warning" id="update-storyboard-confirm">Update storyboard</button></div>
   </dialog>
 
-  <dialog id="capture-dialog" class="small-dialog workflow-profiles-dialog">
-    <div class="dialog-header"><div><p class="eyebrow">ComfyUI</p><h2>Rendering profiles</h2></div><button class="icon-button capture-close" aria-label="Close">×</button></div>
-    <div class="dialog-body">
-      <section class="profile-selection">
-        <p>Choose separate Image and Video workflows. Live mode selects the latest compatible workflow for that media type.</p>
-        <div class="profile-media-tabs" role="group" aria-label="Workflow media type"><button type="button" class="active" data-profile-media="image" aria-pressed="true">Image</button><button type="button" data-profile-media="video" aria-pressed="false">Video</button></div>
-        <div id="image-profile-settings">
-          <label class="switch-row"><span><strong>Live Image workflow</strong><small>Use the latest successful external image workflow</small></span><input type="checkbox" id="live-workflow-source"><i></i></label>
-          <div id="workflow-profile-selectors">
-            <div class="workflow-profile-selector-group">
-              <div class="field workflow-profile-selector-heading"><span>Production rendering</span></div>
-              <label class="switch-row" title="Enhance image prompts before production rendering"><span><strong>Prompt enhance</strong></span><input type="checkbox" id="prompt-enhancer-production"><i></i></label>
-              <label class="field"><select id="production-profile"></select></label>
+  <dialog id="settings-dialog" class="settings-dialog">
+    <div class="dialog-header"><div><p class="eyebrow">Workspace configuration</p><h2>Settings</h2></div><button class="icon-button settings-close" aria-label="Close settings">×</button></div>
+    <div class="settings-layout">
+      <nav class="settings-nav" aria-label="Settings sections" role="tablist">
+        <button type="button" class="settings-nav-item active" role="tab" aria-selected="true" aria-controls="settings-panel-workflows" data-settings-tab="workflows"><span class="settings-nav-icon">⌘</span><span><strong>Workflows</strong><small>Image and video pipelines</small></span></button>
+        <button type="button" class="settings-nav-item" role="tab" aria-selected="false" aria-controls="settings-panel-enhancer" data-settings-tab="enhancer"><span class="settings-nav-icon">✦</span><span><strong>Prompt enhancer</strong><small>Models and render stages</small></span></button>
+        <button type="button" class="settings-nav-item" role="tab" aria-selected="false" aria-controls="settings-panel-interface" data-settings-tab="interface"><span class="settings-nav-icon">◐</span><span><strong>Interface</strong><small>Appearance and privacy</small></span></button>
+      </nav>
+      <div class="settings-content">
+        <section class="settings-panel" id="settings-panel-workflows" role="tabpanel" data-settings-panel="workflows">
+          <div class="settings-panel-heading"><div><p class="eyebrow">Rendering setup</p><h3>Workflow profiles</h3></div><span class="settings-panel-badge">ComfyUI</span></div>
+          <p class="settings-panel-intro">Choose independent Image and Video workflows. Live mode always uses the latest compatible workflow from ComfyUI.</p>
+          <div class="profile-media-tabs" role="group" aria-label="Workflow media type"><button type="button" class="active" data-profile-media="image" aria-pressed="true">Image</button><button type="button" data-profile-media="video" aria-pressed="false">Video</button></div>
+          <div id="image-profile-settings">
+            <label class="switch-row settings-card"><span><strong>Live Image workflow</strong><small>Use the latest successful external image workflow</small></span><input type="checkbox" id="live-workflow-source"><i></i></label>
+            <div id="workflow-profile-selectors" class="settings-card-grid">
+              <div class="workflow-profile-selector-group settings-card">
+                <div class="workflow-profile-selector-heading"><strong>Production</strong><small>Full-quality image renders</small></div>
+                <label class="field"><select id="production-profile" aria-label="Production workflow profile"></select></label>
+              </div>
+              <div class="workflow-profile-selector-group settings-card">
+                <div class="workflow-profile-selector-heading"><strong>Preview</strong><small>Fast draft renders</small></div>
+                <label class="field"><select id="preview-profile" aria-label="Preview workflow profile"></select></label>
+              </div>
             </div>
-            <div class="workflow-profile-selector-group">
-              <div class="field workflow-profile-selector-heading"><span>Preview rendering</span></div>
-              <label class="switch-row" title="Enhance image prompts before preview rendering"><span><strong>Prompt enhance</strong></span><input type="checkbox" id="prompt-enhancer-preview"><i></i></label>
-              <label class="field"><select id="preview-profile"></select></label>
+            <p class="field-help hidden" id="live-workflow-help">Preview size and node bypass limits still apply.</p>
+            <div class="workflow-profile-list" id="workflow-profile-list"></div>
+          </div>
+          <div id="video-profile-settings" class="hidden">
+            <label class="switch-row settings-card"><span><strong>Live Video workflow</strong><small>Use the latest successful external video workflow</small></span><input type="checkbox" id="live-video-workflow-source"><i></i></label>
+            <div class="settings-card"><label class="field" id="video-profile-selector"><select id="video-production-profile" aria-label="Video production workflow profile"></select></label><p class="field-help hidden" id="live-video-workflow-help">Only a captured Video profile is used when Live mode is off.</p></div>
+            <div class="workflow-profile-list" id="video-workflow-profile-list"></div>
+          </div>
+          <section class="profile-capture settings-card">
+            <div class="settings-card-heading"><div><strong>Capture a workflow</strong><small>Import the latest successful external run</small></div></div>
+            <label class="field"><span>Profile name</span><input id="capture-profile-name" maxlength="80" placeholder="Detected model name"></label>
+            <p class="field-help" id="capture-candidate-status">Open Settings to inspect the latest ComfyUI run.</p>
+            <label class="switch-row"><span><strong>Replace matching profile</strong><small>Required when this profile filename already exists</small></span><input type="checkbox" id="capture-force"><i></i></label>
+            <div class="profile-capture-actions"><button class="button primary" id="capture-confirm" type="button">Capture profile</button></div>
+          </section>
+        </section>
+
+        <section class="settings-panel hidden" id="settings-panel-enhancer" role="tabpanel" data-settings-panel="enhancer">
+          <div class="settings-panel-heading"><div><p class="eyebrow">Prompt preparation</p><h3>Prompt enhancer</h3></div><span class="settings-panel-badge">OpenAI-compatible</span></div>
+          <p class="settings-panel-intro">Choose the model and instructions independently for each media type.</p>
+          <div class="profile-media-tabs settings-media-tabs" role="tablist" aria-label="Prompt enhancer media type"><button type="button" class="active" role="tab" aria-selected="true" aria-controls="prompt-enhancer-image-settings" data-enhancer-media="image">Image</button><button type="button" role="tab" aria-selected="false" aria-controls="prompt-enhancer-video-settings" data-enhancer-media="video">Video</button></div>
+          <div id="prompt-enhancer-image-settings">
+            <div class="settings-card"><div class="settings-card-heading"><div><strong>Image model</strong><small>Used for Production and Preview image prompts</small></div><span class="settings-card-icon">▧</span></div><label class="field"><select id="prompt-enhancer-image-model" aria-label="Image enhancer model"></select></label><div class="settings-card-heading settings-instructions-heading"><div><strong>Instructions</strong><small>System prompt for image enhancement</small></div></div><label class="field"><select id="prompt-enhancer-image-instructions" aria-label="Image enhancer instructions"></select></label></div>
+            <div class="settings-card settings-stage-card">
+              <div class="settings-switch-stack">
+                <label class="switch-row"><span><strong>Production prompts</strong><small>Enhance prompts before full-quality rendering</small></span><input type="checkbox" id="prompt-enhancer-production"><i></i></label>
+                <label class="switch-row"><span><strong>Preview prompts</strong><small>Enhance prompts before fast draft rendering</small></span><input type="checkbox" id="prompt-enhancer-preview"><i></i></label>
+              </div>
             </div>
           </div>
-          <p class="field-help hidden" id="live-workflow-help">Preview size and node bypass limits still apply.</p>
-          <div class="workflow-profile-list" id="workflow-profile-list"></div>
-        </div>
-        <div id="video-profile-settings" class="hidden">
-          <label class="switch-row"><span><strong>Live Video workflow</strong><small>Use the latest successful external video workflow</small></span><input type="checkbox" id="live-video-workflow-source"><i></i></label>
-          <label class="field" id="video-profile-selector"><span>Production rendering</span><select id="video-production-profile"></select></label>
-          <p class="field-help hidden" id="live-video-workflow-help">Only a captured Video profile is used when Live mode is off.</p>
-          <div class="workflow-profile-list" id="video-workflow-profile-list"></div>
-        </div>
-      </section>
-      <section class="profile-capture">
-        <p class="setup-section-title">Capture latest successful workflow</p>
-        <label class="field"><span>Profile name</span><input id="capture-profile-name" maxlength="80" placeholder="Detected model name"></label>
-        <p class="field-help" id="capture-candidate-status">Open the manager to inspect the latest ComfyUI run.</p>
-        <label class="switch-row"><span><strong>Replace matching profile</strong><small>Required when this profile filename already exists</small></span><input type="checkbox" id="capture-force"><i></i></label>
-      </section>
+          <div id="prompt-enhancer-video-settings" class="hidden">
+            <div class="settings-card"><div class="settings-card-heading"><div><strong>Video model</strong><small>Used when creating motion prompts from proofs</small></div><span class="settings-card-icon">▶</span></div><label class="field"><select id="prompt-enhancer-video-model" aria-label="Video enhancer model"></select></label><div class="settings-card-heading settings-instructions-heading"><div><strong>Instructions</strong><small>System prompt for motion prompt generation</small></div></div><label class="field"><select id="prompt-enhancer-video-instructions" aria-label="Video enhancer instructions"></select></label></div>
+          </div>
+        </section>
+
+        <section class="settings-panel hidden" id="settings-panel-interface" role="tabpanel" data-settings-panel="interface">
+          <div class="settings-panel-heading"><div><p class="eyebrow">Workspace preferences</p><h3>Interface</h3></div><span class="settings-panel-badge">Stored locally</span></div>
+          <p class="settings-panel-intro">These preferences affect this browser only.</p>
+          <div class="settings-card-grid interface-settings-grid">
+            <div class="settings-card"><div class="settings-card-heading"><div><strong>Appearance</strong><small>Theme used by the workspace</small></div></div><div class="settings-choice-control theme-control" role="group" aria-label="Appearance theme"><button type="button" data-theme-choice="system" aria-label="System theme" title="System">◐</button><button type="button" data-theme-choice="light" aria-label="Light theme" title="Light">☀</button><button type="button" data-theme-choice="dark" aria-label="Dark theme" title="Dark">☾</button></div></div>
+            <div class="settings-card"><div class="settings-card-heading"><div><strong>Text size</strong><small>Adjust workspace density</small></div></div><div class="settings-choice-control type-size-control" role="group" aria-label="Text size"><button type="button" data-type-size="small" aria-label="Small text" title="Small">S</button><button type="button" data-type-size="normal" aria-label="Normal text" title="Normal">M</button><button type="button" data-type-size="large" aria-label="Large text" title="Large">L</button></div></div>
+            <div class="settings-card"><div class="settings-card-heading"><div><strong>Accent</strong><small>Choose the highlight color</small></div></div><div class="settings-choice-control accent-control" role="group" aria-label="Accent color"><button type="button" data-accent="lavender" aria-label="Lavender accent" title="Lavender"><i></i></button><button type="button" data-accent="azure" aria-label="Azure accent" title="Azure"><i></i></button><button type="button" data-accent="rose" aria-label="Rose accent" title="Rose"><i></i></button></div></div>
+            <div class="settings-card"><div class="settings-card-heading"><div><strong>Privacy cover shortcut</strong><small>Hide sensitive proofs quickly</small></div></div><div class="settings-choice-control privacy-control" role="group" aria-label="Privacy cover shortcut"><button type="button" data-privacy-shortcut="middle" aria-label="Middle click to cover, double middle click to reveal" title="Middle click to cover">M</button><button type="button" data-privacy-shortcut="shift-x" aria-label="Use Shift plus X" title="Shift+X">X</button><button type="button" data-privacy-shortcut="both" aria-label="Use both privacy shortcuts" title="Middle click or Shift+X">M+X</button></div></div>
+            <div class="settings-card"><div class="settings-card-heading"><div><strong>Automatic cover</strong><small>Cover the gallery after inactivity</small></div></div><div class="settings-choice-control privacy-idle-control" role="group" aria-label="Automatically cover after inactivity"><button type="button" data-privacy-idle="0" aria-label="Disable automatic privacy cover" title="Auto cover off">Off</button><button type="button" data-privacy-idle-option="0" data-privacy-idle="5" aria-label="Cover after 5 minutes of inactivity" title="After 5 minutes idle">5</button><button type="button" data-privacy-idle-option="1" data-privacy-idle="15" aria-label="Cover after 15 minutes of inactivity" title="After 15 minutes idle">15</button></div></div>
+          </div>
+        </section>
+      </div>
     </div>
-    <div class="dialog-footer"><button class="button ghost capture-close">Close</button><button class="button primary" id="capture-confirm">Capture profile</button></div>
+    <div class="dialog-footer"><button class="button ghost settings-close">Close</button></div>
   </dialog>
 
   <div class="toast-region" id="toast-region" aria-live="polite"></div>

@@ -31,7 +31,7 @@ class AppError(RuntimeError):
     """An expected, user-facing application error."""
 
 
-APP_VERSION = "1.7.1"
+APP_VERSION = "1.7.2"
 MEDIA_TYPES = {"image", "video"}
 UI_SEED_MIN = 100_000_000_000_000
 UI_SEED_MAX = 999_999_999_999_999
@@ -177,9 +177,42 @@ def load_config() -> tuple[dict[str, Any], Path]:
     for tier in ("production", "preview"):
         if not isinstance(prompt_enhancer.get(tier, False), bool):
             raise AppError(f"config.prompt_enhancer.{tier} must be true or false")
-    for key in ("url", "model", "instructions_image", "instructions_video", "api_key_env"):
+    for key in ("url", "instructions_image", "instructions_video", "api_key_env"):
         if not isinstance(prompt_enhancer.get(key), str) or not prompt_enhancer[key]:
             raise AppError(f"config.prompt_enhancer.{key} must be a non-empty string")
+    raw_models = prompt_enhancer.get("models")
+    if raw_models is None:
+        legacy_model = prompt_enhancer.get("model")
+        if not isinstance(legacy_model, str) or not legacy_model:
+            raise AppError("config.prompt_enhancer.models must be a non-empty array")
+        raw_models = [{"model": legacy_model}]
+        prompt_enhancer["models"] = raw_models
+    if not isinstance(raw_models, list) or not raw_models:
+        raise AppError("config.prompt_enhancer.models must be a non-empty array")
+    enhancer_model_ids = set()
+    normalized_models = []
+    for index, item in enumerate(raw_models):
+        if isinstance(item, str):
+            item = {"model": item}
+        if not isinstance(item, dict):
+            raise AppError(f"config.prompt_enhancer.models[{index}] must be a string or object")
+        model_name = item.get("model")
+        if not isinstance(model_name, str) or not model_name.strip():
+            raise AppError(f"config.prompt_enhancer.models[{index}].model must be a non-empty string")
+        model_name = model_name.strip()
+        if model_name in enhancer_model_ids:
+            raise AppError(f"config.prompt_enhancer.models contains duplicate model: {model_name}")
+        enhancer_model_ids.add(model_name)
+        normalized_models.append({"model": model_name})
+    prompt_enhancer["models"] = normalized_models
+    for media_type in ("image", "video"):
+        selection_key = f"{media_type}_model"
+        selected_model = prompt_enhancer.get(selection_key, normalized_models[0]["model"])
+        if not isinstance(selected_model, str) or selected_model not in enhancer_model_ids:
+            raise AppError(
+                f"config.prompt_enhancer.{selection_key} must reference a configured model id"
+            )
+        prompt_enhancer[selection_key] = selected_model
     enhancer_timeout = prompt_enhancer.get("timeout_seconds")
     if (
         not isinstance(enhancer_timeout, (int, float))
@@ -4380,6 +4413,26 @@ def prompt_enhancer_context(render_tier: str) -> dict[str, Any]:
     }
 
 
+def prompt_enhancer_model(settings: dict[str, Any], media_type: str) -> str:
+    """Resolve the selected model for Image or Video prompt enhancement."""
+    media_type = "video" if media_type == "video" else "image"
+    models = settings.get("models")
+    selected_id = settings.get(f"{media_type}_model")
+    if isinstance(models, list):
+        for item in models:
+            if isinstance(item, str) and item == selected_id:
+                return item
+            if isinstance(item, dict) and item.get("model") == selected_id:
+                return str(item["model"])
+        if models:
+            first = models[0]
+            return str(first.get("model", first)) if isinstance(first, dict) else str(first)
+    legacy_model = settings.get("model")
+    if isinstance(legacy_model, str) and legacy_model:
+        return legacy_model
+    raise AppError(f"No prompt enhancer model is configured for {media_type}")
+
+
 def prompt_enhancer_fingerprint(
     positive: str, render_tier: str, context: dict[str, Any] | None = None
 ) -> str:
@@ -4391,11 +4444,14 @@ def prompt_enhancer_fingerprint(
         "render_tier": render_tier,
         "instructions": context.get("instructions", ""),
         "settings": {
-            key: settings.get(key)
-            for key in (
-                "url", "model", "api_key_env", "temperature", "top_p",
-                "max_tokens", "timeout_seconds", "instructions_image",
-            )
+            "url": settings.get("url"),
+            "model": prompt_enhancer_model(settings, "image"),
+            "api_key_env": settings.get("api_key_env"),
+            "temperature": settings.get("temperature"),
+            "top_p": settings.get("top_p"),
+            "max_tokens": settings.get("max_tokens"),
+            "timeout_seconds": settings.get("timeout_seconds"),
+            "instructions_image": settings.get("instructions_image"),
         },
     }
     return hashlib.sha256(
@@ -4409,6 +4465,7 @@ def enhance_compiled_prompt(positive: str, render_tier: str) -> tuple[str, bool]
     if not context["enabled"]:
         return positive, False
     settings = context["settings"]
+    model = prompt_enhancer_model(settings, "image")
     instructions = context["instructions"]
     module = require_requests()
     messages = [
@@ -4428,7 +4485,7 @@ def enhance_compiled_prompt(positive: str, render_tier: str) -> tuple[str, bool]
             endpoint,
             headers=headers,
             json={
-                "model": settings["model"],
+                "model": model,
                 "messages": messages,
                 "temperature": settings["temperature"],
                 "top_p": settings["top_p"],
@@ -4505,7 +4562,7 @@ def enhance_video_prompt(
             endpoint,
             headers=headers,
             json={
-                "model": settings["model"],
+                "model": prompt_enhancer_model(settings, "video"),
                 "messages": [{"role": "system", "content": instructions}],
                 "temperature": settings["temperature"],
                 "top_p": settings["top_p"],
@@ -4679,20 +4736,82 @@ def save_workflow_profile_registry(
     save_config(config)
 
 
-def prompt_enhancer_settings() -> dict[str, bool]:
-    config, _ = load_config()
+def prompt_instruction_options(
+    config_file: Path, media_type: str, current: str
+) -> list[dict[str, str]]:
+    """Return selectable instruction files for one prompt-enhancer media type."""
+    media_type = "video" if media_type == "video" else "image"
+    folder = resolve_path(config_file.parent, "instructions")
+    options: list[dict[str, str]] = []
+    if folder.is_dir():
+        for path in sorted(folder.iterdir(), key=lambda item: item.name.lower()):
+            if not path.is_file() or not (path.name.endswith(".md") or path.name.endswith(".md.example")):
+                continue
+            name = path.name.lower()
+            if not name.startswith(f"{media_type}-"):
+                continue
+            relative = path.relative_to(config_file.parent.resolve()).as_posix()
+            options.append({"path": f"./{relative}", "label": path.name})
+    if current and not any(option["path"] == current for option in options):
+        options.insert(0, {"path": current, "label": Path(current).name})
+    return options
+
+
+def prompt_enhancer_settings() -> dict[str, Any]:
+    config, config_file = load_config()
     settings = config["prompt_enhancer"]
     return {
         "production": settings["production"],
         "preview": settings["preview"],
+        "models": [
+            {"model": item["model"]}
+            for item in settings["models"]
+        ],
+        "image_model": settings["image_model"],
+        "video_model": settings["video_model"],
+        "instructions_image": settings["instructions_image"],
+        "instructions_video": settings["instructions_video"],
+        "instruction_options": {
+            "image": prompt_instruction_options(
+                config_file, "image", settings["instructions_image"]
+            ),
+            "video": prompt_instruction_options(
+                config_file, "video", settings["instructions_video"]
+            ),
+        },
     }
 
 
-def save_prompt_enhancer_settings(production: Any, preview: Any) -> dict[str, bool]:
+def save_prompt_enhancer_settings(
+    production: Any, preview: Any, image_model: Any = None, video_model: Any = None,
+    instructions_image: Any = None, instructions_video: Any = None,
+) -> dict[str, Any]:
     if not isinstance(production, bool) or not isinstance(preview, bool):
         raise AppError("Prompt enhancer production and preview must be true or false")
-    config, _ = load_config()
+    config, config_file = load_config()
     settings = config["prompt_enhancer"]
+    model_ids = {item["model"] for item in settings["models"]}
+    for media_type, selected_model in (("image", image_model), ("video", video_model)):
+        if selected_model is None:
+            continue
+        if not isinstance(selected_model, str) or selected_model not in model_ids:
+            raise AppError(f"Prompt enhancer {media_type} model must reference a configured model id")
+        settings[f"{media_type}_model"] = selected_model
+    for media_type, selected_instruction in (
+        ("image", instructions_image), ("video", instructions_video)
+    ):
+        if selected_instruction is None:
+            continue
+        if not isinstance(selected_instruction, str) or not any(
+            option["path"] == selected_instruction
+            for option in prompt_instruction_options(
+                config_file, media_type, settings[f"instructions_{media_type}"]
+            )
+        ):
+            raise AppError(
+                f"Prompt enhancer {media_type} instructions must reference a file in instructions"
+            )
+        settings[f"instructions_{media_type}"] = selected_instruction
     settings["production"] = production
     settings["preview"] = preview
     save_config(config)
@@ -10510,7 +10629,9 @@ class ValhallaHandler(BaseHTTPRequestHandler):
             elif path == "/api/prompt-enhancer/settings":
                 payload = self.read_json()
                 self.send_json(save_prompt_enhancer_settings(
-                    payload.get("production"), payload.get("preview")
+                    payload.get("production"), payload.get("preview"),
+                    payload.get("image_model"), payload.get("video_model"),
+                    payload.get("instructions_image"), payload.get("instructions_video"),
                 ))
             elif path == "/api/prompt-preparation":
                 payload = self.read_json()

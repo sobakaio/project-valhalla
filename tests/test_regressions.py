@@ -4003,9 +4003,9 @@ class FrontendContractTests(unittest.TestCase):
         html = (Path(app.__file__).parent / "client" / "client.html").read_text(
             encoding="utf-8"
         )
-        self.assertEqual(app.APP_VERSION, "1.7.1")
-        self.assertEqual(app.ValhallaHandler.server_version, "Valhalla/1.7.1")
-        self.assertIn('Photo Studio <span class="brand-version">1.7.1</span>', html)
+        self.assertEqual(app.APP_VERSION, "1.7.2")
+        self.assertEqual(app.ValhallaHandler.server_version, "Valhalla/1.7.2")
+        self.assertIn('Photo Studio <span class="brand-version">1.7.2</span>', html)
         self.assertNotIn('Local workspace', html)
 
     def test_primary_workspace_names_and_headers_use_photography_terms(self):
@@ -4049,10 +4049,21 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('id="export-storyboard" disabled', menu)
         self.assertNotIn('id="capture-button"', menu)
         system = html.split('id="system-card"', 1)[1].split('</section>', 1)[0]
-        self.assertIn('id="capture-button"', system)
+        self.assertIn('id="settings-button"', system)
+        self.assertIn('class="system-settings-icon"', system)
+        self.assertIn('<strong>Settings</strong>', system)
+        self.assertNotIn('<small>Workflows, enhancer and interface</small>', system)
+        self.assertNotIn('<strong>Rendering profiles</strong>', system)
+        self.assertNotIn('<details class="system-settings"', system)
+        self.assertNotIn('Quick settings', system)
+        capture_card = html.split('class="profile-capture settings-card"', 1)[1].split('</section>', 1)[0]
+        self.assertIn('id="capture-confirm"', capture_card)
+        settings_footer = html.split('id="settings-dialog"', 1)[1].split('</dialog>', 1)[0]
+        self.assertNotIn('id="capture-confirm"', settings_footer.split('class="dialog-footer"', 1)[1])
+        self.assertNotIn('>Done<', html)
         self.assertNotIn('id="export-storyboard"', html.split('id="director-view"', 1)[1])
         self.assertIn("studioFilesMenu.open = false", js)
-        self.assertIn("$('#system-settings').open = false", js)
+        self.assertNotIn("$('#system-settings').open = false", js)
 
     def test_active_render_accepts_additional_fifo_jobs(self):
         js = (Path(app.__file__).parent / "client" / "client.js").read_text(encoding="utf-8")
@@ -4352,10 +4363,10 @@ class FrontendContractTests(unittest.TestCase):
         css = (root / "client" / "client.css").read_text(encoding="utf-8")
 
         self.assertIn('data-privacy-shortcut="middle"', html)
-        self.assertIn('<summary><span>Options</span>', html)
+        self.assertIn('id="settings-button"', html)
+        self.assertNotIn('id="system-settings"', html)
         self.assertIn('data-privacy-shortcut="shift-x"', html)
         self.assertIn('data-privacy-shortcut="both"', html)
-        self.assertIn('Double middle click to reveal', html)
         for idle in ("0", "5", "15"):
             self.assertIn(f'data-privacy-idle="{idle}"', html)
         self.assertEqual(html.count('data-privacy-idle-option="'), 2)
@@ -4380,7 +4391,7 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn(".privacy-covered img", css)
         self.assertIn(".privacy-placeholder", css)
         self.assertIn(".privacy-covered .privacy-control", css)
-        self.assertIn(".privacy-covered .system-settings > summary", css)
+        self.assertIn(".system-settings-button", css)
         self.assertIn(".privacy-covered .logger-prompt pre", css)
         self.assertIn(".privacy-covered .logger-prompt::after", css)
         self.assertIn(".privacy-covered .image-stage video", css)
@@ -4546,7 +4557,7 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("env(safe-area-inset-bottom)", css)
         self.assertIn("@media (hover: none) and (pointer: coarse)", css)
         self.assertIn("width: min(288px, calc(100vw - 16px))", css)
-        self.assertIn(".system-card .system-settings > summary { justify-content: space-between; }", css)
+        self.assertIn(".system-settings-button", css)
 
 
     def test_typography_presets_use_relative_scale_with_normal_default(self):
@@ -4569,14 +4580,15 @@ class FrontendContractTests(unittest.TestCase):
         css = (root / "client" / "client.css").read_text(encoding="utf-8")
         for accent in ("lavender", "azure", "rose"):
             self.assertIn(f'data-accent="{accent}"', html)
-        self.assertEqual(html.count('system-choice-control'), 5)
+        self.assertEqual(html.count('settings-choice-control'), 5)
         for theme in ("system", "light", "dark"):
             self.assertIn(f'data-theme-choice="{theme}"', html)
         self.assertIn("sessionStorage.setItem('valhalla-accent', accent)", js)
         self.assertIn("sessionStorage.setItem('valhalla-theme', state.theme)", js)
         self.assertIn("function applyAccent()", js)
-        self.assertIn(".system-choice-control button.active", css)
-        self.assertIn(".system-choice-control:not(.accent-control) button.active", css)
+        self.assertIn(".settings-choice-control button.active", css)
+        self.assertIn(".accent-control i { display: block;", css)
+        self.assertIn(".accent-control button.active i { box-shadow", css)
         self.assertIn(':root[data-accent="azure"]', css)
         self.assertIn(':root[data-accent="rose"]', css)
         for semantic in ("success", "warning", "danger"):
@@ -4688,6 +4700,12 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("hydratePromptShots(openShots)", javascript)
         self.assertIn("data-prompt-ai", javascript)
         self.assertIn("state.promptJob", javascript)
+        self.assertIn("promptPreparationRequestId", javascript)
+        self.assertIn("requestId !== state.promptPreparationRequestId", javascript)
+        self.assertIn("function closeRenderModeMenu(element)", javascript)
+        self.assertIn("event.preventDefault();", javascript)
+        self.assertIn("state.renderAction !== 'enhance'", javascript)
+        self.assertIn("state.renderAction = 'render';", javascript)
         self.assertIn("/api/prompt-preparation/${state.promptJob.id}/cancel", javascript)
         self.assertIn("? 'Enhancing prompts'", javascript)
         self.assertIn('data-prompt="optimized"', html)
@@ -5761,7 +5779,10 @@ class WorkflowProfileTests(unittest.TestCase):
             "http://127.0.0.1:1234/v1/chat/completions",
         )
         request = fake_requests.calls[0][1]
-        self.assertEqual(request["json"]["model"], config["prompt_enhancer"]["model"])
+        self.assertEqual(
+            request["json"]["model"],
+            app.prompt_enhancer_model(config["prompt_enhancer"], "image"),
+        )
         self.assertEqual(request["json"]["temperature"], config["prompt_enhancer"]["temperature"])
         self.assertEqual(request["json"]["top_p"], config["prompt_enhancer"]["top_p"])
         self.assertEqual(request["json"]["max_tokens"], config["prompt_enhancer"]["max_tokens"])
@@ -5866,6 +5887,34 @@ class WorkflowProfileTests(unittest.TestCase):
         self.assertFalse(production_applied)
         self.assertTrue(preview_applied)
 
+    def test_prompt_enhancer_models_are_selected_independently_by_media(self):
+        config, _ = app.load_config()
+        config["prompt_enhancer"].update(
+            models=[
+                {"model": "qwen3.8-27b-q4-heretic"},
+                {"model": "gemma4-12b-q4-heretic"},
+            ],
+            image_model="gemma4-12b-q4-heretic",
+            video_model="qwen3.8-27b-q4-heretic",
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            config_file = Path(temporary) / "config.json"
+            config_file.write_text(app.json.dumps(config), encoding="utf-8")
+            with patch.object(app, "config_path", return_value=config_file):
+                self.assertEqual(
+                    app.prompt_enhancer_model(config["prompt_enhancer"], "image"),
+                    "gemma4-12b-q4-heretic",
+                )
+                self.assertEqual(
+                    app.prompt_enhancer_model(config["prompt_enhancer"], "video"),
+                    "qwen3.8-27b-q4-heretic",
+                )
+                saved = app.save_prompt_enhancer_settings(
+                    True, True, "qwen3.8-27b-q4-heretic", "gemma4-12b-q4-heretic"
+                )
+        self.assertEqual(saved["image_model"], "qwen3.8-27b-q4-heretic")
+        self.assertEqual(saved["video_model"], "gemma4-12b-q4-heretic")
+
     def test_prompt_enhancer_settings_can_be_read_and_saved(self):
         config, _ = app.load_config()
         with tempfile.TemporaryDirectory() as temporary:
@@ -5876,10 +5925,26 @@ class WorkflowProfileTests(unittest.TestCase):
                     app.prompt_enhancer_settings(), {
                         "production": config["prompt_enhancer"]["production"],
                         "preview": config["prompt_enhancer"]["preview"],
+                        "models": config["prompt_enhancer"]["models"],
+                        "image_model": config["prompt_enhancer"]["image_model"],
+                        "video_model": config["prompt_enhancer"]["video_model"],
+                        "instructions_image": config["prompt_enhancer"]["instructions_image"],
+                        "instructions_video": config["prompt_enhancer"]["instructions_video"],
+                        "instruction_options": {
+                            "image": app.prompt_instruction_options(
+                                config_file, "image", config["prompt_enhancer"]["instructions_image"]
+                            ),
+                            "video": app.prompt_instruction_options(
+                                config_file, "video", config["prompt_enhancer"]["instructions_video"]
+                            ),
+                        },
                     }
                 )
                 saved = app.save_prompt_enhancer_settings(False, True)
-                self.assertEqual(saved, {"production": False, "preview": True})
+                self.assertFalse(saved["production"])
+                self.assertTrue(saved["preview"])
+                self.assertEqual(saved["image_model"], config["prompt_enhancer"]["image_model"])
+                self.assertEqual(saved["video_model"], config["prompt_enhancer"]["video_model"])
                 reloaded = app.json.loads(config_file.read_text(encoding="utf-8"))
         self.assertFalse(reloaded["prompt_enhancer"]["production"])
         self.assertTrue(reloaded["prompt_enhancer"]["preview"])
@@ -5890,25 +5955,27 @@ class WorkflowProfileTests(unittest.TestCase):
         javascript = (root / "client" / "client.js").read_text(encoding="utf-8")
         self.assertIn('id="prompt-enhancer-production"', html)
         self.assertIn('id="prompt-enhancer-preview"', html)
+        self.assertIn('id="prompt-enhancer-image-model"', html)
+        self.assertIn('id="prompt-enhancer-video-model"', html)
+        self.assertIn('id="prompt-enhancer-image-instructions"', html)
+        self.assertIn('id="prompt-enhancer-video-instructions"', html)
+        self.assertIn("System prompt for image enhancement", html)
+        self.assertIn("System prompt for motion prompt generation", html)
+        self.assertLess(html.index("Image model"), html.index('id="prompt-enhancer-image-model"'))
+        self.assertLess(html.index("Video model"), html.index('id="prompt-enhancer-video-model"'))
+        self.assertNotIn("Image render stages", html)
         self.assertLess(
-            html.index("Production rendering"),
             html.index('id="prompt-enhancer-production"'),
-        )
-        self.assertLess(
-            html.index('id="prompt-enhancer-production"'),
-            html.index('id="production-profile"'),
-        )
-        self.assertLess(
-            html.index("Preview rendering"),
             html.index('id="prompt-enhancer-preview"'),
-        )
-        self.assertLess(
-            html.index('id="prompt-enhancer-preview"'),
-            html.index('id="preview-profile"'),
         )
         self.assertIn("/api/prompt-enhancer/settings", javascript)
         self.assertIn("production: controls[0].checked", javascript)
         self.assertIn("preview: controls[1].checked", javascript)
+        self.assertIn("image_model: modelControls[0].value", javascript)
+        self.assertIn("video_model: modelControls[1].value", javascript)
+        self.assertIn("instructions_image: instructionControls[0].value", javascript)
+        self.assertIn("instructions_video: instructionControls[1].value", javascript)
+        self.assertIn("function setSettingsTab(tab)", javascript)
 
     def test_legacy_workflow_config_is_rejected(self):
         config, _ = app.load_config()
