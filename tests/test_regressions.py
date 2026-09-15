@@ -86,6 +86,38 @@ class StudioGenerationLimitTests(unittest.TestCase):
         with self.assertRaisesRegex(app.AppError, "content_mode"):
             app.parse_run_config({"content_mode": "legacy"}, database)
 
+    def test_progressive_percentages_use_explicit_share_of_revealing_in_both_modes(self):
+        database, _ = app.load_database()
+        self.assertEqual(app.progression_counts(12, 50, 30), (6, 2))
+        for mode in ("photoshoot", "random"):
+            for nsfw, explicit, expected_nsfw, expected_explicit in (
+                (0, 100, 0, 0), (50, 0, 6, 0),
+                (50, 30, 6, 2), (50, 100, 6, 6),
+            ):
+                state = app.WebState()
+                board = state.create_storyboard({
+                    "mode": mode,
+                    "content_mode": "progressive",
+                    "count": 12,
+                    "photoshoots": 1,
+                    "prompt_seed": 717171 + nsfw + explicit,
+                    "inference_seed": 828282 + nsfw + explicit,
+                    "nsfw_percent": nsfw,
+                    "plateau_percent": explicit,
+                })
+                record = state.get_storyboard(board["id"])
+                levels = [shot["stage"]["level"] for shot in record["shots"]]
+                self.assertEqual(
+                    sum(
+                        app.content_band_for_stage(shot["stage"]) != "covered"
+                        for shot in record["shots"]
+                    ),
+                    expected_nsfw,
+                )
+                self.assertEqual(levels.count("explicit"), expected_explicit)
+                self.assertEqual(board["config"]["nsfw_percent"], nsfw)
+                self.assertEqual(board["config"]["plateau_percent"], explicit)
+
 
 class CatalogQualityTests(unittest.TestCase):
     def test_prompt_lint_accepts_opaque_outerwear_at_lingerie_stage(self):
@@ -1426,7 +1458,7 @@ class DirectorRegressionTests(unittest.TestCase):
                     self.assertFalse(
                         app.tags(item) & app.SFW_BLOCKED_DIRECTION_TAGS
                     )
-        with self.assertRaisesRegex(app.AppError, "SFW only"):
+        with self.assertRaisesRegex(app.AppError, "Covered"):
             state.update_director(storyboard_id, {
                 "shot": 1, "field": "shot.intensity", "value": "explicit",
             })
@@ -1446,7 +1478,7 @@ class DirectorRegressionTests(unittest.TestCase):
         state, storyboard_id = self.make_storyboard(content_mode="xxx")
         exported = state.export_storyboard(storyboard_id)
         exported["config"]["content_mode"] = "sfw"
-        with self.assertRaisesRegex(app.AppError, "not allowed in SFW only mode"):
+        with self.assertRaisesRegex(app.AppError, "not allowed in Covered mode"):
             state.import_storyboard(exported)
         exported["config"].pop("content_mode")
         with self.assertRaisesRegex(app.AppError, "missing its content mode"):
@@ -2345,6 +2377,22 @@ class DirectorRegressionTests(unittest.TestCase):
         imported_payload = state.storyboard_payload(state.get_storyboard(imported["id"]))
         self.assertIn("human.hair_color", imported_payload["shots"][0]["manual_fields"])
 
+    def test_random_progression_bands_survive_export_import(self):
+        state, storyboard_id = self.make_storyboard(
+            mode="random", count=12, prompt_seed=331122,
+            nsfw_percent=50, plateau_percent=30,
+        )
+        original = [
+            shot.get("progression_bucket")
+            for shot in state.get_storyboard(storyboard_id)["shots"]
+        ]
+        imported = state.import_storyboard(state.export_storyboard(storyboard_id))
+        restored = [
+            shot.get("progression_bucket")
+            for shot in state.get_storyboard(imported["id"])["shots"]
+        ]
+        self.assertEqual(restored, original)
+
     def test_photoshoot_stages_never_move_back_toward_more_clothing(self):
         levels = {"covered": 0, "lingerie": 1, "topless": 2, "nude": 3, "explicit": 4}
         for seed in range(40):
@@ -2356,7 +2404,7 @@ class DirectorRegressionTests(unittest.TestCase):
             progression = [levels[shot["scene"]["stage"]["level"]] for shot in shots]
             self.assertEqual(progression, sorted(progression), (seed, progression))
 
-    def test_zero_nsfw_and_plateau_never_resolve_nude_stages(self):
+    def test_zero_revealing_and_explicit_share_stays_covered(self):
         for seed in range(20):
             state, storyboard_id = self.make_storyboard(
                 count=20,
@@ -2368,7 +2416,7 @@ class DirectorRegressionTests(unittest.TestCase):
                 shot["scene"]["stage"]["level"]
                 for shot in state.get_storyboard(storyboard_id)["shots"]
             }
-            self.assertTrue(levels.issubset({"covered", "lingerie"}), (seed, levels))
+            self.assertTrue(levels.issubset({"covered"}), (seed, levels))
 
     def test_compiler_preserves_stage_and_visible_garments(self):
         anchors = {
@@ -3942,7 +3990,8 @@ class FrontendContractTests(unittest.TestCase):
         root = Path(app.__file__).parent
         js = (root / "client" / "client.js").read_text(encoding="utf-8")
         self.assertIn("config.nsfw_percent == null || config.plateau_percent == null", js)
-        self.assertIn("? 'Progressive'", js)
+        self.assertIn("? 'Covered'", js)
+        self.assertIn("? 'Explicit'", js)
 
     def test_gallery_cards_use_hand_cursor_for_clickable_media(self):
         css = (Path(app.__file__).parent / "client" / "client.css").read_text(encoding="utf-8")
@@ -4664,14 +4713,24 @@ class FrontendContractTests(unittest.TestCase):
         javascript = (root / "client" / "client.js").read_text(encoding="utf-8")
         for marker in (
             'id="config-notice"', 'id="active-config"',
-            'id="nsfw-help"', 'id="plateau-help"',
+            'id="revealing-help"', 'id="explicit-share-help"',
             'id="update-storyboard-dialog"',
         ):
             self.assertIn(marker, html)
         self.assertIn("state.pendingStructural", javascript)
         self.assertIn("Update & Render", javascript)
-        self.assertIn("form.elements.plateau_percent.max = String(nsfw)", javascript)
-        self.assertIn("form.elements.plateau_percent.disabled", javascript)
+        self.assertIn("form.elements.explicit_share_percent.max = '100'", javascript)
+        self.assertIn("form.elements.explicit_share_percent.disabled", javascript)
+        self.assertIn("const progressionDisabled = content !== 'progressive';", javascript)
+        self.assertIn("contentMode === 'progressive'", javascript)
+        self.assertIn("progressive: 'Revealing'", javascript)
+        self.assertIn("Fully clothed; no suggestive poses or actions.", javascript)
+        self.assertIn("Partially undressed;", javascript)
+        self.assertIn('>Covered</span>', html)
+        self.assertIn('>Revealing</span>', html)
+        self.assertIn('>Explicit</span>', html)
+        self.assertIn('Revealing share', html)
+        self.assertIn("Explicit share", html)
         self.assertIn("if (state.pendingStructural)", javascript)
 
 
@@ -4796,7 +4855,7 @@ class PreviewVisualAuditTests(unittest.TestCase):
         for photoshoot in range(3):
             shots = first["shots"][photoshoot * 8:(photoshoot + 1) * 8]
             safe = sum(
-                shot["stage"]["level"] not in app.NSFW_LEVELS for shot in shots
+                shot["stage"]["level"] not in app.REVEALING_LEVELS for shot in shots
             )
             self.assertEqual((safe, len(shots) - safe), (4, 4))
             self.assertTrue(

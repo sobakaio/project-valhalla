@@ -1,12 +1,12 @@
 # Valhalla Photo Studio
 
-Valhalla Photo Studio 1.7.1 is a local production workspace for generating coherent SFW and NSFW photoshoots of adult women with your own ComfyUI instance. It turns creative direction into complete, automatically composed prompts, keeps the subject and visual story consistent across a set, and sends the approved shots to ComfyUI for image inference and Motion proofs.
+Valhalla Photo Studio 1.7.1 is a local production workspace for generating coherent Covered, Revealing, and Explicit photoshoots of adult women with your own ComfyUI instance. It turns creative direction into complete, automatically composed prompts, keeps the subject and visual story consistent across a set, and sends the approved shots to ComfyUI for image inference and Motion proofs.
 
 The browser interface brings the full workflow together: storyboard planning, prompt automation, compatible scene and wardrobe selection, shot-level direction, Preview and Production rendering, progress tracking, and a built-in Proofs gallery for organizing and reviewing generated images and Motion outputs. Every rule-compatible storyboard is resolved before GPU work begins, so poses, wardrobe, scene geometry, camera direction, content progression, prompts, and seeds can be inspected or edited before an expensive render.
 
 The application is designed for a private workstation or trusted LAN. It has no cloud service, account system, telemetry, or built-in authentication.
 
-> **Adult-content notice:** the production catalog supports SFW, progressive adult, and explicit solo-adult modes. All configured subjects are adults aged 21–23. Use the application only where its content is lawful and appropriate.
+> **Adult-content notice:** the production catalog supports Covered, Revealing, and Explicit solo-adult modes. All configured subjects are adults aged 21–23. Use the application only where its content is lawful and appropriate.
 
 ## Version 1.7.1
 
@@ -16,7 +16,7 @@ This release adds the LTX 2.5 video workflow and keeps image and video render hi
 
 - **Review before render:** resolve complete storyboards without GPU work, inspect every prompt and seed, then render only when the plan is ready.
 - **Coherent photoshoots:** keep the subject, wardrobe, palette, location, mood, and visual treatment fixed while compatible poses and camera direction evolve.
-- **Three content modes:** enforced SFW-only, configurable progressive content, and Full XXX editorial arcs.
+- **Three content modes:** Covered, configurable Revealing content, and Explicit editorial arcs.
 - **Director’s Desk:** edit compatible subject traits, wardrobe, stages, poses, actions, expressions, locations, surfaces, camera grammar, and explicit recipes at set or shot scope.
 - **Deterministic production:** Storyboard seeds reproduce composition; separate image-variation seeds reproduce or vary rendered pixels.
 - **Named ComfyUI profiles:** capture, validate, rename, and select independent Production and Preview workflows without manually editing workflow JSON.
@@ -166,7 +166,7 @@ or panties exposed as appropriate; a later removal shot only describes full remo
 the selected light, medium, or dark skin tone. Bra tan lines compile only with
 physically exposed chest
 anatomy; panty tan lines compile only when the hips/pubic area is uncovered. The
-selected marking remains stable across a Photoshoot and covered/SFW prompts do not
+selected marking remains stable across a Photoshoot and Covered prompts do not
 mention hidden tan-line anatomy.
 
 If `comfy.workflow_source` is set to `live`, Valhalla reads the latest compatible ComfyUI image workflow instead of the selected saved profiles. The
@@ -178,10 +178,32 @@ profiles are recommended for reproducible production.
 
 ### Modes
 
-- **Photoshoot** creates coherent sets with progressive, non-reversing garment and content stages.
-- **Random** rebuilds the subject context and scene for every frame.
-- **SFW only** server-enforces fully covered stages and removes incompatible garments, actions, poses, intensities, and imports.
-- **Full XXX** starts explicitly and plans a seeded editorial arc across concrete recipe, pose, action, camera, and intensity families, reserving a compatible peak closing frame.
+- **Photoshoot** creates coherent sets with gradual, non-reversing Covered → Revealing → Explicit stages.
+- **Random** rebuilds the subject context and scene for every frame while honoring the configured Revealing and Explicit shares.
+- **Covered** server-enforces fully clothed, non-suggestive stages and removes incompatible garments, actions, poses, intensities, and imports.
+- **Explicit** starts fully nude and plans a seeded editorial arc across concrete recipe, pose, action, camera, and intensity families, reserving a compatible peak closing frame.
+
+The content bands are deliberately distinct: **Covered** means fully clothed with
+no suggestive content or poses (revealing underwear is excluded); **Revealing**
+means partially undressed, including underwear or lingerie, with suggestive
+content or poses allowed; **Explicit** means fully nude with explicit poses or
+actions.
+
+### Content shares
+
+In the Revealing content mode, the sliders apply to each set independently:
+
+- **Revealing share** is the percentage of frames that go beyond Covered. It
+  includes all Revealing and Explicit frames.
+- **Explicit share** is the percentage of those Revealing-share frames that are
+  Explicit. It is not a percentage of the whole storyboard: for 12 shots with
+  a 50% Revealing share and 30% Explicit share, 6 shots are beyond Covered and
+  2 of those are Explicit.
+
+Photoshoot places these frames at the end of each coherent set. Random mixes
+the same exact counts across independent frames. A zero Revealing share keeps
+every frame Covered; a 100% Explicit share makes every Revealing-share frame
+Explicit.
 
 ### Seeds
 
@@ -300,7 +322,7 @@ Run the complete GPU-free production audit before a large render batch or after 
 # equivalent: python3 server.py validate
 ```
 
-Validation checks configuration and catalog structure, exact record reachability, every outfit/interior combination, SFW contracts, garment transitions, representative storyboards in every mode, all explicit recipes, and 10,000 camera-grammar scenes. It never contacts ComfyUI or writes outputs. Proven failures return a non-zero exit code; finite-sample gaps are warnings only when the exact analyzer proves a valid route.
+Validation checks configuration and catalog structure, exact record reachability, every outfit/interior combination, Covered contracts, garment transitions, representative storyboards in every mode, all explicit recipes, and 10,000 camera-grammar scenes. It never contacts ComfyUI or writes outputs. Proven failures return a non-zero exit code; finite-sample gaps are warnings only when the exact analyzer proves a valid route.
 
 Inspect diversity and narrow candidate pools with:
 

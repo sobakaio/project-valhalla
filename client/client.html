@@ -132,11 +132,11 @@
               <fieldset>
                 <legend>Content direction</legend>
                 <div class="segmented three" role="radiogroup" aria-label="Content direction">
-                  <label><input type="radio" name="content" value="sfw"><span>SFW</span></label>
-                  <label><input type="radio" name="content" value="progressive" checked><span>Gradual</span></label>
-                  <label><input type="radio" name="content" value="xxx"><span>XXX</span></label>
+                  <label><input type="radio" name="content" value="sfw"><span>Covered</span></label>
+                  <label><input type="radio" name="content" value="progressive" checked><span id="progressive-content-label">Revealing</span></label>
+                  <label><input type="radio" name="content" value="xxx"><span>Explicit</span></label>
                 </div>
-                <p class="field-help" id="content-help">Begins clothed and progresses toward the configured NSFW ending.</p>
+                <p class="field-help" id="content-help">Partially undressed; progresses toward the configured Explicit share.</p>
               </fieldset>
 
               <div class="field-grid two">
@@ -147,12 +147,12 @@
               <label class="field seed-field structural-seed"><span><strong>Storyboard seed <em>optional</em><i class="seed-status" id="storyboard-seed-status">Active</i></strong><small>Rebuilds subject, wardrobe, scene and shot direction.</small></span><div class="seed-input"><input type="number" name="prompt_seed" min="0" placeholder="Create one automatically"><button type="button" id="randomize-storyboard-seed" title="Generate a new storyboard seed" aria-label="Generate a new storyboard seed">↻</button></div></label>
 
               <div class="range-section" id="progression-fields">
-                <div class="range-heading"><label for="nsfw-percent">NSFW ending</label><output id="nsfw-output">50%</output></div>
-                <input type="range" id="nsfw-percent" name="nsfw_percent" min="0" max="100" step="1" value="50">
-                <p class="range-help" id="nsfw-help">Final 6 of 12 frames may be topless, nude or explicit.</p>
-                <div class="range-heading"><label for="plateau-percent">Explicit plateau</label><output id="plateau-output">30%</output></div>
-                <input type="range" id="plateau-percent" name="plateau_percent" min="0" max="100" step="1" value="30">
-                <p class="range-help" id="plateau-help">Final 4 of 12 frames remain explicit.</p>
+                <div class="range-heading"><label for="revealing-percent">Revealing share</label><output id="revealing-output">50%</output></div>
+                <input type="range" id="revealing-percent" name="revealing_percent" min="0" max="100" step="1" value="50">
+                <p class="range-help" id="revealing-help">Final 6 of 12 frames move beyond Covered.</p>
+                <div class="range-heading"><label for="explicit-share-percent">Explicit share</label><output id="explicit-share-output">30%</output></div>
+                <input type="range" id="explicit-share-percent" name="explicit_share_percent" min="0" max="100" step="1" value="30">
+                <p class="range-help" id="explicit-share-help">30% of Revealing frames become Explicit.</p>
               </div>
 
               <details class="advanced">

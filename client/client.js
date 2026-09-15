@@ -744,39 +744,40 @@ function syncForm(event) {
   const count = Math.max(1, Number(form.elements.count.value) || 1);
   const total = (mode === 'photoshoot' ? photoshoots : 1) * count;
   $('#photoshoots-field').classList.toggle('hidden', mode === 'random');
-  const progressionDisabled = mode === 'random' || content !== 'progressive';
+  const progressionDisabled = content !== 'progressive';
   $('#progression-fields').classList.toggle('hidden', progressionDisabled);
+  $('#progressive-content-label').textContent = 'Revealing';
   $('#mode-help').textContent = mode === 'photoshoot'
     ? 'One consistent subject, wardrobe and set per photoshoot.'
     : 'Every image receives an independently assembled production context.';
   $('#content-help').textContent = content === 'sfw'
-    ? 'Every frame keeps breasts and genitals fully covered.'
+    ? 'Fully clothed; no suggestive poses or actions.'
     : (content === 'xxx'
-      ? 'Every frame starts at an explicit stage; progression sliders are not used.'
+      ? 'Fully nude; explicit poses and actions.'
       : (mode === 'photoshoot'
-        ? 'Begins clothed and progresses toward the configured NSFW ending.'
-        : 'Each independent frame receives a compatible stage selected from the full progression.'));
-  const nsfw = Math.max(0, Math.min(100, Number(form.elements.nsfw_percent.value) || 0));
-  let plateau = Math.max(0, Math.min(100, Number(form.elements.plateau_percent.value) || 0));
-  if (event?.target?.name === 'nsfw_percent' && plateau > nsfw) {
-    plateau = nsfw;
-    form.elements.plateau_percent.value = String(plateau);
-  }
-  form.elements.plateau_percent.max = String(nsfw);
-  form.elements.plateau_percent.disabled = progressionDisabled || nsfw === 0;
-  $('#nsfw-output').textContent = `${nsfw}%`;
-  $('#plateau-output').textContent = `${plateau}%`;
-  const nsfwFrames = nsfw > 0 ? Math.ceil(count * nsfw / 100) : 0;
-  const plateauFrames = plateau > 0 ? Math.min(nsfwFrames, Math.ceil(count * plateau / 100)) : 0;
+        ? 'Partially undressed; progresses toward the configured Explicit share.'
+        : 'Partially undressed or Explicit content is mixed across independent frames.'));
+  const revealing = Math.max(0, Math.min(100, Number(form.elements.revealing_percent.value) || 0));
+  const explicitShare = Math.max(0, Math.min(100, Number(form.elements.explicit_share_percent.value) || 0));
+  form.elements.explicit_share_percent.max = '100';
+  form.elements.explicit_share_percent.disabled = progressionDisabled || revealing === 0;
+  $('#revealing-output').textContent = `${revealing}%`;
+  $('#explicit-share-output').textContent = `${explicitShare}%`;
+  const revealingFrames = revealing > 0 ? Math.ceil(count * revealing / 100) : 0;
+  const explicitFrames = explicitShare > 0 ? Math.min(revealingFrames, Math.ceil(revealingFrames * explicitShare / 100)) : 0;
   const perSet = mode === 'photoshoot' && photoshoots > 1 ? ' per set' : '';
-  $('#nsfw-help').textContent = nsfwFrames
-    ? `Final ${nsfwFrames} of ${count} frame${nsfwFrames === 1 ? '' : 's'}${perSet} may be topless, nude or explicit.`
-    : `0 of ${count} frames${perSet} · Covered and lingerie only.`;
-  $('#plateau-help').textContent = nsfw === 0
-    ? 'Disabled because the NSFW ending is 0%.'
-    : (plateauFrames
-      ? `Final ${plateauFrames} of ${count} frame${plateauFrames === 1 ? '' : 's'}${perSet} remain explicit.`
-      : 'No repeated explicit ending.');
+  $('#revealing-help').textContent = revealingFrames
+    ? (mode === 'photoshoot'
+      ? `Final ${revealingFrames} of ${count} frame${revealingFrames === 1 ? '' : 's'}${perSet} move beyond Covered.`
+      : `${revealingFrames} of ${count} frame${revealingFrames === 1 ? '' : 's'} are randomly assigned to Revealing content.`)
+    : `0 of ${count} frames${perSet} · Fully clothed and non-suggestive.`;
+  $('#explicit-share-help').textContent = revealing === 0
+    ? 'Disabled because Revealing share is 0%.'
+    : (explicitFrames
+      ? (mode === 'photoshoot'
+        ? `Final ${explicitFrames} of ${revealingFrames} Revealing frame${revealingFrames === 1 ? '' : 's'}${perSet} become Explicit.`
+        : `${explicitFrames} of ${revealingFrames} Revealing frame${revealingFrames === 1 ? '' : 's'} become Explicit.`)
+      : 'No Explicit frames.');
   $('#planned-total').textContent = `${total} image${total === 1 ? '' : 's'}`;
 }
 
@@ -788,8 +789,8 @@ function structuralConfigFromForm() {
     count: Number(form.elements.count.value),
     photoshoots: mode === 'photoshoot' ? Number(form.elements.photoshoots.value) : 1,
     content_mode: contentMode,
-    nsfw_percent: mode === 'photoshoot' && contentMode === 'progressive' ? Number(form.elements.nsfw_percent.value) : null,
-    plateau_percent: mode === 'photoshoot' && contentMode === 'progressive' ? Number(form.elements.plateau_percent.value) : null,
+    nsfw_percent: contentMode === 'progressive' ? Number(form.elements.revealing_percent.value) : null,
+    plateau_percent: contentMode === 'progressive' ? Number(form.elements.explicit_share_percent.value) : null,
     prompt_seed: form.elements.prompt_seed.value === '' ? null : String(form.elements.prompt_seed.value),
     use_curated_defaults: form.elements.use_curated_defaults.checked,
   };
@@ -803,8 +804,8 @@ function structuralConfigFromBoard(board) {
     count: Number(config.count),
     photoshoots: config.mode === 'photoshoot' ? Number(config.photoshoots) : 1,
     content_mode: config.content_mode,
-    nsfw_percent: config.mode === 'photoshoot' && config.content_mode === 'progressive' ? Number(config.nsfw_percent) : null,
-    plateau_percent: config.mode === 'photoshoot' && config.content_mode === 'progressive' ? Number(config.plateau_percent) : null,
+    nsfw_percent: config.content_mode === 'progressive' ? Number(config.nsfw_percent) : null,
+    plateau_percent: config.content_mode === 'progressive' ? Number(config.plateau_percent) : null,
     prompt_seed: config.prompt_seed == null ? null : String(config.prompt_seed),
     use_curated_defaults: config.use_curated_defaults !== false,
   };
@@ -815,12 +816,12 @@ function configSummary(config) {
   const mode = config.mode === 'photoshoot' ? `${config.photoshoots} set${Number(config.photoshoots) === 1 ? '' : 's'}` : 'Independent shots';
   const contentMode = config.content_mode;
   const content = contentMode === 'sfw'
-    ? 'SFW only'
+    ? 'Covered'
     : contentMode === 'xxx'
-      ? 'Full XXX'
+      ? 'Explicit'
       : config.nsfw_percent == null || config.plateau_percent == null
-        ? 'Progressive'
-        : `NSFW ${config.nsfw_percent}% · Explicit ${config.plateau_percent}%`;
+        ? 'Revealing'
+        : `Revealing share ${config.nsfw_percent}% · Explicit share ${config.plateau_percent}%`;
   const defaults = config.use_curated_defaults === false ? 'Full catalog paths' : 'Curated defaults';
   return `${mode} · ${config.count} shots · ${content} · ${defaults} · Storyboard seed ${config.prompt_seed ?? 'automatic'}`;
 }
@@ -834,8 +835,8 @@ function syncPendingState() {
     : [];
   const changedLabels = {
     mode: 'mode', count: 'shot count', photoshoots: 'set count',
-    content_mode: 'content mode', nsfw_percent: 'NSFW ending',
-    plateau_percent: 'explicit plateau', prompt_seed: 'Storyboard seed',
+    content_mode: 'content mode', nsfw_percent: 'revealing share',
+    plateau_percent: 'explicit share', prompt_seed: 'Storyboard seed',
     use_curated_defaults: 'curated defaults',
   };
   $('#config-notice-copy').textContent = changedKeys.length
@@ -884,8 +885,8 @@ function restoreConfig(config, job) {
   form.elements.use_curated_defaults.checked = config.use_curated_defaults !== false;
   form.elements.inference_seed.value = config.inference_seed ?? '';
   form.elements.inference_strategy.value = config.inference_strategy || 'sequence';
-  if (config.nsfw_percent != null) form.elements.nsfw_percent.value = config.nsfw_percent;
-  if (config.plateau_percent != null) form.elements.plateau_percent.value = config.plateau_percent;
+  if (config.nsfw_percent != null) form.elements.revealing_percent.value = config.nsfw_percent;
+  if (config.plateau_percent != null) form.elements.explicit_share_percent.value = config.plateau_percent;
   const previewMode = job && typeof job.fast === 'boolean'
     ? job.fast
     : Boolean(config.fast);
@@ -903,8 +904,8 @@ function configPayload() {
     count: Number(value('count')),
     photoshoots: Number(value('photoshoots')),
     content_mode: value('content'),
-    nsfw_percent: Number(value('nsfw_percent')),
-    plateau_percent: Number(value('plateau_percent')),
+    nsfw_percent: Number(value('revealing_percent')),
+    plateau_percent: Number(value('explicit_share_percent')),
     prompt_seed: value('prompt_seed') === '' ? null : value('prompt_seed'),
     inference_seed: value('inference_seed') === '' ? null : value('inference_seed'),
     inference_strategy: value('inference_strategy'),
@@ -1077,9 +1078,18 @@ function promptStatusPresentation(status) {
   return labels[status] || labels.not_prepared;
 }
 
+function stagePresentation(stage) {
+  const band = stage?.content_band || ({
+    covered: 'Covered', lingerie: 'Revealing', topless: 'Revealing',
+    nude: 'Revealing', explicit: 'Explicit',
+  }[stage?.level] || 'Content');
+  const detail = stage?.plateau_kind?.replaceAll('_', ' ');
+  return detail ? `${band} · ${displayValue(detail)}` : band;
+}
+
 function shotCard(shot) {
   const explicit = shot.stage.level === 'explicit' ? 'explicit' : '';
-  const stage = shot.stage.plateau_kind || shot.stage.level;
+  const stage = stagePresentation(shot.stage);
   const photoshoot = state.storyboard?.config.mode === 'photoshoot';
   const displayShotNumber = photoshoot ? shot.shot_index + 1 : shot.number;
   const manual = Boolean(shot.stage.manual || shot.manual_fields?.length);
@@ -1098,7 +1108,7 @@ function shotCard(shot) {
     <article class="shot-card" data-shot="${shot.number}">
       <div class="shot-top">
         <div class="shot-number">Shot ${displayShotNumber}</div>
-        <div class="shot-top-meta">${statuses}<span class="stage-badge ${explicit} ${shot.stage.manual ? 'manual' : ''}">${escapeHtml(displayValue(stage.replaceAll('_', ' ')))}</span></div>
+        <div class="shot-top-meta">${statuses}<span class="stage-badge ${explicit} ${shot.stage.manual ? 'manual' : ''}">${escapeHtml(stage)}</span></div>
       </div>
       <div class="shot-body">
         <div class="shot-detail shot-subject" title="${escapeHtml(shot.subject)}"><span>Subject</span><strong>${escapeHtml(displayValue(shot.subject))}</strong></div>
@@ -1156,7 +1166,7 @@ function renderStoryboard() {
   shotGrid.innerHTML = storyboardCards(board.shots);
   const sets = board.config.mode === 'photoshoot' ? board.config.photoshoots : 'Independent';
   const contentMode = board.config.content_mode;
-  const contentLabel = { sfw: 'SFW only', progressive: 'Progressive', xxx: 'Full XXX' }[contentMode];
+  const contentLabel = ({ sfw: 'Covered', progressive: 'Revealing', xxx: 'Explicit' }[contentMode]);
   storyboardMeta.innerHTML = `<span>Mode <strong>${escapeHtml(board.config.mode)}</strong></span><span>Sets <strong>${sets}</strong></span><span>Shots <strong>${board.total}</strong></span><span>Diversity <strong>${board.diversity}%</strong></span><span>Content <strong>${contentLabel}</strong></span>`;
   emptyState.classList.add('hidden');
   storyboardActions.classList.remove('hidden');
@@ -1228,8 +1238,7 @@ function openPrompt(shot) {
     state.promptShot = shot;
     state.promptTab = 'optimized';
     $('#dialog-eyebrow').textContent = `Set ${shot.photoshoot_index + 1} · Shot ${shot.shot_index + 1}`;
-    const level = shot.stage?.level || 'shot';
-    $('#dialog-title').textContent = `${level[0].toUpperCase()}${level.slice(1)} composition`;
+    $('#dialog-title').textContent = `${stagePresentation(shot.stage)} composition`;
     $$('.prompt-tabs button').forEach((button) => button.classList.toggle('active', button.dataset.prompt === 'optimized'));
     updatePromptContent();
     hydratePromptShots([shot]);
@@ -3655,11 +3664,11 @@ imageStage.addEventListener('touchcancel', finishPreviewTouch, { passive: true }
 
 function directorShotButton(shot) {
   const active = shot.number === state.directorShot ? 'active' : '';
-  const stage = shot.stage.plateau_kind || shot.stage.level;
+  const stage = stagePresentation(shot.stage);
   return `<button class="director-shot ${active}" data-director-shot="${shot.number}">
     <i title="Shot ${shot.shot_index + 1}">${shot.shot_index + 1}</i>
     <span class="director-shot-copy">
-      <strong>${escapeHtml(displayValue(stage.replaceAll('_', ' ')))}</strong>
+      <strong>${escapeHtml(stage)}</strong>
       <span class="director-shot-action" title="${escapeHtml(displayValue(shot.action.prompt))}">${escapeHtml(displayValue(shot.action.prompt))}</span>
     </span>
   </button>`;
@@ -4561,7 +4570,7 @@ $('#refresh-status').addEventListener('click', () => refreshStatus(true));
 $('#reset-config').addEventListener('click', () => {
   form.reset();
   setRenderMode('production');
-  syncForm({ target: form.elements.nsfw_percent });
+  syncForm({ target: form.elements.revealing_percent });
   syncPendingState();
 });
 $('#randomize-storyboard-seed').addEventListener('click', () => randomizeSeedField('prompt_seed'));

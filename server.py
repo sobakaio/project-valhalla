@@ -434,12 +434,14 @@ def validate_database(db: dict[str, Any]) -> None:
     progression = settings.get("photoshoot_progression", {})
     nsfw_percent = progression.get("nsfw_final_percent", 50)
     if not isinstance(nsfw_percent, (int, float)) or not 0 <= nsfw_percent <= 100:
-        raise AppError("settings.photoshoot_progression.nsfw_final_percent must be between 0 and 100")
-    plateau_percent = progression.get("explicit_plateau_percent", 30)
-    if not isinstance(plateau_percent, (int, float)) or not 0 <= plateau_percent <= nsfw_percent:
         raise AppError(
-            "settings.photoshoot_progression.explicit_plateau_percent must be between 0 "
-            "and nsfw_final_percent"
+            "settings.photoshoot_progression.nsfw_final_percent "
+            "(Revealing share) must be between 0 and 100"
+        )
+    plateau_percent = progression.get("explicit_plateau_percent", 30)
+    if not isinstance(plateau_percent, (int, float)) or not 0 <= plateau_percent <= 100:
+        raise AppError(
+            "settings.photoshoot_progression.explicit_plateau_percent must be between 0 and 100"
         )
     garment_modifiers = settings.get("garment_modifiers", {})
     if not isinstance(garment_modifiers, dict):
@@ -724,7 +726,7 @@ def validate_database(db: dict[str, Any]) -> None:
                 levels = rule.get("drop_uncovered_stage_levels")
                 if (
                     not isinstance(levels, list) or not levels
-                    or not set(levels).issubset({"covered", "lingerie", *NSFW_LEVELS})
+                    or not set(levels).issubset({"covered", *REVEALING_LEVELS})
                 ):
                     raise AppError(f"{context}.{rule['id']}.drop_uncovered_stage_levels is invalid")
                 coverage_slots = rule.get("coverage_slots")
@@ -2277,7 +2279,10 @@ def validate_pose_zone(pose: dict[str, Any], zone: dict[str, Any]) -> None:
         )
 
 
-NSFW_LEVELS = ("topless", "nude", "explicit")
+# Internal catalog names remain stable for storyboard/API compatibility. The
+# user-facing content bands are Covered, Revealing, and Explicit.
+NUDITY_LEVELS = ("topless", "nude", "explicit")
+REVEALING_LEVELS = ("lingerie", *NUDITY_LEVELS)
 INTENSITY_LEVELS = ("fashion", "sensual", "erotic", "nude", "explicit", "peak")
 STAGE_INTENSITIES = {
     "covered": ("fashion", "sensual"),
@@ -2339,6 +2344,15 @@ def is_sfw_stage(stage: dict[str, Any]) -> bool:
     )
 
 
+def content_band_for_stage(stage: dict[str, Any]) -> str:
+    """Return the public Covered/Revealing/Explicit band for one stage."""
+    if stage.get("level") == "explicit":
+        return "explicit"
+    if stage.get("level") in REVEALING_LEVELS or stage.get("visual_category") == "dressed_panties_reveal":
+        return "revealing"
+    return "covered"
+
+
 def template_supports_sfw(db: dict[str, Any], template: dict[str, Any]) -> bool:
     """Return whether the template has a realizable fully covered outfit."""
     safe_stages = [
@@ -2374,7 +2388,7 @@ def validate_sfw_outfit(outfit: dict[str, Any]) -> None:
     template = outfit["template"]
     stages = [stage for stage in effective_photoshoot_stages(template) if is_sfw_stage(stage)]
     if not stages:
-        raise AppError(f"Outfit template {template['id']} has no SFW-compatible covered stage")
+        raise AppError(f"Outfit template {template['id']} has no Covered-compatible stage")
     garments = outfit["garments"]
     for stage in stages:
         visible_slots = set(stage.get("visible_slots", []))
@@ -2394,7 +2408,7 @@ def validate_sfw_outfit(outfit: dict[str, Any]) -> None:
 
 
 def effective_photoshoot_stages(template: dict[str, Any]) -> list[dict[str, Any]]:
-    """Return configured stages plus generic terminal NSFW stages when absent."""
+    """Return configured stages plus generic terminal Revealing stages when absent."""
     stages = copy.deepcopy(template["stages"])
     levels = {stage["level"] for stage in stages}
     terminal_specs = {
@@ -2412,7 +2426,7 @@ def effective_photoshoot_stages(template: dict[str, Any]) -> list[dict[str, Any]
         },
     }
     template_slots = set(template["slots"])
-    for level in NSFW_LEVELS:
+    for level in NUDITY_LEVELS:
         if level in levels:
             continue
         spec = terminal_specs[level]
@@ -2422,18 +2436,56 @@ def effective_photoshoot_stages(template: dict[str, Any]) -> list[dict[str, Any]
             "visible_slots": [slot for slot in spec["visible_slots"] if slot in template_slots],
             "body_visibility": spec["body_visibility"],
         })
-    safe = [stage for stage in stages if stage["level"] not in NSFW_LEVELS]
-    nsfw = sorted(
-        (stage for stage in stages if stage["level"] in NSFW_LEVELS),
-        key=lambda stage: NSFW_LEVELS.index(stage["level"]),
+    covered = [stage for stage in stages if stage["level"] not in NUDITY_LEVELS]
+    revealing_nudity = sorted(
+        (stage for stage in stages if stage["level"] in NUDITY_LEVELS),
+        key=lambda stage: NUDITY_LEVELS.index(stage["level"]),
     )
-    return safe + nsfw
+    return covered + revealing_nudity
 
 
 def progressive_stage(stages: list[dict[str, Any]], index: int, count: int) -> dict[str, Any]:
     if count <= len(stages):
         return stages[len(stages) - count + index]
     return stages[min(len(stages) - 1, index * len(stages) // count)]
+
+
+def progression_counts(
+    count: int, nsfw_percent: float, explicit_share_percent: float
+) -> tuple[int, int]:
+    """Return exact Revealing and Explicit counts for a storyboard."""
+    revealing_count = min(count, math.ceil(count * nsfw_percent / 100)) if nsfw_percent > 0 else 0
+    explicit_count = (
+        min(revealing_count, math.ceil(revealing_count * explicit_share_percent / 100))
+        if explicit_share_percent > 0 else 0
+    )
+    return revealing_count, explicit_count
+
+
+def random_progression_buckets(
+    count: int,
+    nsfw_percent: float,
+    explicit_share_percent: float,
+    rng: random.Random,
+) -> list[str]:
+    """Create an exact but shuffled content mix for Random/Revealing."""
+    revealing_count, explicit_count = progression_counts(
+        count, nsfw_percent, explicit_share_percent
+    )
+    buckets = (
+        ["covered"] * (count - revealing_count)
+        + ["revealing"] * (revealing_count - explicit_count)
+        + ["explicit"] * explicit_count
+    )
+    rng.shuffle(buckets)
+    return buckets
+
+
+def _cloned_rng(rng: random.Random) -> random.Random:
+    """Copy RNG state without consuming the storyboard selection sequence."""
+    clone = random.Random()
+    clone.setstate(rng.getstate())
+    return clone
 
 
 HUMAN_SELECTION_ORDER = (
@@ -4114,33 +4166,35 @@ def stage_for_index(
     mode: str,
     rng: random.Random,
     nsfw_percent: float,
-    plateau_percent: float,
+    explicit_share_percent: float,
+    random_bucket: str | None = None,
 ) -> dict[str, Any]:
     stages = template["stages"]
+    effective = effective_photoshoot_stages(template)
     if mode == "photoshoot":
-        effective = effective_photoshoot_stages(template)
-        safe = [stage for stage in effective if stage["level"] not in NSFW_LEVELS]
-        nsfw = [stage for stage in effective if stage["level"] in NSFW_LEVELS]
-        nsfw_count = min(count, math.ceil(count * nsfw_percent / 100)) if nsfw_percent > 0 else 0
-        plateau_count = min(nsfw_count, math.ceil(count * plateau_percent / 100)) if plateau_percent > 0 else 0
-        safe_count = count - nsfw_count
-        if index < safe_count:
-            return safe[min(len(safe) - 1, index * len(safe) // safe_count)]
-        nsfw_index = index - safe_count
-        transition_count = nsfw_count - plateau_count
-        if nsfw_index < transition_count:
-            transition_stages = nsfw if plateau_count == 0 else [
-                stage for stage in nsfw if stage["level"] != "explicit"
+        covered = [stage for stage in effective if stage["level"] not in REVEALING_LEVELS]
+        revealing = [stage for stage in effective if stage["level"] in REVEALING_LEVELS]
+        revealing_count, explicit_count = progression_counts(
+            count, nsfw_percent, explicit_share_percent
+        )
+        covered_count = count - revealing_count
+        if index < covered_count:
+            return covered[min(len(covered) - 1, index * len(covered) // covered_count)]
+        revealing_index = index - covered_count
+        transition_count = revealing_count - explicit_count
+        if revealing_index < transition_count:
+            transition_stages = [
+                stage for stage in revealing if stage["level"] != "explicit"
             ]
-            return progressive_stage(transition_stages, nsfw_index, transition_count)
-        explicit_stage = next(stage for stage in nsfw if stage["level"] == "explicit")
+            return progressive_stage(transition_stages, revealing_index, transition_count)
+        explicit_stage = next(stage for stage in revealing if stage["level"] == "explicit")
         plateau_kinds = [
             {"plateau_kind": "provocative_rear"},
             {"plateau_kind": "intimate_closeup"},
             {"plateau_kind": "masturbation"},
         ]
-        plateau_index = nsfw_index - transition_count
-        kind = progressive_stage(plateau_kinds, plateau_index, plateau_count)["plateau_kind"]
+        plateau_index = revealing_index - transition_count
+        kind = progressive_stage(plateau_kinds, plateau_index, explicit_count)["plateau_kind"]
         if kind == "intimate_closeup" and "panties" in template.get("slots", {}) and rng.random() < 0.5:
             kind = "panties_aside"
         result = copy.deepcopy(explicit_stage)
@@ -4152,7 +4206,20 @@ def stage_for_index(
         )
         result["body_visibility"] = ["breasts", "nipples", "pubic_area", "genitals"]
         return result
-    return weighted_choice(rng, stages)
+    if random_bucket is None:
+        return weighted_choice(rng, stages)
+    if random_bucket == "covered":
+        candidates = [stage for stage in effective if stage["level"] not in REVEALING_LEVELS]
+    elif random_bucket == "revealing":
+        candidates = [
+            stage for stage in effective
+            if stage["level"] in {"covered", "lingerie", "topless", "nude"}
+        ]
+    elif random_bucket == "explicit":
+        candidates = [stage for stage in effective if stage["level"] == "explicit"]
+    else:
+        raise AppError(f"Unknown random progression bucket: {random_bucket}")
+    return weighted_choice(rng, candidates)
 
 
 def maybe_dressed_panties_reveal(
@@ -4160,6 +4227,7 @@ def maybe_dressed_panties_reveal(
     stage: dict[str, Any],
     outfit: dict[str, Any],
     rng: random.Random,
+    force: bool = False,
 ) -> dict[str, Any]:
     """Turn a compatible dressed frame into a probabilistic panties reveal."""
     rule = db["settings"]["dressed_panties_reveal"]
@@ -4172,7 +4240,7 @@ def maybe_dressed_panties_reveal(
         for slot in rule["outer_slots"]
     ):
         return stage
-    if rng.random() >= rule["chance"]:
+    if not force and rng.random() >= rule["chance"]:
         return stage
     return dressed_panties_reveal_stage(stage, outfit)
 
@@ -4225,11 +4293,11 @@ def full_xxx_recipe_plan(
     plateau = [item for item in recipes if item.get("intensity") != "peak"]
     peak = [item for item in recipes if item.get("intensity") == "peak"]
     if not peak:
-        raise AppError("Full XXX planning requires at least one enabled peak recipe")
+        raise AppError("Explicit planning requires at least one enabled peak recipe")
     if count == 1:
         return weighted_shuffle_sequence(rng, peak, 1)
     if not plateau:
-        raise AppError("Full XXX planning requires at least one enabled explicit recipe")
+        raise AppError("Explicit planning requires at least one enabled explicit recipe")
     return (
         weighted_shuffle_sequence(rng, plateau, count - 1)
         + weighted_shuffle_sequence(rng, peak, 1)
@@ -4258,7 +4326,7 @@ def sfw_stage(
     """Select only stages that guarantee covered breasts and genitals."""
     stages = [stage for stage in effective_photoshoot_stages(template) if is_sfw_stage(stage)]
     if not stages:
-        raise AppError(f"Outfit template {template['id']} has no SFW-compatible covered stage")
+        raise AppError(f"Outfit template {template['id']} has no Covered-compatible stage")
     if mode == "photoshoot":
         result = copy.deepcopy(stages[min(len(stages) - 1, index * len(stages) // count)])
     else:
@@ -5333,6 +5401,11 @@ def build_storyboard(
     for photoshoot_index in range(photoshoot_count):
         avoid: dict[str, set[str]] = {}
         removed_slots: set[str] = set()
+        revealing_count, _ = (
+            progression_counts(args.count, nsfw_percent, plateau_percent)
+            if args.content_mode == "progressive"
+            else (0, 0)
+        )
         xxx_plan = (
             full_xxx_recipe_plan(db, args.count, rng)
             if args.content_mode == "xxx" else []
@@ -5340,11 +5413,27 @@ def build_storyboard(
         progressive_xxx_plan: list[dict[str, Any]] = []
         progressive_xxx_index = 0
         bag_scope = f"photoshoot-{photoshoot_index}"
+        random_buckets = (
+            random_progression_buckets(
+                args.count,
+                nsfw_percent,
+                plateau_percent,
+                _cloned_rng(rng),
+            )
+            if args.mode == "random" and args.content_mode == "progressive"
+            else None
+        )
         fixed = None
         if args.mode == "photoshoot":
             attempts = composer.max_scene_attempts
             for _ in range(attempts):
-                candidate = composer.fixed_context(args.content_mode)
+                context_mode = (
+                    "sfw"
+                    if args.content_mode == "progressive"
+                    and revealing_count < args.count
+                    else args.content_mode
+                )
+                candidate = composer.fixed_context(context_mode)
                 signature = photoshoot_signature(candidate)
                 if signature not in seen_photoshoots:
                     fixed = candidate
@@ -5356,7 +5445,13 @@ def build_storyboard(
                     f"after {attempts} attempts"
                 )
         for shot_index in range(args.count):
-            context = fixed if fixed is not None else composer.fixed_context(args.content_mode)
+            random_bucket = random_buckets[shot_index] if random_buckets else None
+            context_mode = (
+                "sfw"
+                if args.content_mode == "progressive" and random_bucket == "covered"
+                else args.content_mode
+            )
+            context = fixed if fixed is not None else composer.fixed_context(context_mode)
             assert context is not None
             template = context["outfit"]["template"]
             stage = (
@@ -5368,13 +5463,25 @@ def build_storyboard(
                     else stage_for_index(
                         template, shot_index, args.count, args.mode, rng,
                         nsfw_percent, plateau_percent,
+                        random_bucket,
                     )
                 )
             )
             if args.content_mode == "progressive":
-                stage = maybe_dressed_panties_reveal(
-                    db, stage, context["outfit"], rng
-                )
+                if random_bucket == "revealing":
+                    stage = maybe_dressed_panties_reveal(
+                        db, stage, context["outfit"], rng, force=True
+                    )
+                    if content_band_for_stage(stage) != "revealing":
+                        revealing_stages = [
+                            candidate for candidate in effective_photoshoot_stages(template)
+                            if candidate["level"] in {"lingerie", "topless", "nude"}
+                        ]
+                        stage = weighted_choice(rng, revealing_stages)
+                elif args.mode == "photoshoot" and stage["level"] in REVEALING_LEVELS:
+                    stage = maybe_dressed_panties_reveal(
+                        db, stage, context["outfit"], rng
+                    )
             if (
                 args.mode == "photoshoot"
                 and args.content_mode == "progressive"
@@ -5497,6 +5604,9 @@ def build_storyboard(
                 "stage": stage,
                 "scene": scene,
                 "inference_seed": inference_seed,
+                "progression_bucket": (
+                    random_bucket
+                ),
             })
     return storyboard
 
@@ -6246,8 +6356,8 @@ def print_validation_report(report: dict[str, Any]) -> None:
         f"{report['templates']} templates"
     )
     print(
-        f"  outfit matrix: {report['outfit_checks']} progressive and "
-        f"{report['sfw_outfit_checks']} SFW combinations across "
+        f"  outfit matrix: {report['outfit_checks']} Revealing and "
+        f"{report['sfw_outfit_checks']} Covered combinations across "
         f"{report['interiors']} interiors"
     )
     print(
@@ -6466,18 +6576,19 @@ def parse_run_config(payload: dict[str, Any], db: dict[str, Any]) -> SimpleNames
         raise AppError("use_curated_defaults must be a boolean")
     content_mode = payload.get("content_mode", "progressive")
     if content_mode not in {"sfw", "progressive", "xxx"}:
-        raise AppError("content_mode must be sfw, progressive, or xxx")
+        raise AppError(
+            "Content mode must be Covered, Revealing, or Explicit "
+            "(content_mode: sfw, progressive, or xxx)"
+        )
     progression = db["settings"].get("photoshoot_progression", {})
     nsfw = _safe_percent(
         payload.get("nsfw_percent", progression.get("nsfw_final_percent", 50)),
-        "NSFW ending",
+        "Revealing share",
     )
     plateau = _safe_percent(
         payload.get("plateau_percent", progression.get("explicit_plateau_percent", 30)),
-        "Explicit plateau",
+        "Explicit share",
     )
-    if plateau > nsfw:
-        raise AppError("The explicit plateau percentage cannot exceed the NSFW ending")
     return SimpleNamespace(
         mode=mode,
         count=count,
@@ -6486,8 +6597,8 @@ def parse_run_config(payload: dict[str, Any], db: dict[str, Any]) -> SimpleNames
         inference_seed=inference_seed,
         inference_strategy=inference_strategy,
         content_mode=content_mode,
-        nsfw_percent=None if content_mode != "progressive" or mode == "random" else nsfw,
-        plateau_percent=None if content_mode != "progressive" or mode == "random" else plateau,
+        nsfw_percent=nsfw if content_mode == "progressive" else None,
+        plateau_percent=plateau if content_mode == "progressive" else None,
         use_curated_defaults=use_curated_defaults,
         fast=bool(payload.get("fast", False)),
     )
@@ -6533,6 +6644,7 @@ def serialize_shot(db: dict[str, Any], shot: dict[str, Any]) -> dict[str, Any]:
         "stage": {
             "id": shot["stage"]["id"],
             "level": shot["stage"]["level"],
+            "content_band": content_band_for_stage(shot["stage"]).title(),
             "plateau_kind": shot["stage"].get("plateau_kind"),
             "visible_slots": effective_stage.get("visible_slots", []),
             "body_visibility": effective_stage.get("body_visibility", []),
@@ -7595,7 +7707,12 @@ class WebState:
             "options": [
                 {
                     "id": item["id"],
-                    "label": (item.get("plateau_kind") or item["level"]).replace("_", " ").title(),
+                    "label": (
+                        f"{content_band_for_stage(item).title()} · "
+                        f"{item['plateau_kind'].replace('_', ' ').title()}"
+                        if item.get("plateau_kind")
+                        else content_band_for_stage(item).title()
+                    ),
                     "prompt": item["level"], "current": item["id"] == shot["stage"]["id"],
                     "default": item["id"] == shot["stage"]["id"],
                 } for item in stages
@@ -7847,6 +7964,7 @@ class WebState:
                         else stage_for_index(
                             context["outfit"]["template"], old["shot_index"], args.count,
                             args.mode, record["rng"], nsfw, plateau,
+                            old.get("progression_bucket"),
                         )
                     )
                 )
@@ -8232,7 +8350,7 @@ class WebState:
                 and record["args"].content_mode == "sfw"
                 and not template_supports_sfw(db, template)
             ):
-                raise AppError("This outfit recipe has no SFW-compatible covered stage")
+                raise AppError("This outfit recipe has no Covered-compatible stage")
             context["outfit"] = record["composer"].choose_outfit(
                 template,
                 context["interior"],
@@ -8357,7 +8475,7 @@ class WebState:
                 if value not in INTENSITY_LEVELS:
                     raise AppError("Unknown intensity")
                 if not yolo and record["args"].content_mode == "sfw" and value not in {"fashion", "sensual"}:
-                    raise AppError("SFW only storyboards allow fashion or sensual intensity")
+                    raise AppError("Covered storyboards allow fashion or sensual intensity")
                 if not yolo and value not in allowed_scene_intensities(shot["scene"]):
                     raise AppError(
                         f"Intensity {value} is incompatible with this stage and recipe"
@@ -8504,6 +8622,7 @@ class WebState:
                 "s": shot["shot_index"],
                 "seed": shot["inference_seed"],
                 "stage": encode_database_refs(shot["stage"], index),
+                "progression_bucket": shot.get("progression_bucket"),
                 "stage_manual": bool(shot.get("stage_manual", False)),
                 "manual_fields": sorted(set(shot.get("manual_fields", []))),
                 "context": encode_database_refs(context, index),
@@ -8565,6 +8684,9 @@ class WebState:
             context = decode_database_refs(compact.get("context"), index)
             stage = decode_database_refs(compact.get("stage"), index)
             scene_delta = decode_database_refs(compact.get("scene"), index)
+            progression_bucket = compact.get("progression_bucket")
+            if progression_bucket not in {None, "covered", "revealing", "explicit"}:
+                raise AppError(f"Storyboard shot {position} has an invalid content band")
             if not all(isinstance(value, dict) for value in (context, stage, scene_delta)):
                 raise AppError(f"Storyboard shot {position} is incomplete")
             if (
@@ -8574,7 +8696,7 @@ class WebState:
             ):
                 raise AppError(
                     f"Storyboard shot {position} uses stage {stage.get('id', 'unknown')}, "
-                    "which is not allowed in SFW only mode"
+                    "which is not allowed in Covered mode"
                 )
             scene = dict(context)
             scene.update(scene_delta)
@@ -8602,6 +8724,7 @@ class WebState:
                 ),
                 "context": context,
                 "stage": stage,
+                "progression_bucket": progression_bucket,
                 "stage_manual": bool(compact.get("stage_manual", False)),
                 "manual_fields": sorted(set(manual_fields)),
                 "scene": scene,
