@@ -703,7 +703,8 @@
         "flash_breast": "(dressed breast flash:1.5), the upper garment remains fully worn and deliberately lifted, breasts exposed in a candid caught-moment, natural unposed amateur feel",
         "flash_skirt": "(dressed skirt flash:1.5), the skirt or dress remains fully worn and deliberately lifted, the crotch revealed in a candid caught-moment, natural unposed amateur feel",
         "flash_escalated": "(escalated skirt flash:1.5), the skirt or dress remains fully worn and lifted, panties pushed to one side of the crotch, fully revealed in a candid caught-moment, natural unposed amateur feel"
-      }
+      },
+      "plateau_share": 0.5
     }
   },
   "human_model_parts": {
@@ -26865,7 +26866,7 @@
       ],
       "focus_target": "focus_breasts",
       "intensity": "explicit",
-      "weight": 13.0
+      "weight": 5.2
     },
     {
       "id": "recipe_flash_breast_standing",
@@ -26891,7 +26892,7 @@
       ],
       "focus_target": "focus_breasts",
       "intensity": "explicit",
-      "weight": 13.0
+      "weight": 5.2
     },
     {
       "id": "recipe_flash_skirt_sitting",
@@ -26917,7 +26918,7 @@
       ],
       "focus_target": "focus_torso",
       "intensity": "explicit",
-      "weight": 13.0
+      "weight": 5.2
     },
     {
       "id": "recipe_flash_skirt_standing",
@@ -26943,7 +26944,7 @@
       ],
       "focus_target": "focus_torso",
       "intensity": "explicit",
-      "weight": 13.0
+      "weight": 5.2
     },
     {
       "id": "recipe_flash_escalated",
@@ -26969,7 +26970,7 @@
       ],
       "focus_target": "focus_torso",
       "intensity": "explicit",
-      "weight": 13.0
+      "weight": 5.2
     },
     {
       "id": "recipe_voyeur_morning",
@@ -40201,6 +40202,20 @@
         "closeup"
       ],
       "match_any_tags": [],
+      "environment_tags": []
+    },
+    {
+      "id": "zone_dresser",
+      "prompt": "at the dresser, close to the small mirror on top",
+      "match_id_terms": [
+        "dresser"
+      ],
+      "match_any_tags": [],
+      "capabilities": [
+        "standing",
+        "supported",
+        "closeup"
+      ],
       "environment_tags": []
     }
   ],

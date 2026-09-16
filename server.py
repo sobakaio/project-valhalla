@@ -2210,7 +2210,7 @@ def validate_camera_grammar(scene: dict[str, Any]) -> None:
         or recipe is not None and recipe.get("focus_target") == "focus_rear"
         or scene["stage"].get("plateau_kind") == "provocative_rear"
     )
-    if rear_display:
+    if rear_display and not scene.get("camera_contract_relaxed"):
         if "rear_angle" not in tags(angle):
             conflict("rear display requires a rear-compatible angle", recipe, angle)
         if focus["id"] != "focus_rear":
@@ -3277,12 +3277,21 @@ class Composer:
                 r for r in self.db["explicit_recipes"]
                 if not r.get("disabled", False)
                 and r["id"] != recipe["id"]
-                and (not recipe.get("plateau_kind")
-                     or r.get("plateau_kind") == recipe.get("plateau_kind"))
+                and (not plateau_kind
+                     or r.get("plateau_kind") == plateau_kind)
                 and _swap_candidate_ok(r)
             ]
             if swap_pool:
-                recipe = weighted_choice(self.rng, swap_pool)
+                remaining_outfit_slots = set(
+                    fixed["outfit"]["template"]["slots"].keys()
+                )
+                compatible_swaps = [
+                    r for r in swap_pool
+                    if flash_recipe_slot_compatible(r, remaining_outfit_slots)
+                ]
+                recipe = weighted_choice(
+                    self.rng, compatible_swaps or swap_pool
+                )
                 available_tags |= tags(recipe)
                 if not overrides.get("intensity"):
                     intensity = recipe.get("intensity", "explicit")
@@ -3503,6 +3512,17 @@ class Composer:
                 candidates = casual or candidates
             camera[key] = choose(key, candidates)
             camera_tags |= tags(camera[key])
+        camera_contract_relaxed = False
+        if recipe is not None and (
+            recipe.get("focus_target") == "focus_rear"
+            or stage.get("plateau_kind") == "provocative_rear"
+        ):
+            rear_delivered = (
+                "rear_angle" in tags(camera["camera_angle"])
+                and camera["focus_target"]["id"] == "focus_rear"
+            )
+            if not rear_delivered:
+                camera_contract_relaxed = True
         intimate_arousal_modifier = None
         if recipe and recipe.get("focus_target") == "focus_intimate":
             min_rank = {"erotic": 0, "nude": 1, "explicit": 2, "peak": 3}.get(
@@ -3531,6 +3551,7 @@ class Composer:
             "explicit_recipe": recipe,
             "intimate_arousal_modifier": intimate_arousal_modifier,
             "intensity": intensity,
+            "camera_contract_relaxed": camera_contract_relaxed,
             **camera,
         }
 
@@ -4548,8 +4569,15 @@ def weighted_shuffle_sequence(
 def full_xxx_recipe_plan(
     db: dict[str, Any], count: int, rng: random.Random,
     remaining_slots: set[str] | None = None,
+    flash_share: float | None = None,
 ) -> list[dict[str, Any]]:
-    """Plan an explicit editorial arc over concrete enabled recipe records."""
+    """Plan an explicit editorial arc over concrete enabled recipe records.
+
+    When ``flash_share`` is given (full xxx blocks), flash recipes are
+    interleaved at that density so the plateau hits the target share.
+    Otherwise the weighted bag keeps DB weights (per-shot consumers like
+    progressive re-planning rely on them).
+    """
     recipes = [
         item for item in db["explicit_recipes"]
         if not item.get("disabled", False)
@@ -4563,6 +4591,44 @@ def full_xxx_recipe_plan(
         return weighted_shuffle_sequence(rng, peak, 1)
     if not plateau:
         raise AppError("Explicit planning requires at least one enabled explicit recipe")
+    if flash_share is None:
+        flash_share = float(
+            db["settings"].get("flash_reveal", {}).get("plateau_share", 0.0)
+        )
+    flash_pool = [
+        item for item in plateau if item.get("plateau_kind") in FLASH_KINDS
+    ]
+    rest_pool = [
+        item for item in plateau if item.get("plateau_kind") not in FLASH_KINDS
+    ]
+    if flash_pool and flash_share > 0 and rest_pool:
+        n_plateau = count - 1
+        flash_count = min(
+            len(flash_pool), n_plateau, max(1, round(count * flash_share))
+        )
+        flash_cycle = list(flash_pool)
+        rng.shuffle(flash_cycle)
+        flash_positions = {
+            round(k * n_plateau / flash_count) for k in range(flash_count)
+        } if flash_count else set()
+        rest_plan = (
+            weighted_shuffle_sequence(rng, rest_pool, n_plateau - flash_count)
+            if n_plateau > flash_count else []
+        )
+        plan: list[dict[str, Any]] = []
+        flash_i = 0
+        rest_i = 0
+        for idx in range(n_plateau):
+            if idx in flash_positions:
+                plan.append(flash_cycle[flash_i % len(flash_cycle)])
+                flash_i += 1
+            elif rest_plan:
+                plan.append(rest_plan[rest_i])
+                rest_i += 1
+            else:
+                plan.append(flash_cycle[flash_i % len(flash_cycle)])
+                flash_i += 1
+        return plan + weighted_shuffle_sequence(rng, peak, 1)
     return (
         weighted_shuffle_sequence(rng, plateau, count - 1)
         + weighted_shuffle_sequence(rng, peak, 1)
@@ -5796,7 +5862,12 @@ def build_storyboard(
             else (0, 0)
         )
         xxx_plan = (
-            full_xxx_recipe_plan(db, args.count, rng)
+            full_xxx_recipe_plan(
+                db, args.count, rng,
+                flash_share=float(
+                    db["settings"].get("flash_reveal", {}).get("plateau_share", 0.5)
+                ),
+            )
             if args.content_mode == "xxx" else []
         )
         progressive_xxx_plan: list[dict[str, Any]] = []
@@ -5888,7 +5959,7 @@ def build_storyboard(
                     )
                     progressive_xxx_plan = full_xxx_recipe_plan(
                         db, args.count - shot_index, rng,
-                        remaining_slots=remaining,
+                        remaining_slots=remaining, flash_share=0.0,
                     )
                 stage = planned_xxx_stage(
                     db, template,
@@ -8413,7 +8484,13 @@ class WebState:
         nsfw = float(progression.get("nsfw_final_percent", 50) if args.nsfw_percent is None else args.nsfw_percent)
         plateau = float(progression.get("explicit_plateau_percent", 30) if args.plateau_percent is None else args.plateau_percent)
         xxx_fallback_plan = (
-            full_xxx_recipe_plan(db, args.count, record["rng"])
+            full_xxx_recipe_plan(
+                db, args.count, record["rng"],
+                flash_share=float(
+                    record["db"]["settings"].get("flash_reveal", {}).get(
+                        "plateau_share", 0.5)
+                ),
+            )
             if (
                 recalculate_stages
                 and args.content_mode == "xxx"
