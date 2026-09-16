@@ -8470,6 +8470,272 @@
           "color_ivory",
           "color_navy"
         ]
+      },
+      {
+        "id": "top_young_croptee",
+        "catalog_category": "normal",
+        "prompt": "a cropped cotton tee with a soft raw hem",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "opaque_chest"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_pink",
+          "color_beige",
+          "color_black",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "crop:cotton-tee:under-bust:jersey"
+      },
+      {
+        "id": "top_young_offshoulder_2",
+        "catalog_category": "normal",
+        "prompt": "an off-shoulder knit with a loose rolled neck",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "opaque_chest"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_pink",
+          "color_beige",
+          "color_black",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "offshoulder:knit:loose:rib-knit"
+      },
+      {
+        "id": "top_young_halter",
+        "catalog_category": "normal",
+        "prompt": "a halter crop with thin neck ties",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "opaque_chest"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_pink",
+          "color_beige",
+          "color_black",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "halter:crop:neck-tie:jersey"
+      },
+      {
+        "id": "top_young_longsleeve_baby",
+        "catalog_category": "normal",
+        "prompt": "a baby-style long-sleeve tee with a dropped shoulder",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "opaque_chest"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_pink",
+          "color_beige",
+          "color_black",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "longsleeve:dropped-shoulder:overlong:jersey"
+      },
+      {
+        "id": "top_young_bodysuit_casual",
+        "catalog_category": "normal",
+        "prompt": "a casual ribbed bodysuit with a scoop neck",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "opaque_chest"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_pink",
+          "color_beige",
+          "color_black",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "bodysuit:ribbed:scoop:rib-knit"
+      },
+      {
+        "id": "top_young_cowl_neck_2",
+        "catalog_category": "normal",
+        "prompt": "a cowl-neck sweater with a loose draped front",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "opaque_chest"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_pink",
+          "color_beige",
+          "color_black",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "cowl:draped-front:slouchy:knit"
+      },
+      {
+        "id": "top_young_puff_sleeve",
+        "catalog_category": "normal",
+        "prompt": "a puff-sleeve blouse with a relaxed fit",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "opaque_chest"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_pink",
+          "color_beige",
+          "color_black",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "puff-sleeve:relaxed:mid-length:chiffon"
+      },
+      {
+        "id": "top_young_turtle_rib",
+        "catalog_category": "normal",
+        "prompt": "a thin ribbed turtleneck with a fitted line",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "opaque_chest"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_pink",
+          "color_beige",
+          "color_black",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "turtle:ribbed:fitted:rib-knit"
+      },
+      {
+        "id": "top_sch_cardigan_belt",
+        "catalog_category": "normal",
+        "prompt": "a belted cardigan with a loose tie at the waist",
+        "tags": [
+          "school",
+          "casual",
+          "everyday",
+          "opaque_chest"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_burgundy",
+          "color_navy",
+          "color_gray",
+          "color_sage"
+        ],
+        "diversity_fingerprint": "cardigan:belted:tie-waist:knit"
+      },
+      {
+        "id": "top_sch_cardigan_lace",
+        "catalog_category": "normal",
+        "prompt": "a lace-trim cardigan with a shawl collar",
+        "tags": [
+          "school",
+          "casual",
+          "everyday",
+          "opaque_chest"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_burgundy",
+          "color_navy",
+          "color_gray",
+          "color_sage"
+        ],
+        "diversity_fingerprint": "cardigan:lace-trim:shawl:knit"
+      },
+      {
+        "id": "top_sch_blouse_puff",
+        "catalog_category": "normal",
+        "prompt": "a puff-sleeve blouse with a peter-pan collar",
+        "tags": [
+          "school",
+          "casual",
+          "everyday",
+          "opaque_chest"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_burgundy",
+          "color_navy",
+          "color_gray",
+          "color_sage"
+        ],
+        "diversity_fingerprint": "blouse:puff-sleeve:peter-pan:chiffon"
+      },
+      {
+        "id": "top_sch_shirt_knit",
+        "catalog_category": "normal",
+        "prompt": "a fine knit button-up shirt with a slim collar",
+        "tags": [
+          "school",
+          "casual",
+          "everyday",
+          "opaque_chest"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_burgundy",
+          "color_navy",
+          "color_gray",
+          "color_sage"
+        ],
+        "diversity_fingerprint": "shirt:knit-button:slim-collar:knit"
+      },
+      {
+        "id": "top_sch_sweater_vneck",
+        "catalog_category": "normal",
+        "prompt": "a fine-gauge V-neck sweater with a slim band",
+        "tags": [
+          "school",
+          "casual",
+          "everyday",
+          "opaque_chest"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_burgundy",
+          "color_navy",
+          "color_gray",
+          "color_sage"
+        ],
+        "diversity_fingerprint": "sweater:v-neck:slim-band:knit"
+      },
+      {
+        "id": "top_sch_sweater_cable",
+        "catalog_category": "normal",
+        "prompt": "a cable-knit sweater with a soft collar",
+        "tags": [
+          "school",
+          "casual",
+          "everyday",
+          "opaque_chest"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_burgundy",
+          "color_navy",
+          "color_gray",
+          "color_sage"
+        ],
+        "diversity_fingerprint": "sweater:cable:soft-collar:knit"
       }
     ],
     "lowerwear": [
@@ -10634,6 +10900,274 @@
           "color_burgundy",
           "color_navy"
         ]
+      },
+      {
+        "id": "lower_young_cycle_shorts",
+        "catalog_category": "normal",
+        "prompt": "high-waist cycle shorts with a smooth matte finish",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "short_length"
+        ],
+        "allowed_colors": [
+          "color_denim",
+          "color_white",
+          "color_beige",
+          "color_black",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "cycle:high-waist:matte:spandex"
+      },
+      {
+        "id": "lower_young_plaid_skirt_casual",
+        "catalog_category": "normal",
+        "prompt": "a casual plaid skirt with a soft A-line fall",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "skirt"
+        ],
+        "allowed_colors": [
+          "color_denim",
+          "color_white",
+          "color_beige",
+          "color_black",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "plaid:a-line:mid:wool-blend"
+      },
+      {
+        "id": "lower_young_denim_jogger",
+        "catalog_category": "normal",
+        "prompt": "a denim jogger with a tapered cuff",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "denim",
+          "jogger"
+        ],
+        "allowed_colors": [
+          "color_denim",
+          "color_white",
+          "color_beige",
+          "color_black",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "jogger:tapered-cuff:high-rise:denim"
+      },
+      {
+        "id": "lower_young_rib_legging",
+        "catalog_category": "normal",
+        "prompt": "a ribbed high-waist legging with a held-in feel",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "legging"
+        ],
+        "allowed_colors": [
+          "color_denim",
+          "color_white",
+          "color_beige",
+          "color_black",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "legging:ribbed:high-waist:spandex"
+      },
+      {
+        "id": "lower_young_tulle_skirt",
+        "catalog_category": "normal",
+        "prompt": "a tulle skirt with a soft petal fall",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "skirt"
+        ],
+        "allowed_colors": [
+          "color_denim",
+          "color_white",
+          "color_beige",
+          "color_black",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "tulle:petal:mid:chiffon"
+      },
+      {
+        "id": "lower_young_boyshorts",
+        "catalog_category": "normal",
+        "prompt": "a cotton boyshort with a flat seam",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "short_length"
+        ],
+        "allowed_colors": [
+          "color_denim",
+          "color_white",
+          "color_beige",
+          "color_black",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "boyshort:flat-seam:mid-rise:cotton"
+      },
+      {
+        "id": "lower_young_pleated_mini",
+        "catalog_category": "normal",
+        "prompt": "a pleated mini with a crisp snap at the waist",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "skirt"
+        ],
+        "allowed_colors": [
+          "color_denim",
+          "color_white",
+          "color_beige",
+          "color_black",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "pleated:mini:crisp:sateen"
+      },
+      {
+        "id": "lower_young_cargo_shorts_2",
+        "catalog_category": "normal",
+        "prompt": "a lightweight cargo short with soft side pockets",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "short_length",
+          "denim"
+        ],
+        "allowed_colors": [
+          "color_denim",
+          "color_white",
+          "color_beige",
+          "color_black",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "cargo:pocket:mid-rise:chino"
+      },
+      {
+        "id": "lower_sch_pleated_plaid",
+        "catalog_category": "normal",
+        "prompt": "a pleated plaid skirt with a crisp waist",
+        "tags": [
+          "school",
+          "casual",
+          "everyday",
+          "skirt"
+        ],
+        "allowed_colors": [
+          "color_burgundy",
+          "color_navy",
+          "color_gray",
+          "color_sage",
+          "color_burgundy"
+        ],
+        "diversity_fingerprint": "pleated:plaid:crisp:wool-blend"
+      },
+      {
+        "id": "lower_sch_pleated_solid",
+        "catalog_category": "normal",
+        "prompt": "a solid pleated skirt with a soft fall",
+        "tags": [
+          "school",
+          "casual",
+          "everyday",
+          "skirt"
+        ],
+        "allowed_colors": [
+          "color_burgundy",
+          "color_navy",
+          "color_gray",
+          "color_sage",
+          "color_burgundy"
+        ],
+        "diversity_fingerprint": "pleated:solid:soft:wool-blend"
+      },
+      {
+        "id": "lower_sch_pencil_satin",
+        "catalog_category": "normal",
+        "prompt": "a satin pencil skirt with a side slit",
+        "tags": [
+          "school",
+          "casual",
+          "everyday",
+          "skirt"
+        ],
+        "allowed_colors": [
+          "color_burgundy",
+          "color_navy",
+          "color_gray",
+          "color_sage",
+          "color_burgundy"
+        ],
+        "diversity_fingerprint": "pencil:satin:side-slit:satin"
+      },
+      {
+        "id": "lower_sch_pencil_wool",
+        "catalog_category": "normal",
+        "prompt": "a wool pencil skirt with a clean hem",
+        "tags": [
+          "school",
+          "casual",
+          "everyday",
+          "skirt"
+        ],
+        "allowed_colors": [
+          "color_burgundy",
+          "color_navy",
+          "color_gray",
+          "color_sage",
+          "color_burgundy"
+        ],
+        "diversity_fingerprint": "pencil:wool:clean-hem:wool-blend"
+      },
+      {
+        "id": "lower_sch_layered_tulle",
+        "catalog_category": "normal",
+        "prompt": "a layered tulle skirt with a soft petal fall",
+        "tags": [
+          "school",
+          "casual",
+          "everyday",
+          "skirt"
+        ],
+        "allowed_colors": [
+          "color_burgundy",
+          "color_navy",
+          "color_gray",
+          "color_sage",
+          "color_burgundy"
+        ],
+        "diversity_fingerprint": "tulle:layered:petal:chiffon"
+      },
+      {
+        "id": "lower_sch_plaid_midi",
+        "catalog_category": "normal",
+        "prompt": "a plaid midi skirt with a soft A-line",
+        "tags": [
+          "school",
+          "casual",
+          "everyday",
+          "skirt"
+        ],
+        "allowed_colors": [
+          "color_burgundy",
+          "color_navy",
+          "color_gray",
+          "color_sage",
+          "color_burgundy"
+        ],
+        "diversity_fingerprint": "plaid:midi:a-line:wool-blend"
       }
     ],
     "full_body": [
@@ -12831,6 +13365,190 @@
           "color_navy",
           "color_pink"
         ]
+      },
+      {
+        "id": "dress_young_jumpsuit",
+        "catalog_category": "normal",
+        "prompt": "a soft knitted jumpsuit with a relaxed leg",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "opaque_body",
+          "loose"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_pink",
+          "color_beige",
+          "color_navy",
+          "color_teal"
+        ],
+        "diversity_fingerprint": "jumpsuit:knit:relaxed-leg:jersey"
+      },
+      {
+        "id": "dress_young_surfer",
+        "catalog_category": "normal",
+        "prompt": "a surfer-style dress with a dropped shoulder",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "opaque_body"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_pink",
+          "color_beige",
+          "color_navy",
+          "color_teal"
+        ],
+        "diversity_fingerprint": "surfer:dropped-shoulder:mid:jersey"
+      },
+      {
+        "id": "dress_young_slip_mini",
+        "catalog_category": "normal",
+        "prompt": "a satin slip mini with thin straps",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "slit"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_pink",
+          "color_beige",
+          "color_navy",
+          "color_teal"
+        ],
+        "diversity_fingerprint": "slip:mini:thin-strap:satin"
+      },
+      {
+        "id": "dress_young_tie_dye",
+        "catalog_category": "normal",
+        "prompt": "a tie-dye t-shirt dress with a soft hem",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "loose",
+          "opaque_body"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_pink",
+          "color_beige",
+          "color_navy",
+          "color_teal"
+        ],
+        "diversity_fingerprint": "tshirt:tie-dye:below-knee:jersey"
+      },
+      {
+        "id": "dress_young_peplum",
+        "catalog_category": "normal",
+        "prompt": "a peplum knit dress with a flared waist",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "opaque_body"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_pink",
+          "color_beige",
+          "color_navy",
+          "color_teal"
+        ],
+        "diversity_fingerprint": "peplum:knit:flared:jersey"
+      },
+      {
+        "id": "dress_young_wrinkle",
+        "catalog_category": "normal",
+        "prompt": "a crinkle-nylon midi with a bias fall",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "slit"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_pink",
+          "color_beige",
+          "color_navy",
+          "color_teal"
+        ],
+        "diversity_fingerprint": "crinkle:nylon:midi:bias"
+      },
+      {
+        "id": "dress_boudoir_chemise",
+        "catalog_category": "normal",
+        "prompt": "a silk chemise with a soft bias fall",
+        "tags": [
+          "erotic",
+          "lace",
+          "lingerie"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_black",
+          "color_pink",
+          "color_burgundy",
+          "color_teal"
+        ]
+      },
+      {
+        "id": "dress_boudoir_babydollar",
+        "catalog_category": "normal",
+        "prompt": "a babydoll with a sheer overlay",
+        "tags": [
+          "erotic",
+          "lace",
+          "lingerie"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_black",
+          "color_pink",
+          "color_burgundy",
+          "color_teal"
+        ]
+      },
+      {
+        "id": "dress_boudoir_slip_satin",
+        "catalog_category": "normal",
+        "prompt": "a satin slip with a thin strap",
+        "tags": [
+          "erotic",
+          "lace",
+          "lingerie"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_black",
+          "color_pink",
+          "color_burgundy",
+          "color_teal"
+        ]
+      },
+      {
+        "id": "dress_boudoir_bodysuit_lace",
+        "catalog_category": "normal",
+        "prompt": "a lace bodysuit with a held line",
+        "tags": [
+          "erotic",
+          "lace",
+          "lingerie"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_black",
+          "color_pink",
+          "color_burgundy",
+          "color_teal"
+        ]
       }
     ],
     "outerwear": [
@@ -13771,6 +14489,114 @@
           "color_beige",
           "color_rust"
         ]
+      },
+      {
+        "id": "outer_sch_bomber",
+        "catalog_category": "normal",
+        "prompt": "a soft bomber jacket with a ribbed collar",
+        "tags": [
+          "school",
+          "casual",
+          "outerwear"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_chocolate",
+          "color_gray",
+          "color_sage",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "bomber:ribbed-collar:soft:nylon"
+      },
+      {
+        "id": "outer_sch_trench",
+        "catalog_category": "normal",
+        "prompt": "a short trench coat with a belt",
+        "tags": [
+          "school",
+          "casual",
+          "outerwear"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_chocolate",
+          "color_gray",
+          "color_sage",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "trench:short:belted:wool"
+      },
+      {
+        "id": "outer_sch_tweed",
+        "catalog_category": "normal",
+        "prompt": "a tweed jacket with a collar and button",
+        "tags": [
+          "school",
+          "casual",
+          "outerwear"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_chocolate",
+          "color_gray",
+          "color_sage",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "tweed:collared:button:wool-blend"
+      },
+      {
+        "id": "outer_sch_puffer",
+        "catalog_category": "normal",
+        "prompt": "a light puffer jacket with a zip front",
+        "tags": [
+          "school",
+          "casual",
+          "outerwear"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_chocolate",
+          "color_gray",
+          "color_sage",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "puffer:light:zip-front:nylon"
+      },
+      {
+        "id": "outer_sch_cape",
+        "catalog_category": "normal",
+        "prompt": "a short wool cape with a pin at the shoulder",
+        "tags": [
+          "school",
+          "casual",
+          "outerwear"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_chocolate",
+          "color_gray",
+          "color_sage",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "cape:wool:short:pin:wool-blend"
+      },
+      {
+        "id": "outer_sch_wool_coat",
+        "catalog_category": "normal",
+        "prompt": "a knee-length wool coat with a belt",
+        "tags": [
+          "school",
+          "casual",
+          "outerwear"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_chocolate",
+          "color_gray",
+          "color_sage",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "coat:wool:knee:belted:wool"
       }
     ],
     "bra": [
@@ -14577,6 +15403,74 @@
           "color_white",
           "color_black",
           "color_burgundy"
+        ]
+      },
+      {
+        "id": "bra_boudoir_balconette",
+        "catalog_category": "normal",
+        "prompt": "a balconette bra with a low cup and thin band",
+        "tags": [
+          "erotic",
+          "lace",
+          "lingerie"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_black",
+          "color_pink",
+          "color_burgundy",
+          "color_teal"
+        ]
+      },
+      {
+        "id": "bra_boudoir_ring",
+        "catalog_category": "normal",
+        "prompt": "a ring-cup bralette with a fine lace edge",
+        "tags": [
+          "erotic",
+          "lace",
+          "lingerie"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_black",
+          "color_pink",
+          "color_burgundy",
+          "color_teal"
+        ]
+      },
+      {
+        "id": "bra_boudoir_demi",
+        "catalog_category": "normal",
+        "prompt": "a demi-cup bra with a soft side boning",
+        "tags": [
+          "erotic",
+          "lace",
+          "lingerie"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_black",
+          "color_pink",
+          "color_burgundy",
+          "color_teal"
+        ]
+      },
+      {
+        "id": "bra_boudoir_plunge",
+        "catalog_category": "normal",
+        "prompt": "a deep plunge bra with a low center",
+        "tags": [
+          "erotic",
+          "lace",
+          "lingerie"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_black",
+          "color_pink",
+          "color_burgundy",
+          "color_teal"
         ]
       }
     ],
@@ -15702,6 +16596,74 @@
           "color_black",
           "color_burgundy"
         ]
+      },
+      {
+        "id": "panty_boudoir_brief",
+        "catalog_category": "normal",
+        "prompt": "a high-waist brief with a lace edge",
+        "tags": [
+          "erotic",
+          "lace",
+          "lingerie"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_black",
+          "color_pink",
+          "color_burgundy",
+          "color_teal"
+        ]
+      },
+      {
+        "id": "panty_boudoir_bikini",
+        "catalog_category": "normal",
+        "prompt": "a bikini brief with a soft side",
+        "tags": [
+          "erotic",
+          "lace",
+          "lingerie"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_black",
+          "color_pink",
+          "color_burgundy",
+          "color_teal"
+        ]
+      },
+      {
+        "id": "panty_boudoir_thong",
+        "catalog_category": "normal",
+        "prompt": "a thong brief with a fine lace front",
+        "tags": [
+          "erotic",
+          "lace",
+          "lingerie"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_black",
+          "color_pink",
+          "color_burgundy",
+          "color_teal"
+        ]
+      },
+      {
+        "id": "panty_boudoir_cheek",
+        "catalog_category": "normal",
+        "prompt": "a cheeky brief with a rounded edge",
+        "tags": [
+          "erotic",
+          "lace",
+          "lingerie"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_black",
+          "color_pink",
+          "color_burgundy",
+          "color_teal"
+        ]
       }
     ],
     "legwear": [
@@ -16616,6 +17578,108 @@
           "color_navy"
         ],
         "support_mode": "self_supporting"
+      },
+      {
+        "id": "leg_knee_socks_lace",
+        "catalog_category": "normal",
+        "prompt": "lace-top knee-high socks with a soft rib",
+        "tags": [
+          "school",
+          "casual",
+          "legwear"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_white",
+          "color_gray",
+          "color_chocolate"
+        ],
+        "diversity_fingerprint": "knee:lace-top:soft-rib:cotton"
+      },
+      {
+        "id": "leg_knee_socks_pleat",
+        "catalog_category": "normal",
+        "prompt": "pleated knee-high socks with a clean band",
+        "tags": [
+          "school",
+          "casual",
+          "legwear"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_white",
+          "color_gray",
+          "color_chocolate"
+        ],
+        "diversity_fingerprint": "knee:pleated:clean-band:cotton"
+      },
+      {
+        "id": "leg_thigh_sheer",
+        "catalog_category": "normal",
+        "prompt": "a sheer thigh-high with a held band",
+        "tags": [
+          "school",
+          "casual",
+          "legwear"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_white",
+          "color_gray",
+          "color_chocolate"
+        ],
+        "diversity_fingerprint": "thigh:sheer:held-band:nylon"
+      },
+      {
+        "id": "leg_ankle_cuff",
+        "catalog_category": "normal",
+        "prompt": "a cuffed ankle sock with a soft rib",
+        "tags": [
+          "school",
+          "casual",
+          "legwear"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_white",
+          "color_gray",
+          "color_chocolate"
+        ],
+        "diversity_fingerprint": "ankle:cuffed:soft-rib:cotton"
+      },
+      {
+        "id": "leg_knee_socks_rib",
+        "catalog_category": "normal",
+        "prompt": "ribbed knee-high socks with a firm band",
+        "tags": [
+          "school",
+          "casual",
+          "legwear"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_white",
+          "color_gray",
+          "color_chocolate"
+        ],
+        "diversity_fingerprint": "knee:ribbed:firm-band:cotton"
+      },
+      {
+        "id": "leg_thigh_lace",
+        "catalog_category": "normal",
+        "prompt": "a lace-band thigh-high with a fine knit",
+        "tags": [
+          "school",
+          "casual",
+          "legwear"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_white",
+          "color_gray",
+          "color_chocolate"
+        ],
+        "diversity_fingerprint": "thigh:lace-band:fine-knit:nylon"
       }
     ],
     "footwear": [
@@ -17725,6 +18789,109 @@
           "color_navy",
           "color_black"
         ]
+      },
+      {
+        "id": "foot_maryjane_strap",
+        "catalog_category": "normal",
+        "prompt": "a Mary Jane with a double strap across the instep",
+        "tags": [
+          "school",
+          "casual",
+          "footwear"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_chocolate",
+          "color_ivory",
+          "color_white"
+        ],
+        "diversity_fingerprint": "maryjane:double-strap:low-heel:patent"
+      },
+      {
+        "id": "foot_maryjane_buckle",
+        "catalog_category": "normal",
+        "prompt": "a Mary Jane with a small buckle at the instep",
+        "tags": [
+          "school",
+          "casual",
+          "footwear"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_chocolate",
+          "color_ivory",
+          "color_white"
+        ],
+        "diversity_fingerprint": "maryjane:small-buckle:low-heel:patent"
+      },
+      {
+        "id": "foot_loafer_horsebit",
+        "catalog_category": "normal",
+        "prompt": "a horsebit loafer with a soft toe",
+        "tags": [
+          "school",
+          "casual",
+          "footwear"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_chocolate",
+          "color_ivory",
+          "color_white"
+        ],
+        "diversity_fingerprint": "loafer:horsebit:soft-toe:leather"
+      },
+      {
+        "id": "foot_loafer_penny",
+        "catalog_category": "normal",
+        "prompt": "a penny loafer with a clean toe",
+        "tags": [
+          "school",
+          "casual",
+          "footwear"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_chocolate",
+          "color_ivory",
+          "color_white"
+        ],
+        "diversity_fingerprint": "loafer:penny:clean-toe:leather"
+      },
+      {
+        "id": "foot_sneaker_canvas",
+        "catalog_category": "normal",
+        "prompt": "a canvas sneaker with a low profile",
+        "tags": [
+          "school",
+          "casual",
+          "everyday",
+          "footwear"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_chocolate",
+          "color_ivory",
+          "color_white"
+        ],
+        "diversity_fingerprint": "sneaker:canvas:low-profile:canvas"
+      },
+      {
+        "id": "foot_chelsea_knee",
+        "catalog_category": "normal",
+        "prompt": "a knee-high Chelsea boot with a soft heel",
+        "tags": [
+          "school",
+          "casual",
+          "footwear"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_chocolate",
+          "color_ivory",
+          "color_white"
+        ],
+        "diversity_fingerprint": "chelsea:knee-high:soft-heel:leather"
       }
     ],
     "accessories": [
@@ -18429,6 +19596,108 @@
         ],
         "diversity_fingerprint": "accessory:hair:scrunchie:yarn",
         "allowed_colors": []
+      },
+      {
+        "id": "acc_satchel_leather",
+        "catalog_category": "normal",
+        "prompt": "a leather satchel with a single shoulder strap",
+        "tags": [
+          "school",
+          "casual",
+          "accessory"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_chocolate",
+          "color_ivory",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "satchel:leather:single-strap:leather"
+      },
+      {
+        "id": "acc_backpack_canvas",
+        "catalog_category": "normal",
+        "prompt": "a canvas backpack with a soft frame",
+        "tags": [
+          "school",
+          "casual",
+          "accessory"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_chocolate",
+          "color_ivory",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "backpack:canvas:soft-frame:canvas"
+      },
+      {
+        "id": "acc_glasses_round",
+        "catalog_category": "normal",
+        "prompt": "round wire-frame glasses with a thin bridge",
+        "tags": [
+          "school",
+          "casual",
+          "accessory"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_chocolate",
+          "color_ivory",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "glasses:round:wire:metal"
+      },
+      {
+        "id": "acc_hair_scrunchie",
+        "catalog_category": "normal",
+        "prompt": "a soft silk scrunchie at the wrist",
+        "tags": [
+          "school",
+          "casual",
+          "accessory"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_chocolate",
+          "color_ivory",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "scrunchie:silk:soft:satin"
+      },
+      {
+        "id": "acc_tote_canvas",
+        "catalog_category": "normal",
+        "prompt": "a canvas tote with a single strap",
+        "tags": [
+          "school",
+          "casual",
+          "accessory"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_chocolate",
+          "color_ivory",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "tote:canvas:single-strap:canvas"
+      },
+      {
+        "id": "acc_brooch_small",
+        "catalog_category": "normal",
+        "prompt": "a small enamel brooch at the collar",
+        "tags": [
+          "school",
+          "casual",
+          "accessory"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_chocolate",
+          "color_ivory",
+          "color_navy"
+        ],
+        "diversity_fingerprint": "brooch:enamel:small:metal"
       }
     ]
   },
@@ -26502,6 +27771,20 @@
       "menu_label": "Peak glisten",
       "min_intensity_rank": 3,
       "weight": 0.9
+    },
+    {
+      "id": "arousal_deep_heat",
+      "prompt": "deep sustained heat, a slow internal glow with a visible flush working down the throat",
+      "menu_label": "Deep heat",
+      "min_intensity_rank": 3,
+      "weight": 0.9
+    },
+    {
+      "id": "arousal_wet_glow",
+      "prompt": "a wet glow settling in, skin dewy and responsive with a natural sheen",
+      "menu_label": "Wet glow",
+      "min_intensity_rank": 4,
+      "weight": 0.9
     }
   ],
   "explicit_recipes": [
@@ -32662,6 +33945,1796 @@
       "allowed_levels": [
         "topless",
         "nude"
+      ]
+    },
+    {
+      "id": "pose_flash_breast_sit_lift_ankle",
+      "prompt": "sitting low with the hem gathered high and one ankle crossed",
+      "tags": [
+        "sitting",
+        "flash_breast",
+        "topless_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashbreast_sit_lift_ankle",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface",
+        "breasts"
+      ]
+    },
+    {
+      "id": "pose_flash_breast_sit_lift_braid",
+      "prompt": "sitting with a braid over the gathered lift",
+      "tags": [
+        "sitting",
+        "flash_breast",
+        "topless_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashbreast_sit_lift_braid",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface",
+        "breasts"
+      ]
+    },
+    {
+      "id": "pose_flash_breast_sit_lift_chin",
+      "prompt": "sitting with the lift held and the chin lifted",
+      "tags": [
+        "sitting",
+        "flash_breast",
+        "topless_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashbreast_sit_lift_chin",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface",
+        "breasts"
+      ]
+    },
+    {
+      "id": "pose_flash_breast_sit_lift_shoulder",
+      "prompt": "sitting with one shoulder dropped into the lift",
+      "tags": [
+        "sitting",
+        "flash_breast",
+        "topless_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashbreast_sit_lift_shoulder",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface",
+        "breasts"
+      ]
+    },
+    {
+      "id": "pose_flash_breast_sit_lift_sleeve",
+      "prompt": "sitting with the sleeve riding as the lift holds",
+      "tags": [
+        "sitting",
+        "flash_breast",
+        "topless_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashbreast_sit_lift_sleeve",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface",
+        "breasts"
+      ]
+    },
+    {
+      "id": "pose_flash_breast_sit_lift_glance",
+      "prompt": "sitting with the lift held and the gaze drifting low",
+      "tags": [
+        "sitting",
+        "flash_breast",
+        "topless_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashbreast_sit_lift_glance",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface",
+        "breasts"
+      ]
+    },
+    {
+      "id": "pose_flash_breast_sit_lift_hand",
+      "prompt": "sitting with one hand loose at the gathered hem",
+      "tags": [
+        "sitting",
+        "flash_breast",
+        "topless_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashbreast_sit_lift_hand",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface",
+        "breasts"
+      ]
+    },
+    {
+      "id": "pose_flash_breast_sit_lift_settle",
+      "prompt": "sitting as the lift settles into a slow line",
+      "tags": [
+        "sitting",
+        "flash_breast",
+        "topless_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashbreast_sit_lift_settle",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface",
+        "breasts"
+      ]
+    },
+    {
+      "id": "pose_flash_breast_stand_stand_lean",
+      "prompt": "standing with the lift held and weight on one hip",
+      "tags": [
+        "standing",
+        "flash_breast",
+        "topless_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashbreast_stand_stand_lean",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "pose_flash_breast_stand_stand_window",
+      "prompt": "standing at the window with the lift held",
+      "tags": [
+        "standing",
+        "flash_breast",
+        "topless_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashbreast_stand_stand_window",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "pose_flash_breast_stand_stand_door",
+      "prompt": "standing in the doorway with the lift held",
+      "tags": [
+        "standing",
+        "flash_breast",
+        "topless_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashbreast_stand_stand_door",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "pose_flash_breast_stand_stand_hair",
+      "prompt": "standing with a hand loose in the hair as the lift holds",
+      "tags": [
+        "standing",
+        "flash_breast",
+        "topless_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashbreast_stand_stand_hair",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "pose_flash_breast_stand_stand_counter",
+      "prompt": "standing at the counter with the lift held",
+      "tags": [
+        "standing",
+        "flash_breast",
+        "topless_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashbreast_stand_stand_counter",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "pose_flash_breast_stand_stand_stair",
+      "prompt": "standing on the stair with the lift held",
+      "tags": [
+        "standing",
+        "flash_breast",
+        "topless_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashbreast_stand_stand_stair",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_sit_sit_knee",
+      "prompt": "sitting with one knee lifted into the gathered hem",
+      "tags": [
+        "sitting",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_sit_sit_knee",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_sit_sit_reach",
+      "prompt": "sitting reaching past the gathered hem",
+      "tags": [
+        "sitting",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_sit_sit_reach",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_sit_sit_side",
+      "prompt": "sitting with the hem riding up to one side",
+      "tags": [
+        "sitting",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_sit_sit_side",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_sit_sit_ankle",
+      "prompt": "sitting with ankles crossed and the hem high",
+      "tags": [
+        "sitting",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_sit_sit_ankle",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_sit_sit_settle",
+      "prompt": "sitting as the hem settles low at the thigh",
+      "tags": [
+        "sitting",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_sit_sit_settle",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_sit_sit_bend",
+      "prompt": "sitting with a small forward bend as the hem opens",
+      "tags": [
+        "sitting",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_sit_sit_bend",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_sit_sit_braid",
+      "prompt": "sitting with a braid falling over the hem",
+      "tags": [
+        "sitting",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_sit_sit_braid",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_sit_sit_hand",
+      "prompt": "sitting with one hand at the gathered hem",
+      "tags": [
+        "sitting",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_sit_sit_hand",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_sit_sit_low",
+      "prompt": "sitting low with the hem riding the thigh line",
+      "tags": [
+        "sitting",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_sit_sit_low",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_sit_sit_turn",
+      "prompt": "sitting with a slow turn as the hem follows",
+      "tags": [
+        "sitting",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_sit_sit_turn",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_stand_stand_grip",
+      "prompt": "standing with a firm grip on the hem",
+      "tags": [
+        "standing",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_stand_stand_grip",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_stand_stand_twist",
+      "prompt": "standing with the hem twisted at the side",
+      "tags": [
+        "standing",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_stand_stand_twist",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_stand_stand_walk",
+      "prompt": "standing mid-step with the hem gathered",
+      "tags": [
+        "standing",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_stand_stand_walk",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_stand_stand_turn",
+      "prompt": "standing with a slow turn as the hem rides",
+      "tags": [
+        "standing",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_stand_stand_turn",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_stand_stand_lean",
+      "prompt": "standing with a hip lean as the hem opens",
+      "tags": [
+        "standing",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_stand_stand_lean",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_stand_stand_door",
+      "prompt": "standing at the door with the hem held",
+      "tags": [
+        "standing",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_stand_stand_door",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_stand_stand_mirror",
+      "prompt": "standing with a glance at the mirror, hem high",
+      "tags": [
+        "standing",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_stand_stand_mirror",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_stand_stand_stair",
+      "prompt": "standing on the stair with the hem riding",
+      "tags": [
+        "standing",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_stand_stand_stair",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_kneel_kneel_hem",
+      "prompt": "kneeling with the hem gathered behind her",
+      "tags": [
+        "kneeling",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_kneel_kneel_hem",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "kneeling_surface"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_kneel_kneel_reach",
+      "prompt": "kneeling reaching back over the gathered hem",
+      "tags": [
+        "kneeling",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_kneel_kneel_reach",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "kneeling_surface"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_kneel_kneel_side",
+      "prompt": "kneeling with the hem riding to one side",
+      "tags": [
+        "kneeling",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_kneel_kneel_side",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "kneeling_surface"
+      ]
+    },
+    {
+      "id": "pose_flash_skirt_kneel_kneel_settle",
+      "prompt": "kneeling as the hem settles into a fold",
+      "tags": [
+        "kneeling",
+        "flash_skirt",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:flashskirt_kneel_kneel_settle",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "kneeling_surface"
+      ]
+    },
+    {
+      "id": "pose_voyeur_sit_sit_fidget",
+      "prompt": "sitting with an idle fidget that tugs at the hem",
+      "tags": [
+        "sitting",
+        "voyeur",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:voyeur_sit_sit_fidget",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_voyeur_sit_sit_gaze",
+      "prompt": "sitting with a gaze drifting out the window",
+      "tags": [
+        "sitting",
+        "voyeur",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:voyeur_sit_sit_gaze",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_voyeur_sit_sit_stretch",
+      "prompt": "sitting mid-stretch with a soft yawn",
+      "tags": [
+        "sitting",
+        "voyeur",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:voyeur_sit_sit_stretch",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_voyeur_sit_sit_settle",
+      "prompt": "sitting as she settles back into the chair",
+      "tags": [
+        "sitting",
+        "voyeur",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:voyeur_sit_sit_settle",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_voyeur_stand_stand_door",
+      "prompt": "standing in the doorway with one hand on the frame",
+      "tags": [
+        "standing",
+        "voyeur",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:voyeur_stand_stand_door",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_voyeur_stand_stand_glass",
+      "prompt": "standing at the glass with a small breath fogging it",
+      "tags": [
+        "standing",
+        "voyeur",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:voyeur_stand_stand_glass",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_voyeur_stand_stand_lean",
+      "prompt": "standing with a lazy lean against the wall",
+      "tags": [
+        "standing",
+        "voyeur",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:voyeur_stand_stand_lean",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_voyeur_stand_stand_step",
+      "prompt": "standing mid-step with the weight shifting",
+      "tags": [
+        "standing",
+        "voyeur",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:voyeur_stand_stand_step",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_voyeur_lying_lying_prone",
+      "prompt": "lying prone with a face pressed into the pillow",
+      "tags": [
+        "lying",
+        "voyeur",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:voyeur_lying_lying_prone",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "lying_surface"
+      ]
+    },
+    {
+      "id": "pose_voyeur_lying_lying_back",
+      "prompt": "lying on her back with the sheet loose at the waist",
+      "tags": [
+        "lying",
+        "voyeur",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:voyeur_lying_lying_back",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "lying_surface"
+      ]
+    },
+    {
+      "id": "pose_voyeur_lying_lying_side",
+      "prompt": "lying on her side with one arm tucked under the cheek",
+      "tags": [
+        "lying",
+        "voyeur",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:voyeur_lying_lying_side",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "lying_surface"
+      ]
+    },
+    {
+      "id": "pose_voyeur_lying_lying_stretch",
+      "prompt": "lying mid-stretch with a slow exhale",
+      "tags": [
+        "lying",
+        "voyeur",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:voyeur_lying_lying_stretch",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "lying_surface"
+      ]
+    },
+    {
+      "id": "pose_school_sit_sit_lap",
+      "prompt": "sitting with a book balanced on the lap",
+      "tags": [
+        "sitting",
+        "school",
+        "closeup",
+        "explicit_pose",
+        "intimate_closeup"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:school_sit_sit_lap",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_school_sit_sit_cross",
+      "prompt": "sitting with the legs crossed at the ankle",
+      "tags": [
+        "sitting",
+        "school",
+        "closeup",
+        "explicit_pose",
+        "intimate_closeup"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:school_sit_sit_cross",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_school_sit_sit_notebook",
+      "prompt": "sitting with the notebook open and the pen in hand",
+      "tags": [
+        "sitting",
+        "school",
+        "closeup",
+        "explicit_pose",
+        "intimate_closeup"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:school_sit_sit_notebook",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_school_sit_sit_pillow",
+      "prompt": "sitting on the reading pillow with the legs tucked",
+      "tags": [
+        "sitting",
+        "school",
+        "closeup",
+        "explicit_pose",
+        "intimate_closeup"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:school_sit_sit_pillow",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_school_sit_sit_bench",
+      "prompt": "sitting on the bench with a small shift",
+      "tags": [
+        "sitting",
+        "school",
+        "closeup",
+        "explicit_pose",
+        "intimate_closeup"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:school_sit_sit_bench",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_school_sit_sit_floor",
+      "prompt": "sitting on the floor with the knees up",
+      "tags": [
+        "sitting",
+        "school",
+        "closeup",
+        "explicit_pose",
+        "intimate_closeup"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:school_sit_sit_floor",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_school_stand_stand_ladder",
+      "prompt": "standing on the dorm ladder with the book tucked",
+      "tags": [
+        "standing",
+        "school",
+        "closeup",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:school_stand_stand_ladder",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_school_stand_stand_aisle",
+      "prompt": "standing in the aisle with the satchel strap on one shoulder",
+      "tags": [
+        "standing",
+        "school",
+        "closeup",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:school_stand_stand_aisle",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_school_stand_stand_locker",
+      "prompt": "standing at the locker with a hand on the door",
+      "tags": [
+        "standing",
+        "school",
+        "closeup",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:school_stand_stand_locker",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_school_stand_stand_window",
+      "prompt": "standing at the window with the gaze out",
+      "tags": [
+        "standing",
+        "school",
+        "closeup",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:school_stand_stand_window",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_magazine_stand_stand_jaw",
+      "prompt": "standing with the jaw line catching the light",
+      "tags": [
+        "standing",
+        "magazine",
+        "open_legs",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:magazine_stand_stand_jaw",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_magazine_stand_stand_neck",
+      "prompt": "standing with the neck held long and still",
+      "tags": [
+        "standing",
+        "magazine",
+        "open_legs",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:magazine_stand_stand_neck",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_magazine_stand_stand_hip",
+      "prompt": "standing with a small hip pop that sets the line",
+      "tags": [
+        "standing",
+        "magazine",
+        "open_legs",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:magazine_stand_stand_hip",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_magazine_stand_stand_chin",
+      "prompt": "standing with a slow tilt of the chin",
+      "tags": [
+        "standing",
+        "magazine",
+        "open_legs",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:magazine_stand_stand_chin",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_magazine_stand_stand_shoulder",
+      "prompt": "standing with one shoulder dropped off the strap",
+      "tags": [
+        "standing",
+        "magazine",
+        "open_legs",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:magazine_stand_stand_shoulder",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_magazine_stand_stand_breath",
+      "prompt": "standing with a breath line held along the jaw",
+      "tags": [
+        "standing",
+        "magazine",
+        "open_legs",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:magazine_stand_stand_breath",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ]
+    },
+    {
+      "id": "pose_magazine_sit_sit_wrist",
+      "prompt": "sitting with a slow turn of the wrist",
+      "tags": [
+        "sitting",
+        "magazine",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:magazine_sit_sit_wrist",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_magazine_sit_sit_collarb",
+      "prompt": "sitting with the collarbone framing the top",
+      "tags": [
+        "sitting",
+        "magazine",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:magazine_sit_sit_collarb",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_magazine_sit_sit_hand",
+      "prompt": "sitting with one hand loose in the hair",
+      "tags": [
+        "sitting",
+        "magazine",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:magazine_sit_sit_hand",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_magazine_sit_sit_ankle",
+      "prompt": "sitting with the ankles stacked low",
+      "tags": [
+        "sitting",
+        "magazine",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:magazine_sit_sit_ankle",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_peak_sit_peak_sit_ride",
+      "prompt": "sitting with a firm grip riding the crest",
+      "tags": [
+        "sitting",
+        "open_legs",
+        "masturbation_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:peak_sit_peak_sit_ride",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_peak_sit_peak_sit_arch",
+      "prompt": "sitting arched back with the peak pulling the shoulders",
+      "tags": [
+        "sitting",
+        "open_legs",
+        "masturbation_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:peak_sit_peak_sit_arch",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_peak_sit_peak_sit_bite",
+      "prompt": "sitting with a bitten exhale at the top of the wave",
+      "tags": [
+        "sitting",
+        "open_legs",
+        "masturbation_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:peak_sit_peak_sit_bite",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_peak_sit_peak_sit_loose",
+      "prompt": "sitting as the grip loosens between the waves",
+      "tags": [
+        "sitting",
+        "open_legs",
+        "masturbation_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:peak_sit_peak_sit_loose",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "pose_peak_lying_peak_lying_wave",
+      "prompt": "lying with a long bitten exhale as the wave crests",
+      "tags": [
+        "lying",
+        "open_legs",
+        "masturbation_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:peak_lying_peak_lying_wave",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "lying_surface"
+      ]
+    },
+    {
+      "id": "pose_peak_lying_peak_lying_fall",
+      "prompt": "lying as she falls back against the surface",
+      "tags": [
+        "lying",
+        "open_legs",
+        "masturbation_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:peak_lying_peak_lying_fall",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "lying_surface"
+      ]
+    },
+    {
+      "id": "pose_peak_lying_peak_lying_tremble",
+      "prompt": "lying with a fine tremble running through her hands",
+      "tags": [
+        "lying",
+        "open_legs",
+        "masturbation_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:peak_lying_peak_lying_tremble",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "lying_surface"
+      ]
+    },
+    {
+      "id": "pose_peak_lying_peak_lying_release",
+      "prompt": "lying holding the release one beat longer",
+      "tags": [
+        "lying",
+        "open_legs",
+        "masturbation_pose",
+        "explicit_pose"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:peak_lying_peak_lying_release",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "lying_surface"
+      ]
+    },
+    {
+      "id": "pose_rear_allfours_rear_arch",
+      "prompt": "all fours with the spine arched back toward the light",
+      "tags": [
+        "all_fours",
+        "erotic_pose",
+        "provocative_rear"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:rear_allfours_rear_arch",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "kneeling_surface"
+      ]
+    },
+    {
+      "id": "pose_rear_allfours_rear_hip",
+      "prompt": "all fours with a slow roll of the hips",
+      "tags": [
+        "all_fours",
+        "erotic_pose",
+        "provocative_rear"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:rear_allfours_rear_hip",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "kneeling_surface"
+      ]
+    },
+    {
+      "id": "pose_rear_allfours_rear_reach",
+      "prompt": "all fours with a reach back over the top",
+      "tags": [
+        "all_fours",
+        "erotic_pose",
+        "provocative_rear"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:rear_allfours_rear_reach",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "kneeling_surface"
+      ]
+    },
+    {
+      "id": "pose_rear_allfours_rear_settle",
+      "prompt": "all fours as the hips settle into the line",
+      "tags": [
+        "all_fours",
+        "erotic_pose",
+        "provocative_rear"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:rear_allfours_rear_settle",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "kneeling_surface"
+      ]
+    },
+    {
+      "id": "pose_rear_allfours_rear_shoulder",
+      "prompt": "all fours with the shoulders set wide",
+      "tags": [
+        "all_fours",
+        "erotic_pose",
+        "provocative_rear"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:rear_allfours_rear_shoulder",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "kneeling_surface"
+      ]
+    },
+    {
+      "id": "pose_rear_allfours_rear_breath",
+      "prompt": "all fours with a held breath at the apex",
+      "tags": [
+        "all_fours",
+        "erotic_pose",
+        "provocative_rear"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "pose:rear_allfours_rear_breath",
+      "weight": 1.0,
+      "allowed_levels": [
+        "covered",
+        "lingerie",
+        "topless",
+        "nude",
+        "explicit"
+      ],
+      "requires_tags": [
+        "kneeling_surface"
       ]
     }
   ],
@@ -39458,6 +42531,2224 @@
       "allowed_levels": [
         "nude"
       ]
+    },
+    {
+      "id": "action_selfplay_kneeling_01",
+      "prompt": "her kneading grip shifting along the ridge as she kneels",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "kneeling"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_kneeling_01",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "kneeling",
+        "open_legs"
+      ]
+    },
+    {
+      "id": "action_selfplay_kneeling_02",
+      "prompt": "slow pressing strokes that trace the same line again and again",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "kneeling"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_kneeling_02",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "kneeling",
+        "open_legs"
+      ]
+    },
+    {
+      "id": "action_selfplay_kneeling_03",
+      "prompt": "two fingertips rolling small circles in a steady rhythm",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "kneeling"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_kneeling_03",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "kneeling",
+        "open_legs"
+      ]
+    },
+    {
+      "id": "action_selfplay_kneeling_04",
+      "prompt": "warm palms sliding from the inner thigh down to a firmer grip",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "kneeling"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_kneeling_04",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "kneeling",
+        "open_legs"
+      ]
+    },
+    {
+      "id": "action_selfplay_lying_05",
+      "prompt": "long crossing strokes from the hip to the center as she lies back",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "lying"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_lying_05",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "lying",
+        "open_legs"
+      ]
+    },
+    {
+      "id": "action_selfplay_lying_06",
+      "prompt": "one hand steadying the bent thigh while the other keeps the rhythm",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "lying"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_lying_06",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "lying",
+        "open_legs"
+      ]
+    },
+    {
+      "id": "action_selfplay_lying_07",
+      "prompt": "an unhurried drag that lingers at the edge of a wave",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "lying"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_lying_07",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "lying",
+        "open_legs"
+      ]
+    },
+    {
+      "id": "action_selfplay_lying_08",
+      "prompt": "both hands working the same line in overlapping passes",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "lying"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_lying_08",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "lying",
+        "open_legs"
+      ]
+    },
+    {
+      "id": "action_selfplay_sitting_09",
+      "prompt": "a firm grip that quickens as she sits at the edge of the bed",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_sitting_09",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "open_legs",
+        "sitting"
+      ]
+    },
+    {
+      "id": "action_selfplay_sitting_10",
+      "prompt": "kneading circles that climb higher with every pass",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_sitting_10",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "open_legs",
+        "sitting"
+      ]
+    },
+    {
+      "id": "action_selfplay_sitting_11",
+      "prompt": "a single fingertip tracing a slow line along the seam",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_sitting_11",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "open_legs",
+        "sitting"
+      ]
+    },
+    {
+      "id": "action_selfplay_sitting_12",
+      "prompt": "her hand braced on the ankle while the other keeps time",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_sitting_12",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "open_legs",
+        "sitting"
+      ]
+    },
+    {
+      "id": "action_selfplay_standing_13",
+      "prompt": "a low braced grip that steadies her against the wall",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_standing_13",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "open_legs",
+        "standing"
+      ]
+    },
+    {
+      "id": "action_selfplay_standing_14",
+      "prompt": "counter-pressing strokes that follow the small of her back",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_standing_14",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "open_legs",
+        "standing"
+      ]
+    },
+    {
+      "id": "action_selfplay_standing_15",
+      "prompt": "slow kneads against the counter edge, unhurried and deliberate",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_standing_15",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "open_legs",
+        "standing"
+      ]
+    },
+    {
+      "id": "action_selfplay_standing_16",
+      "prompt": "a drawn line of fingertip pressure that circles once more",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_standing_16",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "open_legs",
+        "standing"
+      ]
+    },
+    {
+      "id": "action_selfplay_kneeling_17",
+      "prompt": "pausing the motion to press the knee closer, then resuming",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "kneeling"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_kneeling_17",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "kneeling",
+        "open_legs"
+      ]
+    },
+    {
+      "id": "action_selfplay_lying_18",
+      "prompt": "each stroke timed to the slow rise and fall of her breathing",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "lying"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_lying_18",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "lying",
+        "open_legs"
+      ]
+    },
+    {
+      "id": "action_selfplay_sitting_19",
+      "prompt": "leaning back on her palms as the grip works its own rhythm",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_sitting_19",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "open_legs",
+        "sitting"
+      ]
+    },
+    {
+      "id": "action_selfplay_standing_20",
+      "prompt": "a soft hip rock that keeps the kneading strokes in time",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_standing_20",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "open_legs",
+        "standing"
+      ]
+    },
+    {
+      "id": "action_selfplay_kneeling_21",
+      "prompt": "the flat of her palm pressing in slow, even circles",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "kneeling"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_kneeling_21",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "kneeling",
+        "open_legs"
+      ]
+    },
+    {
+      "id": "action_selfplay_lying_22",
+      "prompt": "the other leg draped over her thigh as the strokes continue",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "lying"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_lying_22",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "lying",
+        "open_legs"
+      ]
+    },
+    {
+      "id": "action_selfplay_sitting_23",
+      "prompt": "a thumb press against the inner thigh that mirrors the grip",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_sitting_23",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "open_legs",
+        "sitting"
+      ]
+    },
+    {
+      "id": "action_selfplay_standing_24",
+      "prompt": "weight shifting heel to heel as the rhythm deepens",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "masturbation_action",
+        "self_touch",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:selfplay_standing_24",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals",
+        "open_legs",
+        "standing"
+      ]
+    },
+    {
+      "id": "action_climaxwave_01",
+      "prompt": "riding the crest with a long bitten exhale",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:climaxwave_01",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_climaxwave_02",
+      "prompt": "a second ripple building behind the first as she holds on",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:climaxwave_02",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_climaxwave_03",
+      "prompt": "arching fully as the peak pulls her shoulders back",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:climaxwave_03",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_climaxwave_04",
+      "prompt": "the grip going slack for one breath between the waves",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:climaxwave_04",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_climaxwave_05",
+      "prompt": "fingers squeezing a little harder as the wave lifts",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:climaxwave_05",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_climaxwave_06",
+      "prompt": "a fine tremble running through her hands at the top of the wave",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:climaxwave_06",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_climaxwave_07",
+      "prompt": "a full-body shudder that breaks the rhythm for a moment",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:climaxwave_07",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_climaxwave_08",
+      "prompt": "the strokes speeding into the final crescendo",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:climaxwave_08",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_climaxwave_09",
+      "prompt": "two crests chasing each other as she grips the sheet",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:climaxwave_09",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_climaxwave_10",
+      "prompt": "holding the release one beat longer than it should last",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:climaxwave_10",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_climaxwave_11",
+      "prompt": "the tension softening as the wave rolls past",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:climaxwave_11",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_climaxwave_12",
+      "prompt": "breath held tight at the top before the long exhale",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:climaxwave_12",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_climaxwave_13",
+      "prompt": "falling back against the surface as the wave breaks",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:climaxwave_13",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_climaxwave_14",
+      "prompt": "small ripples fading into a slow, even breath",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:climaxwave_14",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_climaxwave_15",
+      "prompt": "the grip locking in just as the peak lands",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:climaxwave_15",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_climaxwave_16",
+      "prompt": "a last shiver settling through her limbs at the tail",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:climaxwave_16",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_afterglow_01",
+      "prompt": "catching her breath in slow, unsteady waves",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "afterglow_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:afterglow_01",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_afterglow_02",
+      "prompt": "fingers uncurling slowly as the tension leaves her hands",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "afterglow_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:afterglow_02",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_afterglow_03",
+      "prompt": "a soft blink as the world drifts back into focus",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "afterglow_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:afterglow_03",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_afterglow_04",
+      "prompt": "a loose grip on the sheet that eases off inch by inch",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "afterglow_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:afterglow_04",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_afterglow_05",
+      "prompt": "one leg unbending at a lazy, unhurried pace",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "afterglow_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:afterglow_05",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_afterglow_06",
+      "prompt": "pressing a cool cheek against the surface with a small sigh",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "afterglow_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:afterglow_06",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_afterglow_07",
+      "prompt": "pushing a stray strand from her flushed temple",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "afterglow_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:afterglow_07",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_afterglow_08",
+      "prompt": "shoulders dropping as the last of the tension goes",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "afterglow_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:afterglow_08",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_afterglow_09",
+      "prompt": "counting her own breaths in slow, even numbers",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "afterglow_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:afterglow_09",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_afterglow_10",
+      "prompt": "a natural sheen catching the light as she settles",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "afterglow_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:afterglow_10",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_afterglow_11",
+      "prompt": "a slow stretch that lingers longer than it needs to",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "afterglow_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:afterglow_11",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_afterglow_12",
+      "prompt": "a loose, unfocused gaze somewhere past the window",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "climax_action",
+        "afterglow_action",
+        "masturbation_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:afterglow_12",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_flashlift_01",
+      "prompt": "fingertips gathering the hem to hold it a breath higher",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_breast",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashlift_01",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_flashlift_02",
+      "prompt": "a rolled cuff catching the light as it lifts",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_breast",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashlift_02",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_flashlift_03",
+      "prompt": "a thumb hooked in the waistband as the fabric rides up",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_breast",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashlift_03",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_flashlift_04",
+      "prompt": "one sleeve dipping lower with a slow shoulder shift",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_breast",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashlift_04",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_flashlift_05",
+      "prompt": "the back slipping off the shoulder as she turns",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_breast",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashlift_05",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_flashlift_06",
+      "prompt": "a strap sliding a notch down the shoulder",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_breast",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashlift_06",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_flashlift_07",
+      "prompt": "the blazer hem lifting to let the fabric speak",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_breast",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashlift_07",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_flashlift_08",
+      "prompt": "the cardigan drape shifting to open a line of skin",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_breast",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashlift_08",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_flashlift_09",
+      "prompt": "a glance down as the neckline opens",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_breast",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashlift_09",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_flashlift_10",
+      "prompt": "ankles crossed while the lift holds",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_breast",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashlift_10",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_flashlift_11",
+      "prompt": "chin lifting as the hem gathers higher",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_breast",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashlift_11",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_flashlift_12",
+      "prompt": "a shoulder roll that re-sets the lift",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_breast",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashlift_12",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_flashlift_13",
+      "prompt": "fingertips twisting the hem into a soft fold",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_breast",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashlift_13",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_flashlift_14",
+      "prompt": "a small side bend that widens the opening",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_breast",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashlift_14",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_flashlift_15",
+      "prompt": "a distant gaze past the window as it holds",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_breast",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashlift_15",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_flashlift_16",
+      "prompt": "the cuff slipping as the arm settles",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_breast",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashlift_16",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_flashlift_17",
+      "prompt": "a braid swinging over the lifted side",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_breast",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashlift_17",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_flashlift_18",
+      "prompt": "a slow hip roll that keeps the lift moving",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_breast",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashlift_18",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_flashlift_19",
+      "prompt": "chin resting on the raised hand",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_breast",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashlift_19",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_flashlift_20",
+      "prompt": "settling back with a soft sigh, letting it ride",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_breast",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashlift_20",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "breasts"
+      ]
+    },
+    {
+      "id": "action_flashhem_01",
+      "prompt": "a firm grip on the hem held low at the thigh",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_skirt",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashhem_01",
+      "hands_required": 1,
+      "weight": 1.0
+    },
+    {
+      "id": "action_flashhem_02",
+      "prompt": "the hem twisted into a soft fold at the side",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_skirt",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashhem_02",
+      "hands_required": 1,
+      "weight": 1.0
+    },
+    {
+      "id": "action_flashhem_03",
+      "prompt": "pausing mid-step with the hem gathered",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_skirt",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashhem_03",
+      "hands_required": 1,
+      "weight": 1.0
+    },
+    {
+      "id": "action_flashhem_04",
+      "prompt": "settling back to the seat as the fabric opens",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_skirt",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashhem_04",
+      "hands_required": 1,
+      "weight": 1.0
+    },
+    {
+      "id": "action_flashhem_05",
+      "prompt": "a hand on the rail as the hem rides up",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_skirt",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashhem_05",
+      "hands_required": 1,
+      "weight": 1.0
+    },
+    {
+      "id": "action_flashhem_06",
+      "prompt": "one knee lifting as the hem gathers",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_skirt",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashhem_06",
+      "hands_required": 1,
+      "weight": 1.0
+    },
+    {
+      "id": "action_flashhem_07",
+      "prompt": "a sleeve gliding down as the lift holds",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_skirt",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashhem_07",
+      "hands_required": 1,
+      "weight": 1.0
+    },
+    {
+      "id": "action_flashhem_08",
+      "prompt": "a braid flipping over the shoulder at the apex",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_skirt",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashhem_08",
+      "hands_required": 1,
+      "weight": 1.0
+    },
+    {
+      "id": "action_flashhem_09",
+      "prompt": "hips setting into a slow S-curve",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_skirt",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashhem_09",
+      "hands_required": 1,
+      "weight": 1.0
+    },
+    {
+      "id": "action_flashhem_10",
+      "prompt": "ankles rolling while the hem stays high",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_skirt",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashhem_10",
+      "hands_required": 1,
+      "weight": 1.0
+    },
+    {
+      "id": "action_flashhem_11",
+      "prompt": "a pause at the doorway with the lift held",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_skirt",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashhem_11",
+      "hands_required": 1,
+      "weight": 1.0
+    },
+    {
+      "id": "action_flashhem_12",
+      "prompt": "a glance over the shoulder at the mirror",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_skirt",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashhem_12",
+      "hands_required": 1,
+      "weight": 1.0
+    },
+    {
+      "id": "action_flashhem_13",
+      "prompt": "the knee pressing as the fabric gathers",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_skirt",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashhem_13",
+      "hands_required": 1,
+      "weight": 1.0
+    },
+    {
+      "id": "action_flashhem_14",
+      "prompt": "a slow turn with the hem riding higher",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_skirt",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashhem_14",
+      "hands_required": 1,
+      "weight": 1.0
+    },
+    {
+      "id": "action_flashhem_15",
+      "prompt": "sliding to the edge as the line opens",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_skirt",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashhem_15",
+      "hands_required": 1,
+      "weight": 1.0
+    },
+    {
+      "id": "action_flashhem_16",
+      "prompt": "a held breath at the top of the lift",
+      "tags": [
+        "explicit",
+        "erotic",
+        "erotic_action",
+        "flash_skirt",
+        "explicit_action"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:flashhem_16",
+      "hands_required": 1,
+      "weight": 1.0
+    },
+    {
+      "id": "action_voyeur_lying_01",
+      "prompt": "shifting in sleep with a slow, unaware stretch",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "voyeur",
+        "lying"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:voyeur_lying_01",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_voyeur_standing_02",
+      "prompt": "mid-stretch, arms overhead, caught off guard",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "voyeur",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:voyeur_standing_02",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_voyeur_standing_03",
+      "prompt": "a soft yawn that pulls the shoulders wide",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "voyeur",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:voyeur_standing_03",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_voyeur_sitting_04",
+      "prompt": "an idle fidget that tugs at the hem",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "voyeur",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:voyeur_sitting_04",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_voyeur_standing_05",
+      "prompt": "a casual glance over the shoulder at the mirror",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "voyeur",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:voyeur_standing_05",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_voyeur_standing_06",
+      "prompt": "adjusting a strap with an absent-minded tug",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "voyeur",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:voyeur_standing_06",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_voyeur_sitting_07",
+      "prompt": "tucking hair behind the ear with a loose hand",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "voyeur",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:voyeur_sitting_07",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_voyeur_lying_08",
+      "prompt": "pulling the blanket up with a sleepy grunt",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "voyeur",
+        "lying"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:voyeur_lying_08",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_voyeur_sitting_09",
+      "prompt": "a gaze drifting out the window mid-thought",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "voyeur",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:voyeur_sitting_09",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_voyeur_sitting_10",
+      "prompt": "rolling down a sock with a small grimace",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "voyeur",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:voyeur_sitting_10",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_voyeur_lying_11",
+      "prompt": "fluffing the pillow with both hands",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "voyeur",
+        "lying"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:voyeur_lying_11",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_voyeur_standing_12",
+      "prompt": "pausing at the doorway with one hand on the frame",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "voyeur",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:voyeur_standing_12",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_voyeur_lying_13",
+      "prompt": "smoothing the sheet with a slow pass",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "voyeur",
+        "lying"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:voyeur_lying_13",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_voyeur_sitting_14",
+      "prompt": "leaning back on the bench, unhurried",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "voyeur",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:voyeur_sitting_14",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_voyeur_standing_15",
+      "prompt": "stepping down the ladder one rung at a time",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "voyeur",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:voyeur_standing_15",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_voyeur_standing_16",
+      "prompt": "a small breath fogging the glass",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "voyeur",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:voyeur_standing_16",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_school_sitting_01",
+      "prompt": "adjusting the blazer buttons before sitting down",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "school_action",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:school_sitting_01",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_school_sitting_02",
+      "prompt": "tucking the skirt hem back into place",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "school_action",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:school_sitting_02",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_school_sitting_03",
+      "prompt": "pushing the glasses up with one finger",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "school_action",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:school_sitting_03",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_school_sitting_04",
+      "prompt": "opening the notebook to the right page",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "school_action",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:school_sitting_04",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_school_sitting_05",
+      "prompt": "clicking the pen cap on as she reads",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "school_action",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:school_sitting_05",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_school_standing_06",
+      "prompt": "settling the satchel strap on the shoulder",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "school_action",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:school_standing_06",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_school_sitting_07",
+      "prompt": "twisting a soft fold at the side of the skirt",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "school_action",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:school_sitting_07",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_school_sitting_08",
+      "prompt": "rolling one sleeve a notch higher",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "school_action",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:school_sitting_08",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_school_standing_09",
+      "prompt": "stepping up the dorm ladder with the book tucked",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "school_action",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:school_standing_09",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_school_sitting_10",
+      "prompt": "settling the reading pillow before the next chapter",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "school_action",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:school_sitting_10",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_school_standing_11",
+      "prompt": "gathering the hair with a soft band",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "school_action",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:school_standing_11",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_school_sitting_12",
+      "prompt": "settling the legs with a small shift",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "school_action",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:school_sitting_12",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_magazine_sitting_01",
+      "prompt": "one hand loose in the hair, jaw slightly set",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "magazine_action",
+        "closeup_action",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:magazine_sitting_01",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_magazine_standing_02",
+      "prompt": "a slow tilt of the chin that finds the light",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "magazine_action",
+        "closeup_action",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:magazine_standing_02",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_magazine_standing_03",
+      "prompt": "the jaw line catching the window light",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "magazine_action",
+        "closeup_action",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:magazine_standing_03",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_magazine_sitting_04",
+      "prompt": "the collarbone framing the top of the lift",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "magazine_action",
+        "closeup_action",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:magazine_sitting_04",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_magazine_standing_05",
+      "prompt": "a small hip pop that sets the line",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "magazine_action",
+        "closeup_action",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:magazine_standing_05",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_magazine_sitting_06",
+      "prompt": "one shoulder dropping off the strap",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "magazine_action",
+        "closeup_action",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:magazine_sitting_06",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_magazine_standing_07",
+      "prompt": "the line of the neck held long and still",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "magazine_action",
+        "closeup_action",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:magazine_standing_07",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_magazine_standing_08",
+      "prompt": "ankles stacked low at the edge of the frame",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "magazine_action",
+        "closeup_action",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:magazine_standing_08",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_magazine_sitting_09",
+      "prompt": "a slow turn of the wrist that changes the angle",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "magazine_action",
+        "closeup_action",
+        "sitting"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:magazine_sitting_09",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_magazine_standing_10",
+      "prompt": "a breath line held along the jaw",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "magazine_action",
+        "closeup_action",
+        "standing"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:magazine_standing_10",
+      "hands_required": 0,
+      "weight": 1.0
+    },
+    {
+      "id": "action_wet_01",
+      "prompt": "a natural sheen catching the light on the inner thigh",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "wet_detail",
+        "masturbation_action",
+        "self_touch"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:wetdetail_01",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_wet_02",
+      "prompt": "dampness deepening along the inner thigh",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "wet_detail",
+        "masturbation_action",
+        "self_touch"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:wetdetail_02",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_wet_03",
+      "prompt": "a soft glisten at the seam line",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "wet_detail",
+        "masturbation_action",
+        "self_touch"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:wetdetail_03",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_wet_04",
+      "prompt": "a natural sheen settling into the fold",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "wet_detail",
+        "masturbation_action",
+        "self_touch"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:wetdetail_04",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_wet_05",
+      "prompt": "dampness gathering where the knee meets the hip",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "wet_detail",
+        "masturbation_action",
+        "self_touch"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:wetdetail_05",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_wet_06",
+      "prompt": "a slow glisten working up the inner thigh",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "wet_detail",
+        "masturbation_action",
+        "self_touch"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:wetdetail_06",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_wet_07",
+      "prompt": "a wet sheen that moves with the breath",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "wet_detail",
+        "masturbation_action",
+        "self_touch"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:wetdetail_07",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
+    },
+    {
+      "id": "action_wet_08",
+      "prompt": "a soft damp bend where the fabric meets the skin",
+      "tags": [
+        "explicit",
+        "explicit_action",
+        "wet_detail",
+        "masturbation_action",
+        "self_touch"
+      ],
+      "direction_mode": "nsfw",
+      "diversity_fingerprint": "action:wetdetail_08",
+      "hands_required": 1,
+      "weight": 1.0,
+      "requires_tags": [
+        "genitals"
+      ]
     }
   ],
   "props": [
@@ -39649,6 +44940,90 @@
     {
       "id": "prop_tripod_phone",
       "prompt": "a smartphone on a small tripod set up to record her",
+      "tags": [
+        "home_prop"
+      ]
+    },
+    {
+      "id": "prop_blanket_warm",
+      "prompt": "a warm knit blanket folded on the chair",
+      "tags": [
+        "home_prop"
+      ]
+    },
+    {
+      "id": "prop_coffee_mug",
+      "prompt": "a coffee mug with a paper sleeve on the desk",
+      "tags": [
+        "home_prop"
+      ]
+    },
+    {
+      "id": "prop_book_open",
+      "prompt": "an open book with a page mid-fold on the lap",
+      "tags": [
+        "home_prop"
+      ]
+    },
+    {
+      "id": "prop_notebook_pen",
+      "prompt": "a notebook and a pen left uncapped on the desk",
+      "tags": [
+        "home_prop"
+      ]
+    },
+    {
+      "id": "prop_towel_fresh",
+      "prompt": "a fresh towel rolled on the bath shelf",
+      "tags": [
+        "home_prop"
+      ]
+    },
+    {
+      "id": "prop_pillow_soft",
+      "prompt": "a soft reading pillow with a pressed crease",
+      "tags": [
+        "home_prop"
+      ]
+    },
+    {
+      "id": "prop_phone_face_down",
+      "prompt": "a phone face-down on the nightstand",
+      "tags": [
+        "home_prop"
+      ]
+    },
+    {
+      "id": "prop_hairbrush_wood",
+      "prompt": "a wooden hairbrush set on the dresser",
+      "tags": [
+        "home_prop"
+      ]
+    },
+    {
+      "id": "prop_laptop_closed",
+      "prompt": "a closed laptop beside the stack of books",
+      "tags": [
+        "home_prop"
+      ]
+    },
+    {
+      "id": "prop_socks_pair",
+      "prompt": "a pair of socks folded beside the bed",
+      "tags": [
+        "home_prop"
+      ]
+    },
+    {
+      "id": "prop_basket_laundry",
+      "prompt": "a laundry basket half full by the door",
+      "tags": [
+        "home_prop"
+      ]
+    },
+    {
+      "id": "prop_window_curtain",
+      "prompt": "a curtain drawn back by the window light",
       "tags": [
         "home_prop"
       ]
@@ -39858,6 +45233,68 @@
       ],
       "excludes_tags": [
         "tongue_out"
+      ]
+    },
+    {
+      "id": "expression_afterglow_drift",
+      "prompt": "a soft, unfocused gaze drifting somewhere past the window",
+      "tags": [
+        "afterglow_expression",
+        "candid_expression"
+      ]
+    },
+    {
+      "id": "expression_afterglow_breath",
+      "prompt": "breathing slowly with a loose, unguarded exhale",
+      "tags": [
+        "afterglow_expression"
+      ]
+    },
+    {
+      "id": "expression_intense_wave",
+      "prompt": "a wave crossing her face as the peak builds, eyes closing tight",
+      "tags": [
+        "intense_pleasure_expression",
+        "climax_expression"
+      ]
+    },
+    {
+      "id": "expression_intense_ache",
+      "prompt": "an aching, almost wincing pull as it tightens at the center",
+      "tags": [
+        "intense_pleasure_expression"
+      ]
+    },
+    {
+      "id": "expression_candid_daze",
+      "prompt": "a dazed, half-lidded look with the lips softly parted",
+      "tags": [
+        "candid_expression",
+        "aroused_expression"
+      ]
+    },
+    {
+      "id": "expression_candid_smile",
+      "prompt": "a small unguarded smile at something that is not quite the moment",
+      "tags": [
+        "candid_expression",
+        "playful_expression"
+      ]
+    },
+    {
+      "id": "expression_climax_break",
+      "prompt": "a full break of composure as the crest lands, brow furrowed",
+      "tags": [
+        "climax_expression",
+        "intense_pleasure_expression"
+      ]
+    },
+    {
+      "id": "expression_climax_fade",
+      "prompt": "the peak fading into a soft, unfocused calm",
+      "tags": [
+        "climax_expression",
+        "afterglow_expression"
       ]
     }
   ],
@@ -40083,11 +45520,12 @@
         "bathtub"
       ],
       "capabilities": [
-        "seated",
-        "reclining",
+        "closeup",
         "kneeling",
-        "supported",
-        "closeup"
+        "reclining",
+        "seated",
+        "standing",
+        "supported"
       ],
       "environment_tags": [
         "bathroom"
@@ -40195,11 +45633,12 @@
         "rug"
       ],
       "capabilities": [
+        "closeup",
+        "kneeling",
         "lying",
         "reclining",
-        "kneeling",
         "seated",
-        "closeup"
+        "standing"
       ],
       "match_any_tags": [],
       "environment_tags": []
@@ -42017,6 +47456,36 @@
       "prompt": "bright sunlit private room, warm afternoon light through sheer curtains",
       "menu_label": "Sunlit private",
       "menu_group": "Amateur"
+    },
+    {
+      "id": "mood_late_night_low",
+      "prompt": "late-night low light, a single warm lamp against the dark",
+      "menu_label": "Late-Night Low Light",
+      "menu_group": "Amateur"
+    },
+    {
+      "id": "mood_rain_window",
+      "prompt": "rain on the window, soft grey light and the smell of coffee",
+      "menu_label": "Rain On The Window",
+      "menu_group": "Amateur"
+    },
+    {
+      "id": "mood_golden_afternoon",
+      "prompt": "golden afternoon light through the blinds, dust in the air",
+      "menu_label": "Golden Afternoon Light Through The Blinds",
+      "menu_group": "Amateur"
+    },
+    {
+      "id": "mood_overcast_soft",
+      "prompt": "soft overcast light, no harsh shadows, quiet and still",
+      "menu_label": "Soft Overcast Light",
+      "menu_group": "Amateur"
+    },
+    {
+      "id": "mood_candle_warm",
+      "prompt": "a warm candle glow pooling in the corners of the room",
+      "menu_label": "A Warm Candle Glow Pooling In The Corners Of The Room",
+      "menu_group": "Amateur"
     }
   ],
   "photography_styles": [
@@ -42150,6 +47619,24 @@
       "id": "photo_mirror_self",
       "prompt": "mirror-reflecting self-shot, reflection of the room in the glass, casual amateur framing",
       "menu_label": "Mirror self-shot",
+      "menu_group": "Amateur"
+    },
+    {
+      "id": "photo_window_soft",
+      "prompt": "soft window light from the side, the room left a little dark",
+      "menu_label": "Window soft",
+      "menu_group": "Amateur"
+    },
+    {
+      "id": "photo_low_lamp",
+      "prompt": "a single warm lamp from the corner, shadows doing the work",
+      "menu_label": "Low lamp",
+      "menu_group": "Amateur"
+    },
+    {
+      "id": "photo_handheld_rough",
+      "prompt": "a little hand-held roughness, the frame not quite level",
+      "menu_label": "Hand-held rough",
       "menu_group": "Amateur"
     }
   ],

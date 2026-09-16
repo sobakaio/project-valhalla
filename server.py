@@ -2210,7 +2210,16 @@ def validate_camera_grammar(scene: dict[str, Any]) -> None:
         or recipe is not None and recipe.get("focus_target") == "focus_rear"
         or scene["stage"].get("plateau_kind") == "provocative_rear"
     )
-    if rear_display and not scene.get("camera_contract_relaxed"):
+    # The rear contract is only enforceable when the selected scene can
+    # actually deliver a rear angle; if the pose/editorial context has no
+    # rear capability (zone could not provide one), the selection layer
+    # relaxed and the contract degrades instead of hard-failing.
+    rear_deliverable = bool(
+        (set(tags(scene.get("pose") or {}))
+         | set(tags(scene.get("editorial_role") or {})))
+        & {"provocative_rear", "rear_focus"}
+    )
+    if rear_display and rear_deliverable:
         if "rear_angle" not in tags(angle):
             conflict("rear display requires a rear-compatible angle", recipe, angle)
         if focus["id"] != "focus_rear":
@@ -2226,21 +2235,30 @@ def validate_camera_grammar(scene: dict[str, Any]) -> None:
         or recipe is not None and recipe.get("focus_target") == "focus_intimate"
     )
     if intimate_action:
-        if focus["id"] != "focus_intimate":
-            conflict(
-                "intimate action requires intimate focus",
-                recipe, action, focus,
-            )
-        if shot_size["id"] not in INTIMATE_SHOT_SIZE_IDS:
-            conflict(
-                "intimate action requires three-quarter or closer treatment",
-                recipe, action, shot_size,
-            )
-        if framing["id"] == "framing_environmental":
-            conflict(
-                "intimate action cannot use environmental framing",
-                recipe, action, framing,
-            )
+        if recipe is not None and recipe.get("focus_target") == "focus_rear":
+            # Rear-framed peak: the climax reads through body reaction;
+            # the rear-display block owns angle/focus/framing.
+            if framing["id"] == "framing_environmental":
+                conflict(
+                    "intimate action cannot use environmental framing",
+                    recipe, action, framing,
+                )
+        else:
+            if focus["id"] != "focus_intimate":
+                conflict(
+                    "intimate action requires intimate focus",
+                    recipe, action, focus,
+                )
+            if shot_size["id"] not in INTIMATE_SHOT_SIZE_IDS:
+                conflict(
+                    "intimate action requires three-quarter or closer treatment",
+                    recipe, action, shot_size,
+                )
+            if framing["id"] == "framing_environmental":
+                conflict(
+                    "intimate action cannot use environmental framing",
+                    recipe, action, framing,
+                )
 
 
 def camera_angle_prompt(angle: dict[str, Any]) -> str:
@@ -2377,6 +2395,14 @@ SFW_BLOCKED_DIRECTION_TAGS = {
     "explicit_action", "erotic_action", "masturbation_action", "undressing_action",
     "provocative_action", "provocative_rear",
 }
+SFW_BLOCKED_EXPRESSION_TAGS = {
+    "pleasure_expression", "aroused_expression", "intense_pleasure_expression",
+    "climax_expression", "afterglow_expression",
+}
+SFW_BLOCKED_MOOD_TERMS = (
+    "climax", "afterglow", "arousal", "pleasure", "orgasm", "erotic",
+    "seduct", "sultry", "lust",
+)
 
 
 def is_sfw_stage(stage: dict[str, Any]) -> bool:
@@ -3104,6 +3130,15 @@ class Composer:
                     mood_candidates = [
                         item for item in mood_candidates if item["id"] in allowed_ids
                     ]
+                if content_mode == "sfw":
+                    blocked_moods = [
+                        item for item in mood_candidates
+                        if not any(
+                            term in str(item.get("prompt", "")).casefold()
+                            for term in SFW_BLOCKED_MOOD_TERMS
+                        )
+                    ]
+                    mood_candidates = blocked_moods or mood_candidates
                 photography_candidates = self.db["photography_styles"]
                 if scene_pools.get("photography_styles"):
                     allowed_ids = set(scene_pools["photography_styles"])
@@ -3224,6 +3259,7 @@ class Composer:
         plateau_kind = stage.get("plateau_kind") or (
             recipe.get("plateau_kind") if recipe else None
         )
+        plateau_poses_backup = list(poses)
         if plateau_kind == "provocative_rear":
             poses = [item for item in poses if "provocative_rear" in tags(item)]
         elif plateau_kind == "intimate_closeup":
@@ -3308,13 +3344,21 @@ class Composer:
         if not focus_pool:
             recipe_focus_relaxed = True
         poses = focus_pool or poses
-        zone_safe_poses = []
-        for candidate in poses:
-            try:
-                validate_pose_zone(candidate, location_zone)
-            except AppError:
-                continue
-            zone_safe_poses.append(candidate)
+        def _zone_safe(pool: list[dict[str, Any]]) -> list[dict[str, Any]]:
+            safe: list[dict[str, Any]] = []
+            for candidate in pool:
+                try:
+                    validate_pose_zone(candidate, location_zone)
+                except AppError:
+                    continue
+                safe.append(candidate)
+            return safe
+
+        zone_safe_poses = _zone_safe(poses)
+        if not zone_safe_poses and plateau_poses_backup:
+            # The exact pose_tags contract cannot be delivered in this
+            # zone; widen to the plateau pool before accepting an unsafe pose.
+            zone_safe_poses = _zone_safe(plateau_poses_backup)
         poses = zone_safe_poses or poses
         if overrides.get("pose"):
             poses = [item for item in poses if item["id"] == overrides["pose"]]
@@ -3427,6 +3471,12 @@ class Composer:
             if item_allows_intensity(item, intensity)
             and expression_compatible_with_human(item, fixed["human"])
         ]
+        if stage.get("sfw"):
+            sfw_expressions = [
+                item for item in expression_candidates
+                if not (tags(item) & SFW_BLOCKED_EXPRESSION_TAGS)
+            ]
+            expression_candidates = sfw_expressions or expression_candidates
         required_expression_tags = set(action.get("requires_expression_tags", []))
         if required_expression_tags:
             expression_candidates = [
@@ -3512,17 +3562,6 @@ class Composer:
                 candidates = casual or candidates
             camera[key] = choose(key, candidates)
             camera_tags |= tags(camera[key])
-        camera_contract_relaxed = False
-        if recipe is not None and (
-            recipe.get("focus_target") == "focus_rear"
-            or stage.get("plateau_kind") == "provocative_rear"
-        ):
-            rear_delivered = (
-                "rear_angle" in tags(camera["camera_angle"])
-                and camera["focus_target"]["id"] == "focus_rear"
-            )
-            if not rear_delivered:
-                camera_contract_relaxed = True
         intimate_arousal_modifier = None
         if recipe and recipe.get("focus_target") == "focus_intimate":
             min_rank = {"erotic": 0, "nude": 1, "explicit": 2, "peak": 3}.get(
@@ -3551,7 +3590,6 @@ class Composer:
             "explicit_recipe": recipe,
             "intimate_arousal_modifier": intimate_arousal_modifier,
             "intensity": intensity,
-            "camera_contract_relaxed": camera_contract_relaxed,
             **camera,
         }
 
@@ -4201,6 +4239,7 @@ def prompt_lint(
         | tags(scene.get("interior", {}))
         | tags(scene.get("furniture", {}))
         | tags(scene.get("pose", {}))
+        | set(scene.get("location_zone", {}).get("capabilities", []))
         | set().union(*(
             tags(item) for item in scene["outfit"]["garments"].values()
         ), set())
