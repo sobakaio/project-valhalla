@@ -47,7 +47,7 @@
         1
       ],
       "lora_name": "Z-Detail-Slider.safetensors",
-      "strength_model": 0.3,
+      "strength_model": 0.8,
       "strength_clip": 1.0
     }
   },
