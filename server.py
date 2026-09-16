@@ -1736,6 +1736,10 @@ def effective_stage_for_outfit(
     result["visible_slots"] = [
         slot for slot in result.get("visible_slots", []) if slot in visible_slots
     ]
+    if result.get("visual_category") in FLASH_KINDS:
+        # Flash stages declare their own exposure (the garment is lifted);
+        # static covering rules would strip the exposed parts.
+        return result
     for rule in db["settings"]["wardrobe_compatibility"].get(
         "stage_visibility_rules", []
     ):
@@ -2315,6 +2319,7 @@ def validate_pose_zone(pose: dict[str, Any], zone: dict[str, Any]) -> None:
 # Internal catalog names remain stable for storyboard/API compatibility. The
 # user-facing content bands are Covered, Revealing, and Explicit.
 NUDITY_LEVELS = ("topless", "nude", "explicit")
+FLASH_KINDS = ("flash_breast", "flash_skirt", "flash_escalated")
 REVEALING_LEVELS = ("lingerie", *NUDITY_LEVELS)
 INTENSITY_LEVELS = ("fashion", "sensual", "erotic", "nude", "explicit", "peak")
 STAGE_INTENSITIES = {
@@ -3225,10 +3230,78 @@ class Composer:
                 item for item in poses
                 if "open_legs" in tags(item) and "provocative_rear" not in tags(item)
             ]
+        elif plateau_kind == "voyeur":
+            poses = [item for item in poses if "voyeur" in tags(item)]
+        elif plateau_kind in FLASH_KINDS:
+            flash_pose_tag = (
+                "flash_breast" if plateau_kind == "flash_breast" else "flash_skirt"
+            )
+            poses = [item for item in poses if flash_pose_tag in tags(item)]
+        flash_stage_tag = (
+            "flash_breast"
+            if stage.get("visual_category") == "flash_breast"
+            else (
+                "flash_skirt"
+                if stage.get("visual_category") in {"flash_skirt", "flash_escalated"}
+                else None
+            )
+        )
+        if flash_stage_tag:
+            poses = [item for item in poses if flash_stage_tag in tags(item)]
         if recipe and recipe.get("pose_tags"):
             required = set(recipe["pose_tags"])
-            poses = [item for item in poses if required.issubset(tags(item))]
-        poses = [item for item in poses if recipe_focus_compatible(item, recipe, "pose")]
+            tagged = [item for item in poses if required.issubset(tags(item))]
+            # Zone/furniture compatibility is a hard constraint; the recipe
+            # composition is a preference, so keep the plateau pool as fallback.
+            poses = tagged or poses
+        focus_pool = [
+            item for item in poses if recipe_focus_compatible(item, recipe, "pose")
+        ]
+        recipe_focus_relaxed = False
+        if not focus_pool and recipe is not None and poses:
+            # The zone/furniture made the planned recipe unsatisfiable: swap to
+            # a compatible recipe before relaxing its focus contract.
+            def _swap_candidate_ok(candidate):
+                c_pose_tags = set(candidate.get("pose_tags") or [])
+                return any(
+                    (not c_pose_tags or c_pose_tags.issubset(tags(p)))
+                    and recipe_focus_compatible(p, candidate, "pose")
+                    for p in poses
+                )
+            swap_pool = [
+                r for r in self.db["explicit_recipes"]
+                if not r.get("disabled", False)
+                and r["id"] != recipe["id"]
+                and (not recipe.get("plateau_kind")
+                     or r.get("plateau_kind") == recipe.get("plateau_kind"))
+                and _swap_candidate_ok(r)
+            ]
+            if swap_pool:
+                recipe = weighted_choice(self.rng, swap_pool)
+                available_tags |= tags(recipe)
+                if not overrides.get("intensity"):
+                    intensity = recipe.get("intensity", "explicit")
+                c_pose_tags = set(recipe.get("pose_tags") or [])
+                if c_pose_tags:
+                    tagged = [
+                        item for item in poses if c_pose_tags.issubset(tags(item))
+                    ]
+                    poses = tagged or poses
+                focus_pool = [
+                    item for item in poses
+                    if recipe_focus_compatible(item, recipe, "pose")
+                ]
+        if not focus_pool:
+            recipe_focus_relaxed = True
+        poses = focus_pool or poses
+        zone_safe_poses = []
+        for candidate in poses:
+            try:
+                validate_pose_zone(candidate, location_zone)
+            except AppError:
+                continue
+            zone_safe_poses.append(candidate)
+        poses = zone_safe_poses or poses
         if overrides.get("pose"):
             poses = [item for item in poses if item["id"] == overrides["pose"]]
         pose = choose("pose", poses)
@@ -3270,13 +3343,27 @@ class Composer:
             actions = [item for item in actions if "masturbation_action" in tags(item)]
         elif plateau_kind == "panties_aside":
             actions = [item for item in actions if "panties_aside_action" in tags(item)]
+        elif plateau_kind == "voyeur":
+            actions = [item for item in actions if "voyeur" in tags(item)]
+        elif plateau_kind in FLASH_KINDS:
+            flash_action_tag = (
+                "flash_breast" if plateau_kind == "flash_breast" else "flash_skirt"
+            )
+            actions = [item for item in actions if flash_action_tag in tags(item)]
+        if flash_stage_tag:
+            actions = [item for item in actions if flash_stage_tag in tags(item)]
         if recipe and recipe.get("action_tags"):
             required = set(recipe["action_tags"])
-            actions = [item for item in actions if required.issubset(tags(item))]
-        actions = [
+            tagged = [item for item in actions if required.issubset(tags(item))]
+            actions = tagged or actions
+        action_focus_pool = [
             item for item in actions
             if recipe_focus_compatible(item, recipe, "action")
         ]
+        if not action_focus_pool and recipe is not None and actions:
+            action_focus_pool = actions
+            recipe_focus_relaxed = True
+        actions = action_focus_pool
         if overrides.get("action"):
             actions = [item for item in actions if item["id"] == overrides["action"]]
         action = choose("action", actions)
@@ -3345,6 +3432,12 @@ class Composer:
                 "expression_tongue_out_playful", "expression_serene",
                 "expression_shy_sultry",
             }
+            if stage.get("visual_category") in FLASH_KINDS:
+                natural_expressions |= {
+                    "expression_caught_glance", "expression_mid_motion",
+                    "expression_unaware_profile", "expression_mirrored_glance",
+                    "expression_bitten_lip_aroused",
+                }
             expression_candidates = [
                 item for item in expression_candidates
                 if item["id"] in natural_expressions
@@ -3386,8 +3479,13 @@ class Composer:
             recipe_options = recipe_reference_ids(recipe, key)
             if wanted:
                 candidates = [item for item in candidates if item["id"] == wanted]
-            elif recipe_options:
-                candidates = [item for item in candidates if item["id"] in recipe_options]
+            elif recipe_options and not (
+                recipe_focus_relaxed and key == "focus_target"
+            ):
+                options_pool = [
+                    item for item in candidates if item["id"] in recipe_options
+                ]
+                candidates = options_pool or candidates
             elif key == "framing" and stage["level"] != "explicit":
                 casual_framings = {
                     "framing_centered", "framing_tight_crop",
@@ -3402,7 +3500,14 @@ class Composer:
             camera_tags |= tags(camera[key])
         intimate_arousal_modifier = None
         if recipe and recipe.get("focus_target") == "focus_intimate":
+            min_rank = {"erotic": 0, "nude": 1, "explicit": 2, "peak": 3}.get(
+                intensity, 0
+            )
             candidates = [
+                item for item in self.db["intimate_arousal_modifiers"]
+                if not item.get("disabled", False)
+                and item.get("min_intensity_rank", 0) <= min_rank
+            ] or [
                 item for item in self.db["intimate_arousal_modifiers"]
                 if not item.get("disabled", False)
             ]
@@ -3555,14 +3660,10 @@ class Composer:
             )
         recipe = scene.get("explicit_recipe")
         if recipe:
-            if not recipe_focus_compatible(scene["pose"], recipe, "pose"):
-                raise AppError(
-                    f"Pose {scene['pose']['id']} conflicts with recipe focus {recipe['id']}"
-                )
-            if not recipe_focus_compatible(scene["action"], recipe, "action"):
-                raise AppError(
-                    f"Action {scene['action']['id']} conflicts with recipe focus {recipe['id']}"
-                )
+            # Focus is a composition preference: selection already swapped the
+            # recipe or relaxed the pool when the zone made it unsatisfiable,
+            # so a residual mismatch must not hard-fail the scene.
+            pass
         validate_camera_grammar(scene)
 
 
@@ -3672,6 +3773,11 @@ def compile_scene(
         chest_coverage in {"opaque", "sheer"}
         or not bool({"breasts", "nipples"} & stage_visibility)
     )
+    if (
+        stage.get("visual_category") in FLASH_KINDS
+        and bool({"breasts", "nipples"} & stage_visibility)
+    ):
+        covered_chest = False
     visibility = set(stage_visibility)
     recipe = scene.get("explicit_recipe")
     plateau_kind = stage.get("plateau_kind") or (
@@ -3805,9 +3911,18 @@ def compile_scene(
         "nude": "fully nude body, bare breasts, visible nipples, pubic area and genitals visible",
         "explicit": "explicit adult pose, bare breasts, visible nipples, pubic area and genitals visible",
     }
+    flash_anchor = (
+        db["settings"].get("flash_reveal", {}).get("anchors", {}).get(
+            stage.get("visual_category"), ""
+        )
+        if stage.get("visual_category") in FLASH_KINDS
+        else ""
+    )
     stage_anchor = (
         db["settings"]["dressed_panties_reveal"]["positive_prompt"]
         if stage.get("visual_category") == "dressed_panties_reveal"
+        else flash_anchor
+        if flash_anchor
         else stage_anchors.get(stage.get("level"), "")
     )
     # Explicit compiler priority: subject -> camera/direction -> anatomy ->
@@ -3874,6 +3989,14 @@ def compile_scene(
             elif state == "lowered_to_hips":
                 garment_parts.append(
                     "unfastened and lowered to the hips, still visibly worn around the hips"
+                )
+            elif state == "slipped_off_shoulder":
+                garment_parts.append(
+                    "slipped off one shoulder, the fabric hanging loose and slightly twisted"
+                )
+            elif state == "hem_lifted":
+                garment_parts.append(
+                    "hem lifted and gathered at the waist in her fingers"
                 )
             garment_fragment = " ".join(garment_parts)
             if slot == "bra":
@@ -4094,6 +4217,16 @@ def prompt_lint(
             "fully opaque",
             "complete chest-covering layer",
         )
+    elif stage.get("visual_category") in FLASH_KINDS:
+        flash_anchor_text = (
+            db.get("settings", {}).get("flash_reveal", {}).get("anchors", {}).get(
+                stage["visual_category"], ""
+            )
+            if db is not None
+            else ""
+        )
+        if flash_anchor_text:
+            expected_anchors = (flash_anchor_text.split(",")[0].strip(),)
     elif stage["level"] == "covered":
         expected_anchors = ("fully opaque", "complete chest-covering layer")
     elif (
@@ -4192,6 +4325,81 @@ def photoshoot_signature(context: dict[str, Any]) -> tuple[Any, ...]:
     )
 
 
+def flash_stage_slots(
+    template: dict[str, Any], kind: str, outfit: dict[str, Any] | None = None
+) -> tuple[list[str], list[str]] | None:
+    """Slots and body visibility kept on body for a flash stage.
+
+    Returns None when the template (or the actual outfit, when known) cannot
+    support the variant, so callers can fall back to a nude plateau.
+    """
+    template_slots = set(template.get("slots", {}))
+    garments = (outfit or {}).get("garments", {})
+    base = [slot for slot in ("legwear", "footwear", "accessories") if slot in template_slots]
+    if kind == "flash_breast":
+        chest = next((slot for slot in ("upperwear", "outerwear") if slot in template_slots), None)
+        if chest is None:
+            return None
+        if tags(garments.get(chest, {})) & {"sheer", "transparent", "open_cup"}:
+            return None
+        lower = next((slot for slot in ("lowerwear", "full_body") if slot in template_slots), None)
+        kept = [chest, *( [lower] if lower else [] ), *base]
+        return list(dict.fromkeys(kept)), ["breasts", "nipples"]
+    lower = next((slot for slot in ("lowerwear", "full_body") if slot in template_slots), None)
+    if lower is None:
+        return None
+    if kind == "flash_escalated" and "panties" not in template_slots:
+        return None
+    chest = next((slot for slot in ("upperwear", "outerwear") if slot in template_slots), None)
+    kept = [*( [chest] if chest else [] ), lower]
+    visibility = []
+    if "panties" in template_slots:
+        kept.append("panties")
+        if kind == "flash_escalated":
+            visibility = ["pubic_area", "genitals"]
+    else:
+        visibility = ["pubic_area", "genitals"]
+    kept.extend(base)
+    return list(dict.fromkeys(kept)), visibility
+
+
+def flash_recipe_slot_compatible(recipe: dict[str, Any], remaining_slots: set[str] | None) -> bool:
+    """A flash recipe needs the garments it keeps to still be on body."""
+    if remaining_slots is None:
+        return True
+    kind = recipe.get("plateau_kind", "")
+    if kind == "flash_breast":
+        return bool(remaining_slots & {"upperwear", "outerwear"})
+    if kind in {"flash_skirt", "flash_escalated"}:
+        return bool(remaining_slots & {"lowerwear", "full_body"})
+    return True
+
+
+def resolve_flash_variant(
+    db: dict[str, Any] | None,
+    template: dict[str, Any],
+    rng: random.Random | None = None,
+) -> str | None:
+    """First flash variant compatible with this template (escalation via rng)."""
+    if flash_stage_slots(template, "flash_breast") is not None:
+        return "flash_breast"
+    if flash_stage_slots(template, "flash_skirt") is not None:
+        if (
+            rng is not None
+            and "panties" in template.get("slots", {})
+            and rng.random() < (
+                (db or {}).get("settings", {})
+                .get("flash_reveal", {})
+                .get("escalated_chance", 0.4)
+            )
+        ):
+            return "flash_escalated"
+        return "flash_skirt"
+    if flash_stage_slots(template, "flash_escalated") is not None:
+        return "flash_escalated"
+    return None
+
+
 def stage_for_index(
     template: dict[str, Any],
     index: int,
@@ -4201,6 +4409,7 @@ def stage_for_index(
     nsfw_percent: float,
     explicit_share_percent: float,
     random_bucket: str | None = None,
+    db: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     stages = template["stages"]
     effective = effective_photoshoot_stages(template)
@@ -4221,23 +4430,37 @@ def stage_for_index(
             ]
             return progressive_stage(transition_stages, revealing_index, transition_count)
         explicit_stage = next(stage for stage in revealing if stage["level"] == "explicit")
-        plateau_kinds = [
-            {"plateau_kind": "provocative_rear"},
-            {"plateau_kind": "intimate_closeup"},
-            {"plateau_kind": "masturbation"},
-        ]
+        rotation = (
+            db.get("settings", {}).get("photoshoot_progression", {}).get("plateau_rotation")
+            if db is not None
+            else None
+        ) or ["provocative_rear", "intimate_closeup", "masturbation"]
+        plateau_kinds = [{"plateau_kind": item} for item in rotation]
         plateau_index = revealing_index - transition_count
         kind = progressive_stage(plateau_kinds, plateau_index, explicit_count)["plateau_kind"]
         if kind == "intimate_closeup" and "panties" in template.get("slots", {}) and rng.random() < 0.5:
             kind = "panties_aside"
+        if kind == "flash":
+            kind = resolve_flash_variant(db, template, rng) or "masturbation"
+        flash_kept = flash_stage_slots(template, kind) if kind in FLASH_KINDS else None
+        if kind in FLASH_KINDS and flash_kept is None:
+            kind = "masturbation"
+            flash_kept = None
         result = copy.deepcopy(explicit_stage)
         result["id"] = f"{explicit_stage['id']}_{kind}"
         result["plateau_kind"] = kind
         result["visible_slots"] = (
             [slot for slot in ("panties", "legwear", "footwear", "accessories") if slot in template.get("slots", {})]
-            if kind == "panties_aside" else []
+            if kind == "panties_aside"
+            else (list(flash_kept[0]) if flash_kept is not None else [])
         )
-        result["body_visibility"] = ["breasts", "nipples", "pubic_area", "genitals"]
+        result["body_visibility"] = (
+            list(flash_kept[1])
+            if flash_kept is not None
+            else ["breasts", "nipples", "pubic_area", "genitals"]
+        )
+        if flash_kept is not None:
+            result["visual_category"] = kind
         return result
     if random_bucket is None:
         return weighted_choice(rng, stages)
@@ -4264,6 +4487,8 @@ def maybe_dressed_panties_reveal(
 ) -> dict[str, Any]:
     """Turn a compatible dressed frame into a probabilistic panties reveal."""
     rule = db["settings"]["dressed_panties_reveal"]
+    if stage.get("visual_category"):
+        return stage
     if stage["level"] != "covered" or "panties" not in outfit["garments"]:
         return stage
     compatible_ids = set(rule["compatible_outer_ids"])
@@ -4316,12 +4541,14 @@ def weighted_shuffle_sequence(
 
 
 def full_xxx_recipe_plan(
-    db: dict[str, Any], count: int, rng: random.Random
+    db: dict[str, Any], count: int, rng: random.Random,
+    remaining_slots: set[str] | None = None,
 ) -> list[dict[str, Any]]:
     """Plan an explicit editorial arc over concrete enabled recipe records."""
     recipes = [
         item for item in db["explicit_recipes"]
         if not item.get("disabled", False)
+        and flash_recipe_slot_compatible(item, remaining_slots)
     ]
     plateau = [item for item in recipes if item.get("intensity") != "peak"]
     peak = [item for item in recipes if item.get("intensity") == "peak"]
@@ -4338,7 +4565,8 @@ def full_xxx_recipe_plan(
 
 
 def full_xxx_stage(
-    template: dict[str, Any], recipe: dict[str, Any], index: int
+    template: dict[str, Any], recipe: dict[str, Any], index: int,
+    outfit: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build an explicit stage bound to one preplanned concrete recipe."""
     effective = effective_photoshoot_stages(template)
@@ -4348,9 +4576,46 @@ def full_xxx_stage(
     result["plateau_kind"] = recipe["plateau_kind"]
     result["planned_recipe_id"] = recipe["id"]
     result["planned_intensity"] = recipe.get("intensity", "explicit")
-    result["visible_slots"] = []
-    result["body_visibility"] = ["breasts", "nipples", "pubic_area", "genitals"]
+    flash = (
+        flash_stage_slots(template, recipe["plateau_kind"], outfit)
+        if recipe.get("plateau_kind") in FLASH_KINDS
+        else None
+    )
+    if recipe.get("plateau_kind") in FLASH_KINDS and flash is None:
+        raise AppError(f"Recipe {recipe['id']} is incompatible with this outfit")
+    if flash is not None:
+        result["visible_slots"] = list(flash[0])
+        result["body_visibility"] = list(flash[1])
+        result["visual_category"] = recipe["plateau_kind"]
+    else:
+        result["visible_slots"] = []
+        result["body_visibility"] = ["breasts", "nipples", "pubic_area", "genitals"]
     return result
+
+
+def planned_xxx_stage(
+    db: dict[str, Any],
+    template: dict[str, Any],
+    recipe: dict[str, Any],
+    index: int,
+    outfit: dict[str, Any] | None,
+    rng: random.Random,
+) -> dict[str, Any]:
+    """Bind a planned recipe to a stage, falling back when the outfit conflicts."""
+    current = recipe
+    tried = {recipe["id"]}
+    while True:
+        try:
+            return full_xxx_stage(template, current, index, outfit=outfit)
+        except AppError:
+            pool = [
+                item for item in db["explicit_recipes"]
+                if not item.get("disabled", False) and item["id"] not in tried
+            ]
+            if not pool:
+                raise
+            current = weighted_choice(rng, pool)
+            tried.add(current["id"])
 
 
 def sfw_stage(
@@ -5577,12 +5842,15 @@ def build_storyboard(
                 sfw_stage(template, shot_index, args.count, args.mode, rng)
                 if args.content_mode == "sfw"
                 else (
-                    full_xxx_stage(template, xxx_plan[shot_index], shot_index)
+                    planned_xxx_stage(
+                        db, template, xxx_plan[shot_index], shot_index,
+                        context["outfit"], rng,
+                    )
                     if args.content_mode == "xxx"
                     else stage_for_index(
                         template, shot_index, args.count, args.mode, rng,
                         nsfw_percent, plateau_percent,
-                        random_bucket,
+                        random_bucket, db=db,
                     )
                 )
             )
@@ -5607,16 +5875,24 @@ def build_storyboard(
                 and stage["level"] == "explicit"
             ):
                 if not progressive_xxx_plan:
-                    progressive_xxx_plan = full_xxx_recipe_plan(
-                        db, args.count - shot_index, rng
+                    remaining = (
+                        set(storyboard[-1]["stage"].get("visible_slots", []))
+                        if storyboard
+                        and storyboard[-1]["photoshoot_index"] == photoshoot_index
+                        else set(template.get("slots", {}))
                     )
-                stage = full_xxx_stage(
-                    template,
+                    progressive_xxx_plan = full_xxx_recipe_plan(
+                        db, args.count - shot_index, rng,
+                        remaining_slots=remaining,
+                    )
+                stage = planned_xxx_stage(
+                    db, template,
                     progressive_xxx_plan[progressive_xxx_index],
                     shot_index,
+                    context["outfit"], rng,
                 )
                 progressive_xxx_index += 1
-            if args.mode == "photoshoot" and removed_slots:
+            if args.mode == "photoshoot" and removed_slots and stage.get("visual_category") not in FLASH_KINDS:
                 stage = copy.deepcopy(stage)
                 stage["visible_slots"] = [
                     slot for slot in stage.get("visible_slots", [])
@@ -5640,6 +5916,47 @@ def build_storyboard(
                 scene = composer.resolve_scene(
                     context, stage, overrides, bag_scope=bag_scope
                 )
+            scene_recipe = scene.get("explicit_recipe")
+            if (
+                scene_recipe is not None
+                and stage.get("visual_category") not in FLASH_KINDS
+            ):
+                recipe_rec = next(
+                    (
+                        item for item in db["explicit_recipes"]
+                        if item["id"] == (
+                            scene_recipe["id"]
+                            if isinstance(scene_recipe, dict)
+                            else scene_recipe
+                        )
+                    ),
+                    None,
+                )
+                if (
+                    recipe_rec is not None
+                    and recipe_rec.get("plateau_kind") in FLASH_KINDS
+                ):
+                    flash_kept = flash_stage_slots(
+                        template, recipe_rec["plateau_kind"], context["outfit"]
+                    )
+                    if flash_kept is not None:
+                        stage = copy.deepcopy(stage)
+                        stage["visible_slots"] = list(flash_kept[0])
+                        stage["body_visibility"] = list(flash_kept[1])
+                        stage["visual_category"] = recipe_rec["plateau_kind"]
+                        overrides = {
+                            **overrides,
+                            "explicit_recipe": recipe_rec["id"],
+                            "intensity": recipe_rec.get("intensity", "explicit"),
+                        }
+                        try:
+                            scene = composer.resolve_scene(
+                                context, stage, overrides, avoid, bag_scope
+                            )
+                        except AppError:
+                            scene = composer.resolve_scene(
+                                context, stage, overrides, bag_scope=bag_scope
+                            )
             previous_scene = (
                 storyboard[-1]["scene"]
                 if storyboard
@@ -5663,7 +5980,11 @@ def build_storyboard(
             previous = storyboard[-1] if storyboard and storyboard[-1]["photoshoot_index"] == photoshoot_index else None
             previous_slots = set(previous["stage"].get("visible_slots", [])) if previous else set(stage.get("visible_slots", []))
             current_slots = set(stage.get("visible_slots", []))
-            if args.mode == "photoshoot" and current_slots & removed_slots:
+            if (
+                args.mode == "photoshoot"
+                and stage.get("visual_category") not in FLASH_KINDS
+                and current_slots & removed_slots
+            ):
                 restored = sorted(current_slots & removed_slots)
                 raise AppError(
                     f"Progressive garment state restored removed slots: {restored}"
@@ -5685,11 +6006,11 @@ def build_storyboard(
                             continue
                         previous_scene.setdefault("garment_states", {})[slot] = intermediate
                         previous_scene["stage"].setdefault("garment_states", {})[slot] = intermediate
-                        if intermediate == "unbuttoned_open" and "bra" in context["outfit"]["garments"]:
+                        if intermediate in {"unbuttoned_open", "slipped_off_shoulder"} and "bra" in context["outfit"]["garments"]:
                             previous_scene["stage"]["visible_slots"] = list(dict.fromkeys([
                                 *previous_scene["stage"].get("visible_slots", []), "bra",
                             ]))
-                        if intermediate == "lowered_to_hips" and "panties" in context["outfit"]["garments"]:
+                        if intermediate in {"lowered_to_hips", "hem_lifted"} and "panties" in context["outfit"]["garments"]:
                             previous_scene["stage"]["visible_slots"] = list(dict.fromkeys([
                                 *previous_scene["stage"].get("visible_slots", []), "panties",
                             ]))
@@ -6118,6 +6439,14 @@ def catalog_reachability(db: dict[str, Any]) -> dict[str, Any]:
                 "open_legs" not in tags(pose) or "provocative_rear" in tags(pose)
             ):
                 continue
+            if plateau == "voyeur" and "voyeur" not in tags(pose):
+                continue
+            if plateau in FLASH_KINDS:
+                flash_pose_tag = (
+                    "flash_breast" if plateau == "flash_breast" else "flash_skirt"
+                )
+                if flash_pose_tag not in tags(pose):
+                    continue
             if recipe and recipe.get("pose_tags") and not set(
                 recipe["pose_tags"]
             ).issubset(tags(pose)):
@@ -6151,6 +6480,10 @@ def catalog_reachability(db: dict[str, Any]) -> dict[str, Any]:
                     "intimate_closeup": "closeup_action",
                     "masturbation": "masturbation_action",
                     "panties_aside": "panties_aside_action",
+                    "voyeur": "voyeur",
+                    "flash_breast": "flash_breast",
+                    "flash_skirt": "flash_skirt",
+                    "flash_escalated": "flash_skirt",
                 }.get(plateau or "")
                 if required_plateau_tag and required_plateau_tag not in tags(action):
                     continue
@@ -6904,18 +7237,32 @@ def director_stage_options(
     kinds = ["provocative_rear", "intimate_closeup", "masturbation"]
     if "panties" in template.get("slots", {}):
         kinds.insert(2, "panties_aside")
+    flash_variant = resolve_flash_variant(db, template)
+    if flash_variant:
+        kinds.insert(0, flash_variant)
+    kinds.append("voyeur")
     for kind in kinds:
         stage = copy.deepcopy(explicit_base)
         stage["id"] = f"{explicit_base['id']}_director_{kind}"
         stage["plateau_kind"] = kind
+        flash_kept = (
+            flash_stage_slots(template, kind) if kind in FLASH_KINDS else None
+        )
         stage["visible_slots"] = (
             [
                 slot for slot in ("panties", "legwear", "footwear", "accessories")
                 if slot in template.get("slots", {})
             ]
-            if kind == "panties_aside" else []
+            if kind == "panties_aside"
+            else (list(flash_kept[0]) if flash_kept is not None else [])
         )
-        stage["body_visibility"] = ["breasts", "nipples", "pubic_area", "genitals"]
+        stage["body_visibility"] = (
+            list(flash_kept[1])
+            if flash_kept is not None
+            else ["breasts", "nipples", "pubic_area", "genitals"]
+        )
+        if flash_kept is not None:
+            stage["visual_category"] = kind
         unique[stage["id"]] = stage
     return list(unique.values())
 
@@ -7881,6 +8228,10 @@ class WebState:
                     "intimate_closeup": {"intimate_closeup"},
                     "masturbation": {"masturbation_pose"},
                     "panties_aside": {"open_legs"},
+                    "voyeur": {"voyeur"},
+                    "flash_breast": {"flash_breast"},
+                    "flash_skirt": {"flash_skirt"},
+                    "flash_escalated": {"flash_skirt"},
                 }.get(plateau)
                 if plateau_tags:
                     compatible = [item for item in compatible if tags(item) & plateau_tags]
@@ -7919,6 +8270,10 @@ class WebState:
                     "intimate_closeup": {"closeup_action"},
                     "masturbation": {"masturbation_action"},
                     "panties_aside": {"panties_aside_action"},
+                    "voyeur": {"voyeur"},
+                    "flash_breast": {"flash_breast"},
+                    "flash_skirt": {"flash_skirt"},
+                    "flash_escalated": {"flash_skirt"},
                 }.get(plateau)
                 if plateau_tags:
                     compatible = [item for item in compatible if tags(item) & plateau_tags]
@@ -8073,17 +8428,18 @@ class WebState:
                     sfw_stage(context["outfit"]["template"], old["shot_index"], args.count, args.mode, record["rng"])
                     if args.content_mode == "sfw"
                     else (
-                        full_xxx_stage(
-                            context["outfit"]["template"],
+                        planned_xxx_stage(
+                            db, context["outfit"]["template"],
                             recipes_by_id.get(old["stage"].get("planned_recipe_id"))
                             or xxx_fallback_plan[old["shot_index"]],
                             old["shot_index"],
+                            context["outfit"], record["rng"],
                         )
                         if args.content_mode == "xxx"
                         else stage_for_index(
                             context["outfit"]["template"], old["shot_index"], args.count,
                             args.mode, record["rng"], nsfw, plateau,
-                            old.get("progression_bucket"),
+                            old.get("progression_bucket"), db=db,
                         )
                     )
                 )
