@@ -1009,7 +1009,12 @@ def validate_database(db: dict[str, Any]) -> None:
             )
     supported_state_sequences = {
         ("worn_closed", "unbuttoned_open", "removed"),
+        ("worn_closed", "unbuttoned_open", "slipped_off_shoulder", "removed"),
+        ("worn_closed", "slipped_off_shoulder", "removed"),
         ("worn_closed", "lowered_to_hips", "removed"),
+        ("worn_closed", "lowered_to_hips", "hem_lifted", "removed"),
+        ("worn_closed", "hem_lifted", "removed"),
+        ("worn_closed", "hem_lifted", "lowered_to_hips", "removed"),
     }
     for values in db["garments"].values():
         for item in values:

@@ -91,21 +91,57 @@
         "luxury"
       ],
       "pools": {
-        "interiors": [],
-        "furniture": [],
+        "interiors": [
+          "interior_student_dorm",
+          "interior_student_dorm_bath",
+          "interior_campus_library",
+          "interior_campus_hallway",
+          "interior_apartment_bedroom",
+          "interior_shared_flat_kitchen",
+          "interior_guest_room",
+          "interior_laundry_corner",
+          "interior_campus_common",
+          "interior_attic_dormer"
+        ],
+        "furniture": [
+          "furniture_dorm_bed",
+          "furniture_dorm_desk",
+          "furniture_dorm_lockers",
+          "furniture_library_desk",
+          "furniture_library_shelf",
+          "furniture_flat_kitchen_counter",
+          "furniture_sofa_bed",
+          "furniture_wardrobe",
+          "furniture_dresser",
+          "furniture_laundry_cart",
+          "furniture_window_seat",
+          "furniture_floor_rug",
+          "furniture_kitchen_table",
+          "furniture_common_sofa"
+        ],
         "moods": [
           "mood_everyday_relaxed",
           "mood_ordinary_afternoon",
-          "mood_casual_private"
+          "mood_casual_private",
+          "mood_candid_amateur",
+          "mood_caught_off_guard",
+          "mood_afterglow",
+          "mood_bedroom_haze",
+          "mood_school_preppy",
+          "mood_sunlit_private"
         ],
         "photography_styles": [
           "photo_amateur_home",
           "photo_casual_handheld",
-          "photo_simple_window"
+          "photo_simple_window",
+          "photo_amateur_smartphone",
+          "photo_mirror_self"
         ],
         "explicit_photography_styles": [
           "photo_explicit_home_clear",
-          "photo_explicit_handheld_close"
+          "photo_explicit_handheld_close",
+          "photo_hidden_camera",
+          "photo_amateur_smartphone"
         ]
       },
       "curated_wardrobe": {
@@ -124,9 +160,32 @@
               "template_casual_athleisure",
               "template_casual_midi_dress",
               "template_casual_onepiece_weekend",
-              "template_casual_home_lounge"
+              "template_casual_home_lounge",
+              "template_young_tee_denim",
+              "template_young_flannel_shorts",
+              "template_young_sweat_bike",
+              "template_young_hoodie_jogger",
+              "template_young_sweater_dress",
+              "template_young_shirtdress",
+              "template_young_wrap_skirt",
+              "template_young_slip_denimjacket",
+              "template_sch_cardigan_pleated",
+              "template_sch_cardigan_pleated_b",
+              "template_sch_oxford_knees",
+              "template_sch_sweater_knit_skirt",
+              "template_sch_jumper_dress",
+              "template_sch_cardigan_dress",
+              "template_sch_breton_slip",
+              "template_sch_shirtdress",
+              "template_sch_letter_sweater_pleat",
+              "template_sch_blazer_shirt"
             ],
-            "luxury_template_ids": []
+            "luxury_template_ids": [
+              "template_explicit_lift_tee_mini",
+              "template_explicit_lift_cardigan_mini",
+              "template_explicit_lift_flannel",
+              "template_explicit_lift_dress_jacket"
+            ]
           }
         }
       }
@@ -166,7 +225,16 @@
         "dress_casual_bodycon_mini",
         "dress_square_neck_mini",
         "dress_cotton_shirt_mini",
-        "dress_tshirt_bodycon"
+        "dress_tshirt_bodycon",
+        "lower_young_denim_shorts",
+        "lower_young_corduroy_shorts",
+        "lower_young_mid_denim_skirt",
+        "lower_young_wrap_skirt",
+        "lower_sch_plaid_pleated_mini",
+        "lower_sch_tartan_mini",
+        "lower_sch_houndstooth_mini",
+        "lower_sch_navy_pleat_short",
+        "lower_sch_breton_straight"
       ],
       "positive_prompt": "still fully dressed in the coordinated outer outfit, the outer garment hem deliberately lifted just enough to show the intact panties underneath"
     },
@@ -7526,6 +7594,881 @@
           "color_beige",
           "color_chocolate"
         ]
+      },
+      {
+        "id": "top_young_ribbed_tank",
+        "catalog_category": "normal",
+        "prompt": "fitted ribbed knit tank top",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "top:ribbed-tank:crop:rib-knit",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_pink",
+          "color_beige",
+          "color_black"
+        ]
+      },
+      {
+        "id": "top_young_baby_tee",
+        "catalog_category": "normal",
+        "prompt": "soft oversized baby tee with a small faded print",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "loose",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "top:baby-tee:hip:jersey",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_beige",
+          "color_pink",
+          "color_gray"
+        ]
+      },
+      {
+        "id": "top_young_crop_tee",
+        "catalog_category": "normal",
+        "prompt": "cropped short-sleeve cotton tee",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "short_length",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "top:crop-tee:waist:jersey",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_coral",
+          "color_gray"
+        ]
+      },
+      {
+        "id": "top_young_offshoulder",
+        "catalog_category": "normal",
+        "prompt": "soft off-shoulder knit top with a wide neckband",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "off_shoulder",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "top:off-shoulder:hip:knit",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_beige",
+          "color_lilac",
+          "color_sage",
+          "color_ivory"
+        ]
+      },
+      {
+        "id": "top_young_box_croptank",
+        "catalog_category": "normal",
+        "prompt": "structured square-neck boxy crop tank",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "boxy",
+          "short_length",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "top:boxy-tank:waist:jersey",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_navy",
+          "color_rust",
+          "color_teal"
+        ]
+      },
+      {
+        "id": "top_young_sweatshirt",
+        "catalog_category": "normal",
+        "prompt": "relaxed crewneck sweatshirt with ribbed cuffs",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "loose",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "top:sweatshirt:hip:fleece",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_beige",
+          "color_gray",
+          "color_ivory",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "top_young_hoodie",
+        "catalog_category": "normal",
+        "prompt": "cozy zip-up hoodie with a slouchy drape",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "loose",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "top:zip-hoodie:hip:fleece",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_navy",
+          "color_gray",
+          "color_mustard"
+        ]
+      },
+      {
+        "id": "top_young_flannel",
+        "catalog_category": "normal",
+        "prompt": "long-sleeve plaid flannel shirt worn loosely",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "plaid",
+          "unbuttoned_open",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "top:flannel:hip:flannel-weave",
+        "supported_states": [
+          "worn_closed",
+          "unbuttoned_open",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_rust",
+          "color_navy",
+          "color_sage",
+          "color_black"
+        ]
+      },
+      {
+        "id": "top_young_buttondenim",
+        "catalog_category": "normal",
+        "prompt": "relaxed denim button-up shirt with chest pockets",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "button_front",
+          "unbuttoned_open",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "top:denim-button:hip:denim",
+        "supported_states": [
+          "worn_closed",
+          "unbuttoned_open",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_denim",
+          "color_white",
+          "color_beige"
+        ]
+      },
+      {
+        "id": "top_young_sailor_neck",
+        "catalog_category": "normal",
+        "prompt": "retro sailor-neck top with a contrast collar",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "retro",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "top:sailor-neck:hip:cotton",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_navy",
+          "color_ivory"
+        ]
+      },
+      {
+        "id": "top_young_muscle_sleeve",
+        "catalog_category": "normal",
+        "prompt": "sleeveless muscle-tank top with a scooped armhole",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "sleeveless",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "top:muscle-tank:waist:jersey",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_white",
+          "color_coral",
+          "color_gray"
+        ]
+      },
+      {
+        "id": "top_young_lace_trim_tee",
+        "catalog_category": "normal",
+        "prompt": "everyday cotton tee with lace trim at the hem",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "lace_detail",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "top:lace-hem-tee:hip:jersey",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_pink",
+          "color_ivory"
+        ]
+      },
+      {
+        "id": "top_young_turtleneck_sweater",
+        "catalog_category": "normal",
+        "prompt": "fitted ribbed turtleneck sweater",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "fitted",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "top:turtleneck:hip:rib-knit",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_ivory",
+          "color_rust",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "top_young_polo_knit",
+        "catalog_category": "normal",
+        "prompt": "knit polo with a soft collar and three buttons",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "knit",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "top:knit-polo:hip:pique",
+        "supported_states": [
+          "worn_closed",
+          "unbuttoned_open",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_sage",
+          "color_beige",
+          "color_ivory",
+          "color_olive"
+        ]
+      },
+      {
+        "id": "top_young_cowl_neck",
+        "catalog_category": "normal",
+        "prompt": "drapey cowl-neck jersey top",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "draped",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "top:cowl-neck:hip:jersey",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_beige",
+          "color_lilac",
+          "color_gray"
+        ]
+      },
+      {
+        "id": "top_young_bralette_tee",
+        "catalog_category": "normal",
+        "prompt": "lightweight cotton tee worn over a thin bralette",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "layered",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "top:bralette-tee:hip:jersey",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_pink",
+          "color_ivory",
+          "color_beige"
+        ]
+      },
+      {
+        "id": "top_sch_ribbed_cardigan",
+        "catalog_category": "normal",
+        "prompt": "fitted ribbed cardigan with mother-of-pearl buttons",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "cardigan:ribbed-fitted:hip:knit",
+        "supported_states": [
+          "worn_closed",
+          "unbuttoned_open",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_beige",
+          "color_ivory",
+          "color_navy",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "top_sch_vneck_cardigan",
+        "catalog_category": "normal",
+        "prompt": "soft V-neck cardigan with pearl snaps",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "cardigan:v-neck:waist:knit",
+        "supported_states": [
+          "worn_closed",
+          "unbuttoned_open",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_beige",
+          "color_lilac",
+          "color_pink"
+        ]
+      },
+      {
+        "id": "top_sch_lapel_cardigan",
+        "catalog_category": "normal",
+        "prompt": "longline lapel cardigan with a belt loop",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "cardigan:lapel-longline:knee:knit",
+        "supported_states": [
+          "worn_closed",
+          "unbuttoned_open",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_beige",
+          "color_gray",
+          "color_ivory",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "top_sch_shrug_cardigan",
+        "catalog_category": "normal",
+        "prompt": "short cropped shrug-style cardigan",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "short_length",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "cardigan:shrug-crop:waist:knit",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_beige",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "top_sch_crew_sweater",
+        "catalog_category": "normal",
+        "prompt": "classic crewneck sweater in a school color",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "sweater:crew-classic:hip:knit",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_navy",
+          "color_emerald",
+          "color_rust",
+          "color_black"
+        ]
+      },
+      {
+        "id": "top_sch_letter_sweater",
+        "catalog_category": "normal",
+        "prompt": "varsity-style sweater with a letter patch",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "varsity",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "sweater:letter-varsity:hip:knit",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_emerald",
+          "color_navy",
+          "color_rust",
+          "color_gray"
+        ]
+      },
+      {
+        "id": "top_sch_turtleneck_fine",
+        "catalog_category": "normal",
+        "prompt": "fine-knit turtleneck in a muted tone",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "fitted",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "sweater:fine-turtleneck:waist:knit",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_ivory",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "top_sch_argyle_sweater",
+        "catalog_category": "normal",
+        "prompt": "argyle patterned sweater with a ribbed hem",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "argyle",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "sweater:argyle-patterned:hip:knit",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_emerald",
+          "color_rust",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "top_sch_cable_sweater",
+        "catalog_category": "normal",
+        "prompt": "chunky cable-knit sweater with a relaxed fit",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "cable",
+          "loose",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "sweater:cable-chunky:waist:knit",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_beige",
+          "color_ivory",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "top_sch_polkadot_knit",
+        "catalog_category": "normal",
+        "prompt": "polka-dot knit pullover with a round neck",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "polka_dot",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "pullover:polka-knit:waist:knit",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_pink",
+          "color_ivory",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "top_sch_peter_pan",
+        "catalog_category": "normal",
+        "prompt": "crisp peter pan collar blouse",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "button_front",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "blouse:peter-pan:hip:cotton",
+        "supported_states": [
+          "worn_closed",
+          "unbuttoned_open",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_ivory",
+          "color_pink"
+        ]
+      },
+      {
+        "id": "top_sch_oxford_button",
+        "catalog_category": "normal",
+        "prompt": "boxy oxford button-down shirt with a pointed collar",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "button_front",
+          "unbuttoned_open",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "shirt:oxford-boxy:hip:poplin",
+        "supported_states": [
+          "worn_closed",
+          "unbuttoned_open",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_lilac",
+          "color_ivory",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "top_sch_puff_sleeve_blouse",
+        "catalog_category": "normal",
+        "prompt": "puff-sleeve blouse with a square neckline",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "puff_sleeve",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "blouse:puff-sleeve:hip:cotton",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_pink",
+          "color_white",
+          "color_beige"
+        ]
+      },
+      {
+        "id": "top_sch_sailor_blouse",
+        "catalog_category": "normal",
+        "prompt": "sailor-collar blouse with a soft tie",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "sailor",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "blouse:sailor-tie:hip:cotton",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "top_sch_striped_boatneck",
+        "catalog_category": "normal",
+        "prompt": "breton striped boatneck top",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "striped",
+          "boatneck",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "top:breton-boatneck:waist:jersey",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "top_sch_lace_cuff_blouse",
+        "catalog_category": "normal",
+        "prompt": "blouse with lace cuffs and a bow front",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "lace_detail",
+          "bow",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "blouse:lace-cuff-bow:hip:cotton",
+        "supported_states": [
+          "worn_closed",
+          "unbuttoned_open",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_ivory",
+          "color_pink"
+        ]
+      },
+      {
+        "id": "top_sch_tie_neck",
+        "catalog_category": "normal",
+        "prompt": "silk-look tie-neck blouse with a draped bow",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "draped",
+          "bow",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "blouse:tie-neck-drape:hip:chiffon",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_beige",
+          "color_purple"
+        ]
+      },
+      {
+        "id": "top_sch_batwing_shirt",
+        "catalog_category": "normal",
+        "prompt": "boxy shirt with batwing sleeves worn open",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "batwing",
+          "unbuttoned_open",
+          "loose",
+          "opaque_chest"
+        ],
+        "diversity_fingerprint": "shirt:batwing-boxy:hip:poplin",
+        "supported_states": [
+          "worn_closed",
+          "unbuttoned_open",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_lilac",
+          "color_ivory"
+        ]
+      },
+      {
+        "id": "upper_boudoir_sheer_blowup",
+        "catalog_category": "normal",
+        "prompt": "sheer chiffon blouse with a relaxed drape",
+        "tags": [
+          "erotic",
+          "sheer",
+          "draped"
+        ],
+        "diversity_fingerprint": "blouse:sheer-chiffon:hip:chiffon",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_pink",
+          "color_white"
+        ]
+      },
+      {
+        "id": "upper_boudoir_mesh_panel",
+        "catalog_category": "normal",
+        "prompt": "fitted top with sheer mesh side panels",
+        "tags": [
+          "erotic",
+          "mesh",
+          "fitted"
+        ],
+        "diversity_fingerprint": "top:mesh-panel:waist:mesh",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_ivory",
+          "color_navy"
+        ]
       }
     ],
     "lowerwear": [
@@ -8941,6 +9884,754 @@
           "color_navy",
           "color_beige",
           "color_chocolate"
+        ]
+      },
+      {
+        "id": "lower_young_denim_shorts",
+        "catalog_category": "normal",
+        "prompt": "light-wash denim shorts with frayed hems",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "denim",
+          "short_length"
+        ],
+        "diversity_fingerprint": "shorts:frayed-denim:hip:denim",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_denim",
+          "color_white",
+          "color_beige"
+        ]
+      },
+      {
+        "id": "lower_young_high_denim_shorts",
+        "catalog_category": "normal",
+        "prompt": "high-waist straight-leg denim shorts",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "high_waist",
+          "denim"
+        ],
+        "diversity_fingerprint": "shorts:high-waist-denim:hip:denim",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_denim",
+          "color_black",
+          "color_ivory"
+        ]
+      },
+      {
+        "id": "lower_young_bike_shorts",
+        "catalog_category": "normal",
+        "prompt": "fitted black cotton bike shorts",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "fitted",
+          "sporty"
+        ],
+        "diversity_fingerprint": "shorts:bike:thigh:jersey",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_gray",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "lower_young_ribbed_skort",
+        "catalog_category": "normal",
+        "prompt": "pleated rib-knit skort with an inner liner",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "pleated",
+          "sporty"
+        ],
+        "diversity_fingerprint": "skort:ribbed-pleat:thigh:knit",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_beige",
+          "color_black",
+          "color_sage",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "lower_young_corduroy_shorts",
+        "catalog_category": "normal",
+        "prompt": "high-waist wide-leg corduroy shorts",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "wide_leg",
+          "retro"
+        ],
+        "diversity_fingerprint": "shorts:corduroy-wide:hip:corduroy",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_beige",
+          "color_olive",
+          "color_rust",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "lower_young_cargo_shorts",
+        "catalog_category": "normal",
+        "prompt": "relaxed cargo shorts with deep side pockets",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "cargo",
+          "utility"
+        ],
+        "diversity_fingerprint": "shorts:cargo:thigh:canvas",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_olive",
+          "color_beige",
+          "color_denim",
+          "color_gray"
+        ]
+      },
+      {
+        "id": "lower_young_mid_denim_skirt",
+        "catalog_category": "normal",
+        "prompt": "straight mid-length denim skirt with a clean waistband",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "denim",
+          "midi"
+        ],
+        "diversity_fingerprint": "skirt:denim-straight:knee:denim",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_denim",
+          "color_navy",
+          "color_white"
+        ]
+      },
+      {
+        "id": "lower_young_wrap_skirt",
+        "catalog_category": "normal",
+        "prompt": "soft wrap skirt that ties at the waist",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "wrap",
+          "drapey"
+        ],
+        "diversity_fingerprint": "skirt:wrap:knee:jersey",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_coral",
+          "color_beige",
+          "color_ivory",
+          "color_purple"
+        ]
+      },
+      {
+        "id": "lower_young_ribbed_skirt",
+        "catalog_category": "normal",
+        "prompt": "fitted ribbed knit skirt with a slight flare",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "fitted",
+          "ribbed"
+        ],
+        "diversity_fingerprint": "skirt:ribbed-flare:thigh:knit",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_beige",
+          "color_gray",
+          "color_ivory"
+        ]
+      },
+      {
+        "id": "lower_young_paperbag_waist",
+        "catalog_category": "normal",
+        "prompt": "paperbag-waist midi skirt with soft pleats",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "gathered",
+          "midi"
+        ],
+        "diversity_fingerprint": "skirt:paperbag-midi:knee:jersey",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_beige",
+          "color_navy",
+          "color_ivory",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "lower_young_cargo_pants",
+        "catalog_category": "normal",
+        "prompt": "loose cargo pants with tapered ankles",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "cargo",
+          "utility"
+        ],
+        "diversity_fingerprint": "pants:cargo-taper:ankle:canvas",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_olive",
+          "color_denim",
+          "color_beige"
+        ]
+      },
+      {
+        "id": "lower_young_pleated_wide",
+        "catalog_category": "normal",
+        "prompt": "pleated wide-leg trousers with a high rise",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "wide_leg",
+          "pleated"
+        ],
+        "diversity_fingerprint": "pants:pleated-wide:ankle:wool-blend",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_navy",
+          "color_beige",
+          "color_black"
+        ]
+      },
+      {
+        "id": "lower_young_joggers",
+        "catalog_category": "normal",
+        "prompt": "soft fleece joggers with ribbed cuffs",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "sporty",
+          "fleece"
+        ],
+        "diversity_fingerprint": "pants:jogger:ankle:fleece",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_gray",
+          "color_beige",
+          "color_black",
+          "color_ivory"
+        ]
+      },
+      {
+        "id": "lower_young_slip_jeans",
+        "catalog_category": "normal",
+        "prompt": "low-rise relaxed slip jeans with a faded wash",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "low_rise",
+          "retro",
+          "denim"
+        ],
+        "diversity_fingerprint": "jeans:slip-faded:ankle:denim",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_denim",
+          "color_white"
+        ]
+      },
+      {
+        "id": "lower_sch_plaid_pleated_mini",
+        "catalog_category": "normal",
+        "prompt": "pleated plaid mini skirt with a checkered pattern",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "plaid",
+          "pleated",
+          "short_length"
+        ],
+        "diversity_fingerprint": "skirt:pleated-plaid-mini:thigh:plaid",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_rust",
+          "color_navy",
+          "color_emerald",
+          "color_gray"
+        ]
+      },
+      {
+        "id": "lower_sch_tartan_mini",
+        "catalog_category": "normal",
+        "prompt": "tartan pleated mini with a crisp waistband",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "tartan",
+          "pleated",
+          "short_length"
+        ],
+        "diversity_fingerprint": "skirt:tartan-mini:thigh:plaid",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_navy",
+          "color_emerald",
+          "color_rust",
+          "color_black"
+        ]
+      },
+      {
+        "id": "lower_sch_houndstooth_mini",
+        "catalog_category": "normal",
+        "prompt": "houndstooth pleated skirt with a swingy hem",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "houndstooth",
+          "pleated",
+          "short_length"
+        ],
+        "diversity_fingerprint": "skirt:houndstooth-pleat:thigh:plaid",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_gray",
+          "color_beige",
+          "color_black"
+        ]
+      },
+      {
+        "id": "lower_sch_argyle_pleat_mini",
+        "catalog_category": "normal",
+        "prompt": "argyle pleated mini in muted tones",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "argyle",
+          "pleated",
+          "short_length"
+        ],
+        "diversity_fingerprint": "skirt:argyle-pleat-mini:thigh:knit-plaid",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_emerald",
+          "color_rust",
+          "color_gray",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "lower_sch_brown_plaid_mini",
+        "catalog_category": "normal",
+        "prompt": "brown and cream plaid pleated mini",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "plaid",
+          "pleated",
+          "short_length"
+        ],
+        "diversity_fingerprint": "skirt:brown-plaid-mini:thigh:plaid",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_chocolate",
+          "color_beige",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "lower_sch_navy_pleat_short",
+        "catalog_category": "normal",
+        "prompt": "navy pleated skirt with a contrast hem stripe",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "pleated",
+          "striped",
+          "short_length"
+        ],
+        "diversity_fingerprint": "skirt:navy-pleat-stripe:thigh:poly",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_navy",
+          "color_white",
+          "color_crimson"
+        ]
+      },
+      {
+        "id": "lower_sch_plaid_wrap_mini",
+        "catalog_category": "normal",
+        "prompt": "plaid wrap skirt with a soft tie",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "plaid",
+          "wrap",
+          "short_length"
+        ],
+        "diversity_fingerprint": "skirt:plaid-wrap-mini:thigh:plaid",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_rust",
+          "color_gray",
+          "color_beige"
+        ]
+      },
+      {
+        "id": "lower_sch_micro_pleat",
+        "catalog_category": "normal",
+        "prompt": "extra-short pleated mini with a bouncy swing",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "pleated",
+          "micro",
+          "short_length"
+        ],
+        "diversity_fingerprint": "skirt:micro-pleat:mid-thigh:poly",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_gray",
+          "color_navy",
+          "color_emerald"
+        ]
+      },
+      {
+        "id": "lower_sch_pencil_knee",
+        "catalog_category": "normal",
+        "prompt": "tailored pencil skirt in a school wool blend",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "pencil",
+          "tailored"
+        ],
+        "diversity_fingerprint": "skirt:pencil-tailored:knee:wool-blend",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_navy",
+          "color_gray",
+          "color_beige",
+          "color_black"
+        ]
+      },
+      {
+        "id": "lower_sch_pencil_slit",
+        "catalog_category": "normal",
+        "prompt": "pencil skirt with a back slit and a hook waist",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "pencil",
+          "slit"
+        ],
+        "diversity_fingerprint": "skirt:pencil-slit:knee:wool-blend",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_navy",
+          "color_gray"
+        ]
+      },
+      {
+        "id": "lower_sch_knit_babydoll",
+        "catalog_category": "normal",
+        "prompt": "fitted babydoll knit skirt with a ribbed hem",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "fitted",
+          "ribbed"
+        ],
+        "diversity_fingerprint": "skirt:babydoll-knit:mid-thigh:knit",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_beige",
+          "color_gray",
+          "color_ivory",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "lower_sch_ribbed_pencil",
+        "catalog_category": "normal",
+        "prompt": "high-waist ribbed pencil skirt",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "high_waist",
+          "ribbed"
+        ],
+        "diversity_fingerprint": "skirt:ribbed-pencil-high:knee:knit",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_navy",
+          "color_beige"
+        ]
+      },
+      {
+        "id": "lower_sch_lattice_knit",
+        "catalog_category": "normal",
+        "prompt": "lattice-patterned knit skirt with a straight cut",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "lattice",
+          "knit"
+        ],
+        "diversity_fingerprint": "skirt:lattice-knit:thigh:knit",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_rust",
+          "color_ivory",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "lower_sch_corduroy_pencil",
+        "catalog_category": "normal",
+        "prompt": "soft corduroy pencil skirt with a slit",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "corduroy",
+          "pencil",
+          "slit"
+        ],
+        "diversity_fingerprint": "skirt:corduroy-pencil:knee:corduroy",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_beige",
+          "color_olive",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "lower_sch_breton_straight",
+        "catalog_category": "normal",
+        "prompt": "breton striped straight skirt with a side slit",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "striped",
+          "slit"
+        ],
+        "diversity_fingerprint": "skirt:breton-straight:knee:jersey",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "lower_sch_velvet_babydoll",
+        "catalog_category": "normal",
+        "prompt": "dark velvet babydoll skirt with a satin band",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "velvet",
+          "fitted"
+        ],
+        "diversity_fingerprint": "skirt:velvet-babydoll:mid-thigh:velvet",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_burgundy",
+          "color_navy",
+          "color_black"
+        ]
+      },
+      {
+        "id": "lower_boudoir_satin_shorts",
+        "catalog_category": "normal",
+        "prompt": "satin hot shorts with a low rise",
+        "tags": [
+          "erotic",
+          "satin",
+          "short_length",
+          "low_rise"
+        ],
+        "diversity_fingerprint": "shorts:satin-hot:hip:satin",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_burgundy",
+          "color_navy"
         ]
       }
     ],
@@ -10534,6 +12225,611 @@
           "color_beige",
           "color_chocolate"
         ]
+      },
+      {
+        "id": "dress_young_tshirt_dress",
+        "catalog_category": "normal",
+        "prompt": "loose slouchy T-shirt dress with a side slit",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "loose",
+          "slit",
+          "opaque_body"
+        ],
+        "diversity_fingerprint": "dress:tshirt:below-knee:jersey",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_beige",
+          "color_black",
+          "color_pink"
+        ]
+      },
+      {
+        "id": "dress_young_shirtdress",
+        "catalog_category": "normal",
+        "prompt": "button-front shirtdress with a soft tie belt",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "button_front",
+          "tied_belt",
+          "opaque_body"
+        ],
+        "diversity_fingerprint": "dress:shirtdress:knee:cotton",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_denim",
+          "color_navy",
+          "color_beige"
+        ]
+      },
+      {
+        "id": "dress_young_sweater_dress",
+        "catalog_category": "normal",
+        "prompt": "fitted ribbed sweater dress with a slit hem",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "fitted",
+          "ribbed",
+          "slit",
+          "opaque_body"
+        ],
+        "diversity_fingerprint": "dress:sweater:knee:knit",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_beige",
+          "color_black",
+          "color_sage",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "dress_young_slip_dress",
+        "catalog_category": "normal",
+        "prompt": "bias-cut knit slip dress with spaghetti straps",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "slip",
+          "draped",
+          "opaque_body"
+        ],
+        "diversity_fingerprint": "dress:knit-slip:mid-thigh:jersey",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_beige",
+          "color_pink",
+          "color_gray"
+        ]
+      },
+      {
+        "id": "dress_young_chiffon_wrinkle",
+        "catalog_category": "normal",
+        "prompt": "soft crinkled chiffon dress with a flutter sleeve",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "flutter_sleeve",
+          "drapey",
+          "opaque_body"
+        ],
+        "diversity_fingerprint": "dress:crinkle-chiffon:knee:chiffon",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_coral",
+          "color_ivory",
+          "color_lilac",
+          "color_beige"
+        ]
+      },
+      {
+        "id": "dress_young_linen_wrap",
+        "catalog_category": "normal",
+        "prompt": "loose linen wrap dress with roll sleeves",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "wrap",
+          "loose",
+          "opaque_body"
+        ],
+        "diversity_fingerprint": "dress:linen-wrap:below-knee:linen",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_beige",
+          "color_ivory",
+          "color_olive",
+          "color_denim"
+        ]
+      },
+      {
+        "id": "dress_young_ruffle_hem",
+        "catalog_category": "normal",
+        "prompt": "casual jersey dress with a ruffle hem",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "ruffle",
+          "loose",
+          "opaque_body"
+        ],
+        "diversity_fingerprint": "dress:ruffle-hem:mid-thigh:jersey",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_pink",
+          "color_ivory",
+          "color_rust",
+          "color_gray"
+        ]
+      },
+      {
+        "id": "dress_young_polka_sailor",
+        "catalog_category": "normal",
+        "prompt": "polka-dot dress with a sailor collar",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "polka_dot",
+          "retro",
+          "opaque_body"
+        ],
+        "diversity_fingerprint": "dress:polka-sailor:knee:cotton",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "dress_young_tie_dye_slip",
+        "catalog_category": "normal",
+        "prompt": "tie-dye jersey slip dress with thin straps",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "tie_dye",
+          "slip",
+          "opaque_body"
+        ],
+        "diversity_fingerprint": "dress:tie-dye-slip:knee:jersey",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_pink",
+          "color_ivory",
+          "color_gray"
+        ]
+      },
+      {
+        "id": "dress_young_plaid_sweater_dress",
+        "catalog_category": "normal",
+        "prompt": "cozy plaid knit sweater dress with a cardigan collar",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "plaid",
+          "cozy",
+          "opaque_body"
+        ],
+        "diversity_fingerprint": "dress:plaid-sweater:knee:knit",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_rust",
+          "color_navy",
+          "color_sage",
+          "color_beige"
+        ]
+      },
+      {
+        "id": "dress_young_satin_midi",
+        "catalog_category": "normal",
+        "prompt": "flowing satin midi dress with a draped back",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "satin",
+          "flowy",
+          "opaque_body"
+        ],
+        "diversity_fingerprint": "dress:satin-midi:ankle:satin",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_beige",
+          "color_purple",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "dress_young_denim_dungaree",
+        "catalog_category": "normal",
+        "prompt": "denim pinafore dress with adjustable straps",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "pinafore",
+          "denim",
+          "opaque_body"
+        ],
+        "diversity_fingerprint": "dress:denim-pinafore:knee:denim",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_denim",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "dress_sch_jumper_mini",
+        "catalog_category": "normal",
+        "prompt": "knit jumper dress with a pleated plaid skirt panel",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "plaid",
+          "layered",
+          "opaque_body"
+        ],
+        "diversity_fingerprint": "dress:plaid-jumper:thigh:knit",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_navy",
+          "color_emerald",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "dress_sch_cardigan_mini",
+        "catalog_category": "normal",
+        "prompt": "cardigan-style sweater dress with a pleated hem",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "cardigan_style",
+          "opaque_body"
+        ],
+        "diversity_fingerprint": "dress:cardigan-sweater:knee:knit",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_beige",
+          "color_ivory",
+          "color_navy",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "dress_sch_shirtdress_belted",
+        "catalog_category": "normal",
+        "prompt": "belted shirtdress with a pleated lower panel",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "button_front",
+          "tied_belt",
+          "opaque_body"
+        ],
+        "diversity_fingerprint": "dress:belted-shirtdress:knee:poplin",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_navy",
+          "color_lilac"
+        ]
+      },
+      {
+        "id": "dress_sch_polka_jumpers",
+        "catalog_category": "normal",
+        "prompt": "polka-dot jumper dress with a peter pan collar",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "polka_dot",
+          "peter_pan",
+          "opaque_body"
+        ],
+        "diversity_fingerprint": "dress:polka-jumper:thigh:knit",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_pink",
+          "color_ivory"
+        ]
+      },
+      {
+        "id": "dress_sch_breton_slip",
+        "catalog_category": "normal",
+        "prompt": "breton striped jersey slip dress",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "striped",
+          "slip",
+          "opaque_body"
+        ],
+        "diversity_fingerprint": "dress:breton-slip:knee:jersey",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "dress_sch_plaid_sweater_mini",
+        "catalog_category": "normal",
+        "prompt": "plaid knit mini sweater dress with a collar",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "plaid",
+          "collared",
+          "opaque_body"
+        ],
+        "diversity_fingerprint": "dress:plaid-sweater-mini:thigh:knit",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_rust",
+          "color_navy",
+          "color_emerald"
+        ]
+      },
+      {
+        "id": "dress_sch_velvet_jumper",
+        "catalog_category": "normal",
+        "prompt": "velvet jumper dress with a lace collar",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "velvet",
+          "lace_detail",
+          "opaque_body"
+        ],
+        "diversity_fingerprint": "dress:velvet-jumper-lace:knee:velvet",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_burgundy",
+          "color_navy",
+          "color_emerald"
+        ]
+      },
+      {
+        "id": "dress_sch_gingham_shirtdress",
+        "catalog_category": "normal",
+        "prompt": "gingham shirtdress with a ruffle hem",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "gingham",
+          "ruffle",
+          "opaque_body"
+        ],
+        "diversity_fingerprint": "dress:gingham-shirtdress:knee:poplin",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_rust",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "upper_boudoir_babydoll",
+        "catalog_category": "normal",
+        "prompt": "flowing babydoll nightgown with lace trim",
+        "tags": [
+          "erotic",
+          "lace",
+          "lingerie",
+          "flowy"
+        ],
+        "diversity_fingerprint": "nightgown:babydoll:thigh:chiffon",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_white",
+          "color_ivory",
+          "color_pink",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "upper_boudoir_satin_chemise",
+        "catalog_category": "normal",
+        "prompt": "bias-cut satin chemise with a draped back",
+        "tags": [
+          "erotic",
+          "satin",
+          "lingerie",
+          "draped"
+        ],
+        "diversity_fingerprint": "chemise:satin-bias:below-knee:satin",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_burgundy",
+          "color_navy",
+          "color_beige"
+        ]
+      },
+      {
+        "id": "upper_boudoir_slip_gown",
+        "catalog_category": "normal",
+        "prompt": "slip nightgown with a slit and lace straps",
+        "tags": [
+          "erotic",
+          "satin",
+          "lingerie",
+          "slit"
+        ],
+        "diversity_fingerprint": "nightgown:slip-lace:ankle:jersey",
+        "supported_states": [
+          "worn_closed",
+          "hem_lifted",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_navy",
+          "color_pink"
+        ]
+      },
+      {
+        "id": "lower_boudoir_bodysuit",
+        "catalog_category": "normal",
+        "prompt": "fitted bodysuit with a sheer back panel",
+        "tags": [
+          "erotic",
+          "fitted",
+          "sheer_back"
+        ],
+        "diversity_fingerprint": "bodysuit:fitted-sheer-back:ankle:jersey",
+        "supported_states": [
+          "worn_closed",
+          "lowered_to_hips",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_ivory",
+          "color_navy",
+          "color_pink"
+        ]
       }
     ],
     "outerwear": [
@@ -11055,6 +13351,424 @@
           "color_navy",
           "color_beige",
           "color_chocolate"
+        ]
+      },
+      {
+        "id": "outer_young_denim_jacket",
+        "catalog_category": "normal",
+        "prompt": "classic cropped denim jacket with silver buttons",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "denim",
+          "cropped"
+        ],
+        "diversity_fingerprint": "jacket:denim-crop:waist:denim",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_denim",
+          "color_navy",
+          "color_white"
+        ]
+      },
+      {
+        "id": "outer_young_oversized_cardigan",
+        "catalog_category": "normal",
+        "prompt": "chunky oversized cardigan that pools at the elbows",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "oversized",
+          "cozy"
+        ],
+        "diversity_fingerprint": "cardigan:oversized-chunky:knee:knit",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_beige",
+          "color_ivory",
+          "color_gray",
+          "color_pink"
+        ]
+      },
+      {
+        "id": "outer_young_trench",
+        "catalog_category": "normal",
+        "prompt": "long belted trench coat with epaulettes",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "belted",
+          "long"
+        ],
+        "diversity_fingerprint": "coat:trench-belted:below-knee:cotton-twill",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_beige",
+          "color_ivory",
+          "color_chocolate"
+        ]
+      },
+      {
+        "id": "outer_young_puffer",
+        "catalog_category": "normal",
+        "prompt": "slouchy puffer jacket with a shiny face",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "puffy",
+          "winter"
+        ],
+        "diversity_fingerprint": "jacket:puffer-sloppy:hip:padded",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_black",
+          "color_pink",
+          "color_rust",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "outer_young_bomber",
+        "catalog_category": "normal",
+        "prompt": "soft bomber jacket with ribbed trims",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "retro",
+          "slim"
+        ],
+        "diversity_fingerprint": "jacket:bomber:waist:nylon",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_olive",
+          "color_navy",
+          "color_gray",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "outer_young_fringe_jacket",
+        "catalog_category": "normal",
+        "prompt": "leather-look jacket with fringe at the cuffs",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "fringe",
+          "edgy"
+        ],
+        "diversity_fingerprint": "jacket:fringe-leather:hip:faux-leather",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_chocolate",
+          "color_black"
+        ]
+      },
+      {
+        "id": "outer_young_satin_bombers",
+        "catalog_category": "normal",
+        "prompt": "iridescent satin bomber with a relaxed cut",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "iridescent",
+          "glossy"
+        ],
+        "diversity_fingerprint": "jacket:satin-bomber:waist:satin",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_silver",
+          "color_lilac",
+          "color_purple"
+        ]
+      },
+      {
+        "id": "outer_young_knit_poncho",
+        "catalog_category": "normal",
+        "prompt": "slouchy knit poncho with a drapey collar",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "poncho",
+          "cozy"
+        ],
+        "diversity_fingerprint": "poncho:knit-drape:waist:knit",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_beige",
+          "color_lilac",
+          "color_ivory",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "outer_young_shacket",
+        "catalog_category": "normal",
+        "prompt": "unstructured flannel shacket worn open",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "shacket",
+          "loose"
+        ],
+        "diversity_fingerprint": "jacket:flannel-shacket:hip:flannel",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_rust",
+          "color_olive",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "outer_young_zip_windbreaker",
+        "catalog_category": "normal",
+        "prompt": "retro windbreaker with a high collar",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "sporty",
+          "retro"
+        ],
+        "diversity_fingerprint": "jacket:retro-collar-windbreaker:waist:nylon-spandex",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_crimson",
+          "color_teal",
+          "color_mustard",
+          "color_white"
+        ]
+      },
+      {
+        "id": "outer_boudoir_satin_robe",
+        "catalog_category": "normal",
+        "prompt": "floor-length satin robe with a tie belt",
+        "tags": [
+          "erotic",
+          "satin",
+          "robe",
+          "long"
+        ],
+        "diversity_fingerprint": "robe:satin-floor:ankle:satin",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_burgundy",
+          "color_navy",
+          "color_beige"
+        ]
+      },
+      {
+        "id": "outer_boudoir_kimono",
+        "catalog_category": "normal",
+        "prompt": "silk-look kimono robe with wide sleeves",
+        "tags": [
+          "erotic",
+          "silk",
+          "robe",
+          "wide_sleeve"
+        ],
+        "diversity_fingerprint": "robe:kimono-silk:mid-calf:chiffon",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_pink",
+          "color_navy",
+          "color_gray"
+        ]
+      },
+      {
+        "id": "outer_boudoir_bathrobe",
+        "catalog_category": "normal",
+        "prompt": "fluffy waffle-knit bathrobe with a belt",
+        "tags": [
+          "erotic",
+          "waffle",
+          "robe",
+          "cozy"
+        ],
+        "diversity_fingerprint": "robe:waffle-bath:ankle:waffle-knit",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_ivory",
+          "color_beige",
+          "color_gray"
+        ]
+      },
+      {
+        "id": "outer_sch_navy_blazer",
+        "catalog_category": "normal",
+        "prompt": "single-button navy blazer with notch lapels",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "blazer"
+        ],
+        "diversity_fingerprint": "blazer:single-button:hip:wool",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_navy",
+          "color_black",
+          "color_gray"
+        ]
+      },
+      {
+        "id": "outer_sch_gray_blazer",
+        "catalog_category": "normal",
+        "prompt": "relaxed gray wool blazer with padded shoulders",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "blazer"
+        ],
+        "diversity_fingerprint": "blazer:relaxed-padded:hip:wool",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_gray",
+          "color_beige",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "outer_sch_corduroy_overshirt",
+        "catalog_category": "normal",
+        "prompt": "structured corduroy overshirt with patch pockets",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "corduroy"
+        ],
+        "diversity_fingerprint": "overshirt:corduroy-patch:hip:corduroy",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_olive",
+          "color_rust",
+          "color_beige"
+        ]
+      },
+      {
+        "id": "outer_sch_pea_coat",
+        "catalog_category": "normal",
+        "prompt": "belted wool pea coat with a stand collar",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "belted",
+          "long"
+        ],
+        "diversity_fingerprint": "coat:pea-belted:knee:wool",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_beige",
+          "color_navy",
+          "color_chocolate"
+        ]
+      },
+      {
+        "id": "outer_sch_tweed_vest",
+        "catalog_category": "normal",
+        "prompt": "tweed waistcoat vest with a shawl collar",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "tweed"
+        ],
+        "diversity_fingerprint": "vest:tweed-shawl:waist:tweed",
+        "supported_states": [
+          "worn_closed",
+          "slipped_off_shoulder",
+          "removed"
+        ],
+        "allowed_colors": [
+          "color_gray",
+          "color_beige",
+          "color_rust"
         ]
       }
     ],
@@ -11794,6 +14508,74 @@
           "color_navy",
           "color_beige",
           "color_chocolate"
+        ]
+      },
+      {
+        "id": "bra_boudoir_lace_bralette",
+        "catalog_category": "normal",
+        "prompt": "unlined lace bralette with a scalloped edge",
+        "tags": [
+          "erotic",
+          "lace",
+          "lingerie"
+        ],
+        "diversity_fingerprint": "bra:lace-bralette:medium-coverage:lace",
+        "allowed_colors": [
+          "color_white",
+          "color_navy",
+          "color_pink",
+          "color_black",
+          "color_ivory",
+          "color_teal"
+        ]
+      },
+      {
+        "id": "bra_boudoir_satin_bralette",
+        "catalog_category": "normal",
+        "prompt": "satin triangle bralette with adjustable straps",
+        "tags": [
+          "erotic",
+          "satin",
+          "lingerie"
+        ],
+        "diversity_fingerprint": "bra:satin-triangle:medium-coverage:satin",
+        "allowed_colors": [
+          "color_ivory",
+          "color_beige",
+          "color_burgundy",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "bra_boudoir_sheer_bra",
+        "catalog_category": "normal",
+        "prompt": "sheer longline bra with a mesh panel",
+        "tags": [
+          "erotic",
+          "sheer",
+          "lingerie"
+        ],
+        "diversity_fingerprint": "bra:sheer-longline:full-coverage:mesh",
+        "allowed_colors": [
+          "color_ivory",
+          "color_navy",
+          "color_pink"
+        ]
+      },
+      {
+        "id": "bra_boudoir_strappy_bra",
+        "catalog_category": "normal",
+        "prompt": "strappy back bra with a bow front",
+        "tags": [
+          "erotic",
+          "strappy",
+          "lingerie"
+        ],
+        "diversity_fingerprint": "bra:strappy-bow:full-coverage:nylon",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_burgundy"
         ]
       }
     ],
@@ -12850,6 +15632,75 @@
           "color_beige",
           "color_chocolate"
         ]
+      },
+      {
+        "id": "pant_boudoir_lace_thong",
+        "catalog_category": "normal",
+        "prompt": "lace thong with a scalloped waistband",
+        "tags": [
+          "erotic",
+          "lace",
+          "lingerie"
+        ],
+        "diversity_fingerprint": "panties:lace-thong:low-rise:lace",
+        "allowed_colors": [
+          "color_white",
+          "color_navy",
+          "color_pink",
+          "color_black",
+          "color_ivory",
+          "color_teal"
+        ]
+      },
+      {
+        "id": "pant_boudoir_satin_briefs",
+        "catalog_category": "normal",
+        "prompt": "satin high-waist briefs with a ribbon",
+        "tags": [
+          "erotic",
+          "satin",
+          "lingerie",
+          "high_waist"
+        ],
+        "diversity_fingerprint": "panties:satin-brief:high-rise:satin",
+        "allowed_colors": [
+          "color_ivory",
+          "color_beige",
+          "color_burgundy",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "pant_boudoir_mesh_short",
+        "catalog_category": "normal",
+        "prompt": "sheer mesh boyshort with lace edges",
+        "tags": [
+          "erotic",
+          "sheer",
+          "lingerie"
+        ],
+        "diversity_fingerprint": "panties:mesh-boyshort:mid-rise:mesh",
+        "allowed_colors": [
+          "color_ivory",
+          "color_navy",
+          "color_pink"
+        ]
+      },
+      {
+        "id": "pant_boudoir_strappy_briefs",
+        "catalog_category": "normal",
+        "prompt": "strappy back briefs with a bow front",
+        "tags": [
+          "erotic",
+          "strappy",
+          "lingerie"
+        ],
+        "diversity_fingerprint": "panties:strappy-brief:mid-rise:nylon",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_burgundy"
+        ]
       }
     ],
     "legwear": [
@@ -13608,6 +16459,162 @@
           "color_beige",
           "color_chocolate"
         ]
+      },
+      {
+        "id": "leg_young_crew_socks",
+        "catalog_category": "normal",
+        "prompt": "thick cotton crew socks with a ribbed cuff",
+        "tags": [
+          "young",
+          "casual",
+          "everyday"
+        ],
+        "diversity_fingerprint": "legwear:crew:ankle:cotton",
+        "allowed_colors": [
+          "color_white",
+          "color_beige",
+          "color_gray",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "leg_young_ankle_socks",
+        "catalog_category": "normal",
+        "prompt": "thin ankle socks in a soft neutral tone",
+        "tags": [
+          "young",
+          "casual",
+          "everyday"
+        ],
+        "diversity_fingerprint": "legwear:ankle:low:cotton",
+        "allowed_colors": [
+          "color_white",
+          "color_ivory",
+          "color_beige"
+        ]
+      },
+      {
+        "id": "leg_young_ribbed_knees",
+        "catalog_category": "normal",
+        "prompt": "sheer-look ribbed knee-high socks",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "ribbed"
+        ],
+        "diversity_fingerprint": "legwear:ribbed-knee:knee:knit",
+        "allowed_colors": [
+          "color_ivory",
+          "color_beige",
+          "color_white",
+          "color_pink"
+        ]
+      },
+      {
+        "id": "leg_young_argyle_knees",
+        "catalog_category": "normal",
+        "prompt": "argyle knit knee-high socks",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "argyle"
+        ],
+        "diversity_fingerprint": "legwear:argyle-knee:knee:knit",
+        "allowed_colors": [
+          "color_rust",
+          "color_navy",
+          "color_sage"
+        ]
+      },
+      {
+        "id": "leg_sch_knee_heather",
+        "catalog_category": "normal",
+        "prompt": "heather-gray ribbed knee-high socks",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "ribbed"
+        ],
+        "diversity_fingerprint": "legwear:heather-knee:knee:knit",
+        "allowed_colors": [
+          "color_gray",
+          "color_ivory",
+          "color_beige"
+        ]
+      },
+      {
+        "id": "leg_sch_pile_knees",
+        "catalog_category": "normal",
+        "prompt": "soft pile knee-high socks in a school navy",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college"
+        ],
+        "diversity_fingerprint": "legwear:pile-knee:knee:pile",
+        "allowed_colors": [
+          "color_navy",
+          "color_gray",
+          "color_ivory"
+        ]
+      },
+      {
+        "id": "leg_sch_lace_top_knees",
+        "catalog_category": "normal",
+        "prompt": "lace-top knee-high socks with a scalloped edge",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "lace_detail"
+        ],
+        "diversity_fingerprint": "legwear:lace-top-knee:knee:lace",
+        "allowed_colors": [
+          "color_ivory",
+          "color_white",
+          "color_beige"
+        ]
+      },
+      {
+        "id": "leg_sch_pearl_knees",
+        "catalog_category": "normal",
+        "prompt": "pearl-knit knee socks with a satin band",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college",
+          "pearl_knit"
+        ],
+        "diversity_fingerprint": "legwear:pearl-knee:knee:knit",
+        "allowed_colors": [
+          "color_ivory",
+          "color_beige"
+        ]
+      },
+      {
+        "id": "leg_boudoir_sheer_stockings",
+        "catalog_category": "normal",
+        "prompt": "sheer thigh-high stockings with a satin band",
+        "tags": [
+          "erotic",
+          "sheer",
+          "thigh_high"
+        ],
+        "diversity_fingerprint": "legwear:sheer-thigh-high:thigh:sheer",
+        "allowed_colors": [
+          "color_ivory",
+          "color_beige",
+          "color_pink",
+          "color_navy"
+        ],
+        "support_mode": "self_supporting"
       }
     ],
     "footwear": [
@@ -14536,6 +17543,187 @@
           "color_beige",
           "color_chocolate"
         ]
+      },
+      {
+        "id": "foot_young_canvas_sneakers",
+        "catalog_category": "normal",
+        "prompt": "worn-in low canvas sneakers with white laces",
+        "tags": [
+          "young",
+          "casual",
+          "everyday"
+        ],
+        "diversity_fingerprint": "shoe:canvas-low:flat:canvas",
+        "allowed_colors": [
+          "color_white",
+          "color_black",
+          "color_denim"
+        ]
+      },
+      {
+        "id": "foot_young_ballet_flats",
+        "catalog_category": "normal",
+        "prompt": "soft ballet flats with a round toe",
+        "tags": [
+          "young",
+          "casual",
+          "everyday"
+        ],
+        "diversity_fingerprint": "shoe:ballet-flat:flat:kitten",
+        "allowed_colors": [
+          "color_white",
+          "color_navy",
+          "color_pink",
+          "color_beige"
+        ]
+      },
+      {
+        "id": "foot_young_platform_sandals",
+        "catalog_category": "normal",
+        "prompt": "chunky platform sandals with wide straps",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "platform"
+        ],
+        "diversity_fingerprint": "shoe:platform-sandal:platform:leather",
+        "allowed_colors": [
+          "color_beige",
+          "color_white",
+          "color_ivory"
+        ]
+      },
+      {
+        "id": "foot_young_chelsea_boots",
+        "catalog_category": "normal",
+        "prompt": "slouchy leather Chelsea boots with a low heel",
+        "tags": [
+          "young",
+          "casual",
+          "everyday"
+        ],
+        "diversity_fingerprint": "shoe:chelsea:low-heel:leather",
+        "allowed_colors": [
+          "color_chocolate",
+          "color_black"
+        ]
+      },
+      {
+        "id": "foot_young_retro_runners",
+        "catalog_category": "normal",
+        "prompt": "chunky retro runners in a faded mix",
+        "tags": [
+          "young",
+          "casual",
+          "everyday",
+          "retro"
+        ],
+        "diversity_fingerprint": "shoe:retro-runner:chunky:knit-synthetic",
+        "allowed_colors": [
+          "color_white",
+          "color_gray",
+          "color_coral"
+        ]
+      },
+      {
+        "id": "foot_young_leather_esp",
+        "catalog_category": "normal",
+        "prompt": "classic leather espadrilles with a rope sole",
+        "tags": [
+          "young",
+          "casual",
+          "everyday"
+        ],
+        "diversity_fingerprint": "shoe:espadrille:flat:leather-jute",
+        "allowed_colors": [
+          "color_beige",
+          "color_ivory"
+        ]
+      },
+      {
+        "id": "foot_sch_mary_jane",
+        "catalog_category": "normal",
+        "prompt": "classic black Mary Jane flats with a single strap",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college"
+        ],
+        "diversity_fingerprint": "shoe:mary-jane:flat:leather",
+        "allowed_colors": [
+          "color_black",
+          "color_white",
+          "color_navy"
+        ]
+      },
+      {
+        "id": "foot_sch_mary_jane_heeled",
+        "catalog_category": "normal",
+        "prompt": "Mary Jane shoes with a low block heel",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college"
+        ],
+        "diversity_fingerprint": "shoe:mary-jane-heel:low-heel:leather",
+        "allowed_colors": [
+          "color_black",
+          "color_beige",
+          "color_rust"
+        ]
+      },
+      {
+        "id": "foot_sch_loafers",
+        "catalog_category": "normal",
+        "prompt": "polished leather loafers with a penny cutout",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college"
+        ],
+        "diversity_fingerprint": "shoe:leather-loafer:flat:leather",
+        "allowed_colors": [
+          "color_chocolate",
+          "color_black"
+        ]
+      },
+      {
+        "id": "foot_sch_chelsea_kids",
+        "catalog_category": "normal",
+        "prompt": "sleek knee-high leather booties with a zip",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college"
+        ],
+        "diversity_fingerprint": "shoe:knee-bootie:low-heel:leather",
+        "allowed_colors": [
+          "color_black",
+          "color_chocolate",
+          "color_ivory"
+        ]
+      },
+      {
+        "id": "foot_boudoir_strappy_sandals",
+        "catalog_category": "normal",
+        "prompt": "strappy high-heeled sandals with ankle ties",
+        "tags": [
+          "erotic",
+          "strappy",
+          "heeled"
+        ],
+        "diversity_fingerprint": "shoe:strappy-heel:high-heel:leather",
+        "allowed_colors": [
+          "color_ivory",
+          "color_burgundy",
+          "color_navy",
+          "color_black"
+        ]
       }
     ],
     "accessories": [
@@ -15125,6 +18313,121 @@
           "color_beige",
           "color_chocolate"
         ]
+      },
+      {
+        "id": "acc_young_hoop_earrings",
+        "catalog_category": "normal",
+        "prompt": "thin gold hoop earrings",
+        "tags": [
+          "young",
+          "casual",
+          "everyday"
+        ],
+        "diversity_fingerprint": "accessory:earrings:hoop:gold",
+        "allowed_colors": []
+      },
+      {
+        "id": "acc_young_hair_clip",
+        "catalog_category": "normal",
+        "prompt": "vintage tortoiseshell claw clip",
+        "tags": [
+          "young",
+          "casual",
+          "everyday"
+        ],
+        "diversity_fingerprint": "accessory:hair:claw-clip:tortoiseshell",
+        "allowed_colors": []
+      },
+      {
+        "id": "acc_sch_leather_satchel",
+        "catalog_category": "normal",
+        "prompt": "tortoiseshell-look leather satchel with gold clasps",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college"
+        ],
+        "diversity_fingerprint": "accessory:bag:satchel:leather",
+        "allowed_colors": []
+      },
+      {
+        "id": "acc_sch_canvas_backpack",
+        "catalog_category": "normal",
+        "prompt": "slouchy canvas backpack with webbing straps",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college"
+        ],
+        "diversity_fingerprint": "accessory:bag:backpack-satchel:canvas",
+        "allowed_colors": []
+      },
+      {
+        "id": "acc_sch_round_glasses",
+        "catalog_category": "normal",
+        "prompt": "round wire-frame glasses",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college"
+        ],
+        "diversity_fingerprint": "accessory:glasses:round-wire:metal",
+        "allowed_colors": []
+      },
+      {
+        "id": "acc_sch_rect_glasses",
+        "catalog_category": "normal",
+        "prompt": "rectangular tortoiseshell glasses",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college"
+        ],
+        "diversity_fingerprint": "accessory:glasses:rect-tortoise:acetate",
+        "allowed_colors": []
+      },
+      {
+        "id": "acc_sch_silk_scarf",
+        "catalog_category": "normal",
+        "prompt": "thin silk scarf tied at the collar",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college"
+        ],
+        "diversity_fingerprint": "accessory:neckwear:thin-silk-scarf:silk",
+        "allowed_colors": []
+      },
+      {
+        "id": "acc_sch_hair_scarf",
+        "catalog_category": "normal",
+        "prompt": "soft headband-style hair scarf",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college"
+        ],
+        "diversity_fingerprint": "accessory:hair:headband-scarf:satin",
+        "allowed_colors": []
+      },
+      {
+        "id": "acc_sch_yarn_scrunchie",
+        "catalog_category": "normal",
+        "prompt": "chunky yarn hair scrunchie",
+        "tags": [
+          "young",
+          "preppy",
+          "school",
+          "college"
+        ],
+        "diversity_fingerprint": "accessory:hair:scrunchie:yarn",
+        "allowed_colors": []
       }
     ]
   },
@@ -19188,6 +22491,3513 @@
             "accessories"
           ],
           "body_visibility": []
+        }
+      ]
+    },
+    {
+      "id": "template_young_tee_denim",
+      "catalog_category": "normal",
+      "weight": 2,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_any_tags": [
+            "young"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_any_tags": [
+            "young"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.6,
+          "required_any_tags": [
+            "young",
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "young",
+            "everyday"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.3,
+          "required_any_tags": [
+            "young"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "ytd_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "upperwear",
+            "lowerwear",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "ytd_s1_lower_gone",
+          "level": "lingerie",
+          "visible_slots": [
+            "upperwear",
+            "panties",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "ytd_s2_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "ytd_s3_topless",
+          "level": "topless",
+          "visible_slots": [
+            "panties",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples"
+          ]
+        },
+        {
+          "id": "ytd_s4_nude",
+          "level": "nude",
+          "visible_slots": [
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_young_flannel_shorts",
+      "catalog_category": "normal",
+      "weight": 2,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_any_tags": [
+            "young"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_any_tags": [
+            "young"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "young",
+            "everyday"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.3,
+          "required_any_tags": [
+            "young"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "yfs_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "upperwear",
+            "lowerwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "yfs_s1_top_gone",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "lowerwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "yfs_s2_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "yfs_s3_topless",
+          "level": "topless",
+          "visible_slots": [
+            "panties",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples"
+          ]
+        },
+        {
+          "id": "yfs_s4_nude",
+          "level": "nude",
+          "visible_slots": [
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_young_sweat_bike",
+      "catalog_category": "normal",
+      "weight": 2,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_any_tags": [
+            "young"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_any_tags": [
+            "young"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "young",
+            "everyday"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.3,
+          "required_any_tags": [
+            "young"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "ysb_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "upperwear",
+            "lowerwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "ysb_s1_top_gone",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "lowerwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "ysb_s2_bare_crotch",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "pubic_area",
+            "genitals"
+          ]
+        },
+        {
+          "id": "ysb_s3_nude",
+          "level": "nude",
+          "visible_slots": [
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_young_hoodie_jogger",
+      "catalog_category": "normal",
+      "weight": 2,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_any_tags": [
+            "young"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_any_tags": [
+            "young"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "young",
+            "everyday"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.3,
+          "required_any_tags": [
+            "young"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "yhj_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "upperwear",
+            "lowerwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "yhj_s1_top_gone",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "lowerwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "yhj_s2_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "yhj_s3_topless",
+          "level": "topless",
+          "visible_slots": [
+            "panties",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples"
+          ]
+        },
+        {
+          "id": "yhj_s4_nude",
+          "level": "nude",
+          "visible_slots": [
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_young_sweater_dress",
+      "catalog_category": "normal",
+      "weight": 2,
+      "slots": {
+        "full_body": {
+          "catalog": "full_body",
+          "required": true,
+          "required_any_tags": [
+            "young"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.6,
+          "required_any_tags": [
+            "young",
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "young",
+            "everyday"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.3,
+          "required_any_tags": [
+            "young"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "ysd_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "full_body",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "ysd_s1_nude",
+          "level": "nude",
+          "visible_slots": [
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_young_shirtdress",
+      "catalog_category": "normal",
+      "weight": 2,
+      "slots": {
+        "full_body": {
+          "catalog": "full_body",
+          "required": true,
+          "required_any_tags": [
+            "young",
+            "button_front"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "young",
+            "everyday"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.3,
+          "required_any_tags": [
+            "young"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "yhd_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "full_body",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "yhd_s1_nude",
+          "level": "nude",
+          "visible_slots": [
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_young_wrap_skirt",
+      "catalog_category": "normal",
+      "weight": 2,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_any_tags": [
+            "young"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_any_tags": [
+            "young"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "young",
+            "everyday"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.3,
+          "required_any_tags": [
+            "young"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "yws_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "upperwear",
+            "lowerwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "yws_s1_lower_gone",
+          "level": "lingerie",
+          "visible_slots": [
+            "upperwear",
+            "panties",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "yws_s2_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "yws_s3_topless",
+          "level": "topless",
+          "visible_slots": [
+            "panties",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples"
+          ]
+        },
+        {
+          "id": "yws_s4_nude",
+          "level": "nude",
+          "visible_slots": [
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_young_slip_denimjacket",
+      "catalog_category": "normal",
+      "weight": 2,
+      "slots": {
+        "full_body": {
+          "catalog": "full_body",
+          "required": true,
+          "required_any_tags": [
+            "young",
+            "slip"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "outerwear": {
+          "catalog": "outerwear",
+          "required": true,
+          "required_any_tags": [
+            "young"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "young",
+            "everyday"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.3,
+          "required_any_tags": [
+            "young"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "ysd2_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "outerwear",
+            "full_body",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "ysd2_s1_nude",
+          "level": "nude",
+          "visible_slots": [
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_sch_cardigan_pleated",
+      "catalog_category": "normal",
+      "weight": 3,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college",
+            "pleated"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.5,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college",
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.4,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "scp_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "upperwear",
+            "lowerwear",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "scp_s1_lower_gone",
+          "level": "lingerie",
+          "visible_slots": [
+            "upperwear",
+            "panties",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "scp_s2_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "scp_s3_topless",
+          "level": "topless",
+          "visible_slots": [
+            "panties",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples"
+          ]
+        },
+        {
+          "id": "scp_s4_nude",
+          "level": "nude",
+          "visible_slots": [
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_sch_cardigan_pleated_b",
+      "catalog_category": "normal",
+      "weight": 2,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college",
+            "pleated"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.5,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college",
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.4,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "scpb_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "upperwear",
+            "lowerwear",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "scpb_s1_top_gone",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "lowerwear",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "scpb_s2_bare_crotch",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "pubic_area",
+            "genitals"
+          ]
+        },
+        {
+          "id": "scpb_s3_nude",
+          "level": "nude",
+          "visible_slots": [
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_sch_oxford_knees",
+      "catalog_category": "normal",
+      "weight": 2,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college",
+            "button_front"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college",
+            "pencil"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.4,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "sok_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "upperwear",
+            "lowerwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "sok_s1_top_gone",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "lowerwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "sok_s2_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "sok_s3_topless",
+          "level": "topless",
+          "visible_slots": [
+            "panties",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples"
+          ]
+        },
+        {
+          "id": "sok_s4_nude",
+          "level": "nude",
+          "visible_slots": [
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_sch_sweater_knit_skirt",
+      "catalog_category": "normal",
+      "weight": 2,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college",
+            "ribbed"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.4,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "ssks_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "upperwear",
+            "lowerwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "ssks_s1_lower_gone",
+          "level": "lingerie",
+          "visible_slots": [
+            "upperwear",
+            "panties",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "ssks_s2_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "ssks_s3_topless",
+          "level": "topless",
+          "visible_slots": [
+            "panties",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples"
+          ]
+        },
+        {
+          "id": "ssks_s4_nude",
+          "level": "nude",
+          "visible_slots": [
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_sch_jumper_dress",
+      "catalog_category": "normal",
+      "weight": 3,
+      "slots": {
+        "full_body": {
+          "catalog": "full_body",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.5,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college",
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.4,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "sjd_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "full_body",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "sjd_s1_nude",
+          "level": "nude",
+          "visible_slots": [
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_sch_cardigan_dress",
+      "catalog_category": "normal",
+      "weight": 2,
+      "slots": {
+        "full_body": {
+          "catalog": "full_body",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college",
+            "cardigan_style"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.5,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college",
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.4,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "scd_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "full_body",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "scd_s1_nude",
+          "level": "nude",
+          "visible_slots": [
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_sch_breton_slip",
+      "catalog_category": "normal",
+      "weight": 2,
+      "slots": {
+        "full_body": {
+          "catalog": "full_body",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college",
+            "striped"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.4,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "sbs_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "full_body",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "sbs_s1_nude",
+          "level": "nude",
+          "visible_slots": [
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_sch_shirtdress",
+      "catalog_category": "normal",
+      "weight": 2,
+      "slots": {
+        "full_body": {
+          "catalog": "full_body",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college",
+            "button_front"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.4,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "ssd_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "full_body",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "ssd_s1_nude",
+          "level": "nude",
+          "visible_slots": [
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_sch_letter_sweater_pleat",
+      "catalog_category": "normal",
+      "weight": 2,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college",
+            "varsity"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college",
+            "pleated"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.5,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college",
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.4,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "slsp_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "upperwear",
+            "lowerwear",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "slsp_s1_lower_gone",
+          "level": "lingerie",
+          "visible_slots": [
+            "upperwear",
+            "panties",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "slsp_s2_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "slsp_s3_topless",
+          "level": "topless",
+          "visible_slots": [
+            "panties",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples"
+          ]
+        },
+        {
+          "id": "slsp_s4_nude",
+          "level": "nude",
+          "visible_slots": [
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_sch_blazer_shirt",
+      "catalog_category": "normal",
+      "weight": 2,
+      "slots": {
+        "outerwear": {
+          "catalog": "outerwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college",
+            "button_front"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college",
+            "pencil"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.4,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "sbs2_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "outerwear",
+            "upperwear",
+            "lowerwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "sbs2_s1_top_gone",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "lowerwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "sbs2_s2_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "sbs2_s3_topless",
+          "level": "topless",
+          "visible_slots": [
+            "panties",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples"
+          ]
+        },
+        {
+          "id": "sbs2_s4_nude",
+          "level": "nude",
+          "visible_slots": [
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_boudoir_babydoll",
+      "catalog_category": "luxury",
+      "weight": 2,
+      "slots": {
+        "full_body": {
+          "catalog": "full_body",
+          "required": true,
+          "required_any_tags": [
+            "erotic",
+            "lingerie"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "erotic",
+            "lingerie"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "erotic",
+            "lingerie"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.6,
+          "required_any_tags": [
+            "erotic",
+            "sheer"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ]
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "erotic"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.3,
+          "required_any_tags": [
+            "erotic"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "bbyd_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "full_body",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "bbyd_s1_nude",
+          "level": "nude",
+          "visible_slots": [
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_boudoir_chemise_robe",
+      "catalog_category": "luxury",
+      "weight": 2,
+      "slots": {
+        "full_body": {
+          "catalog": "full_body",
+          "required": true,
+          "required_any_tags": [
+            "erotic",
+            "lingerie"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ]
+        },
+        "outerwear": {
+          "catalog": "outerwear",
+          "required": true,
+          "required_any_tags": [
+            "erotic",
+            "robe"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "erotic",
+            "lingerie"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "erotic",
+            "lingerie"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.6,
+          "required_any_tags": [
+            "erotic",
+            "sheer"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ]
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "erotic"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.3,
+          "required_any_tags": [
+            "erotic"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "bchr_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "outerwear",
+            "full_body",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "bchr_s1_nude",
+          "level": "nude",
+          "visible_slots": [
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_boudoir_lace_separates",
+      "catalog_category": "luxury",
+      "weight": 2,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_any_tags": [
+            "erotic"
+          ],
+          "excludes_tags": [
+            "fetish",
+            "sheer"
+          ]
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_any_tags": [
+            "erotic"
+          ],
+          "excludes_tags": [
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "erotic",
+            "lingerie"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "erotic",
+            "lingerie"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.6,
+          "required_any_tags": [
+            "erotic",
+            "sheer"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ]
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "erotic"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.3,
+          "required_any_tags": [
+            "erotic"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "bls_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "upperwear",
+            "lowerwear",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "bls_s1_lower_gone",
+          "level": "lingerie",
+          "visible_slots": [
+            "upperwear",
+            "panties",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "bls_s2_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "bls_s3_topless",
+          "level": "topless",
+          "visible_slots": [
+            "panties",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples"
+          ]
+        },
+        {
+          "id": "bls_s4_nude",
+          "level": "nude",
+          "visible_slots": [
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_boudoir_satin_robe",
+      "catalog_category": "luxury",
+      "weight": 2,
+      "slots": {
+        "outerwear": {
+          "catalog": "outerwear",
+          "required": true,
+          "required_any_tags": [
+            "erotic",
+            "robe"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "erotic",
+            "lingerie"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "erotic",
+            "lingerie"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.6,
+          "required_any_tags": [
+            "erotic",
+            "sheer"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ]
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "erotic"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.3,
+          "required_any_tags": [
+            "erotic"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "bsr_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "outerwear",
+            "bra",
+            "panties",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "bsr_s1_nude",
+          "level": "nude",
+          "visible_slots": [
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_boudoir_bodysuit",
+      "catalog_category": "luxury",
+      "weight": 2,
+      "slots": {
+        "full_body": {
+          "catalog": "full_body",
+          "required": true,
+          "required_any_tags": [
+            "erotic",
+            "fitted"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "erotic",
+            "lingerie"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "erotic",
+            "lingerie"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.6,
+          "required_any_tags": [
+            "erotic",
+            "sheer"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ]
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "erotic"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.3,
+          "required_any_tags": [
+            "erotic"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "bbdy_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "full_body",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "bbdy_s1_nude",
+          "level": "nude",
+          "visible_slots": [
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_boudoir_slip_kimono",
+      "catalog_category": "luxury",
+      "weight": 2,
+      "slots": {
+        "full_body": {
+          "catalog": "full_body",
+          "required": true,
+          "required_any_tags": [
+            "erotic",
+            "lingerie"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ]
+        },
+        "outerwear": {
+          "catalog": "outerwear",
+          "required": true,
+          "required_any_tags": [
+            "erotic",
+            "silk",
+            "robe"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "erotic",
+            "lingerie"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "erotic",
+            "lingerie"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.6,
+          "required_any_tags": [
+            "erotic",
+            "sheer"
+          ],
+          "excludes_tags": [
+            "fetish"
+          ]
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "erotic"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.3,
+          "required_any_tags": [
+            "erotic"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "bsk_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "outerwear",
+            "full_body",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "bsk_s1_nude",
+          "level": "nude",
+          "visible_slots": [
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_explicit_lift_tee_mini",
+      "catalog_category": "luxury",
+      "weight": 2,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_any_tags": [
+            "young",
+            "preppy",
+            "school",
+            "college"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_any_tags": [
+            "young",
+            "preppy",
+            "school",
+            "college",
+            "pleated"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.5,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college",
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.4,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "fltm_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "upperwear",
+            "lowerwear",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "fltm_s1_lower_gone",
+          "level": "lingerie",
+          "visible_slots": [
+            "upperwear",
+            "panties",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "fltm_s2_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "fltm_s3_topless",
+          "level": "topless",
+          "visible_slots": [
+            "panties",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples"
+          ]
+        },
+        {
+          "id": "fltm_s4_nude",
+          "level": "nude",
+          "visible_slots": [
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_explicit_lift_cardigan_mini",
+      "catalog_category": "luxury",
+      "weight": 2,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college",
+            "pleated"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "legwear": {
+          "catalog": "legwear",
+          "required": false,
+          "chance": 0.5,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college",
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ]
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.4,
+          "required_any_tags": [
+            "preppy",
+            "school",
+            "college"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "flcm_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "upperwear",
+            "lowerwear",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "flcm_s1_lower_gone",
+          "level": "lingerie",
+          "visible_slots": [
+            "upperwear",
+            "panties",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "flcm_s2_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "flcm_s3_topless",
+          "level": "topless",
+          "visible_slots": [
+            "panties",
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples"
+          ]
+        },
+        {
+          "id": "flcm_s4_nude",
+          "level": "nude",
+          "visible_slots": [
+            "legwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_explicit_lift_flannel",
+      "catalog_category": "luxury",
+      "weight": 2,
+      "slots": {
+        "upperwear": {
+          "catalog": "upperwear",
+          "required": true,
+          "required_any_tags": [
+            "young",
+            "plaid",
+            "unbuttoned_open"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "lowerwear": {
+          "catalog": "lowerwear",
+          "required": true,
+          "required_any_tags": [
+            "young",
+            "fitted",
+            "sporty"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "young",
+            "everyday"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.3,
+          "required_any_tags": [
+            "young"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "flfl_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "upperwear",
+            "lowerwear",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "flfl_s1_lower_gone",
+          "level": "lingerie",
+          "visible_slots": [
+            "upperwear",
+            "panties",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "flfl_s2_lingerie",
+          "level": "lingerie",
+          "visible_slots": [
+            "bra",
+            "panties",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "flfl_s3_topless",
+          "level": "topless",
+          "visible_slots": [
+            "panties",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples"
+          ]
+        },
+        {
+          "id": "flfl_s4_nude",
+          "level": "nude",
+          "visible_slots": [
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "template_explicit_lift_dress_jacket",
+      "catalog_category": "luxury",
+      "weight": 2,
+      "slots": {
+        "full_body": {
+          "catalog": "full_body",
+          "required": true,
+          "required_any_tags": [
+            "young",
+            "slip"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "outerwear": {
+          "catalog": "outerwear",
+          "required": true,
+          "required_any_tags": [
+            "young"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish",
+            "sheer"
+          ]
+        },
+        "bra": {
+          "catalog": "bra",
+          "required": true,
+          "required_any_tags": [
+            "everyday"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "panties": {
+          "catalog": "panties",
+          "required": true,
+          "required_any_tags": [
+            "everyday",
+            "lace"
+          ],
+          "excludes_tags": [
+            "explicit",
+            "fetish"
+          ],
+          "color_group": "lingerie"
+        },
+        "footwear": {
+          "catalog": "footwear",
+          "required": true,
+          "required_any_tags": [
+            "young",
+            "everyday"
+          ]
+        },
+        "accessories": {
+          "catalog": "accessories",
+          "required": false,
+          "chance": 0.3,
+          "required_any_tags": [
+            "young"
+          ]
+        }
+      },
+      "stages": [
+        {
+          "id": "flj_s0_clothed",
+          "level": "covered",
+          "visible_slots": [
+            "outerwear",
+            "full_body",
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": []
+        },
+        {
+          "id": "flj_s1_nude",
+          "level": "nude",
+          "visible_slots": [
+            "footwear",
+            "accessories"
+          ],
+          "body_visibility": [
+            "breasts",
+            "nipples",
+            "pubic_area",
+            "genitals"
+          ]
         }
       ]
     }
@@ -33301,6 +40111,97 @@
       "environment_tags": [
         "outdoor"
       ]
+    },
+    {
+      "id": "zone_study_desk",
+      "prompt": "at the desk, one leg under the chair and the other planted on the floor",
+      "match_id_terms": [
+        "desk",
+        "library_desk",
+        "dorm_desk",
+        "kitchen_table"
+      ],
+      "capabilities": [
+        "seated",
+        "standing",
+        "supported",
+        "closeup"
+      ],
+      "match_any_tags": [],
+      "environment_tags": []
+    },
+    {
+      "id": "zone_lockers",
+      "prompt": "standing close to the row of lockers with a hand braced on the metal",
+      "match_id_terms": [
+        "lockers"
+      ],
+      "capabilities": [
+        "standing",
+        "supported",
+        "closeup"
+      ],
+      "match_any_tags": [],
+      "environment_tags": []
+    },
+    {
+      "id": "zone_bookshelf",
+      "prompt": "between the shelves with a book in hand and a book against the spine",
+      "match_id_terms": [
+        "bookshelf"
+      ],
+      "capabilities": [
+        "standing",
+        "supported",
+        "closeup"
+      ],
+      "match_any_tags": [],
+      "environment_tags": []
+    },
+    {
+      "id": "zone_wardrobe",
+      "prompt": "in front of the open wardrobe, close to the hanging clothes",
+      "match_id_terms": [
+        "wardrobe"
+      ],
+      "capabilities": [
+        "standing",
+        "closeup"
+      ],
+      "match_any_tags": [],
+      "environment_tags": []
+    },
+    {
+      "id": "zone_window_seat",
+      "prompt": "on the window seat with daylight pooling on the cushions",
+      "match_id_terms": [
+        "window_seat"
+      ],
+      "capabilities": [
+        "seated",
+        "reclining",
+        "lying",
+        "supported",
+        "closeup"
+      ],
+      "match_any_tags": [],
+      "environment_tags": []
+    },
+    {
+      "id": "zone_floor_rug",
+      "prompt": "on the soft rug with the wooden floor around",
+      "match_id_terms": [
+        "rug"
+      ],
+      "capabilities": [
+        "lying",
+        "reclining",
+        "kneeling",
+        "seated",
+        "closeup"
+      ],
+      "match_any_tags": [],
+      "environment_tags": []
     }
   ],
   "interiors": [
@@ -34037,6 +40938,114 @@
         "private",
         "window"
       ]
+    },
+    {
+      "id": "interior_student_dorm",
+      "catalog_category": "normal",
+      "prompt": "inside a small college dorm room with a single bed",
+      "tags": [
+        "indoor",
+        "bedroom",
+        "dorm",
+        "student",
+        "intimate"
+      ]
+    },
+    {
+      "id": "interior_student_dorm_bath",
+      "catalog_category": "normal",
+      "prompt": "inside a shared dorm bathroom with a mirror and shelves",
+      "tags": [
+        "indoor",
+        "bathroom",
+        "dorm",
+        "student"
+      ]
+    },
+    {
+      "id": "interior_campus_library",
+      "catalog_category": "normal",
+      "prompt": "in a quiet corner of the campus library with tall shelves",
+      "tags": [
+        "indoor",
+        "library",
+        "campus",
+        "student"
+      ]
+    },
+    {
+      "id": "interior_campus_hallway",
+      "catalog_category": "normal",
+      "prompt": "in a hallway with rows of metal lockers and soft light",
+      "tags": [
+        "indoor",
+        "hallway",
+        "lockers",
+        "campus",
+        "student"
+      ]
+    },
+    {
+      "id": "interior_apartment_bedroom",
+      "catalog_category": "normal",
+      "prompt": "in a cozy studio apartment bedroom with string lights",
+      "tags": [
+        "indoor",
+        "bedroom",
+        "apartment",
+        "intimate"
+      ]
+    },
+    {
+      "id": "interior_shared_flat_kitchen",
+      "catalog_category": "normal",
+      "prompt": "in a small kitchen of a shared flat with wooden cabinets",
+      "tags": [
+        "indoor",
+        "kitchen",
+        "apartment"
+      ]
+    },
+    {
+      "id": "interior_guest_room",
+      "catalog_category": "normal",
+      "prompt": "in a simple guest room with a single bed and a plain carpet",
+      "tags": [
+        "indoor",
+        "bedroom",
+        "intimate"
+      ]
+    },
+    {
+      "id": "interior_laundry_corner",
+      "catalog_category": "normal",
+      "prompt": "in a small laundry corner with a washer and a basket of towels",
+      "tags": [
+        "indoor",
+        "laundry",
+        "apartment"
+      ]
+    },
+    {
+      "id": "interior_campus_common",
+      "catalog_category": "normal",
+      "prompt": "in a student lounge with bookshelves and a worn sofa",
+      "tags": [
+        "indoor",
+        "lounge",
+        "campus",
+        "student"
+      ]
+    },
+    {
+      "id": "interior_attic_dormer",
+      "catalog_category": "normal",
+      "prompt": "in a low-ceilinged attic bedroom beside a dormer window",
+      "tags": [
+        "indoor",
+        "bedroom",
+        "intimate"
+      ]
     }
   ],
   "furniture": [
@@ -34698,6 +41707,185 @@
       "requires_tags": [
         "window"
       ]
+    },
+    {
+      "id": "furniture_dorm_bed",
+      "catalog_category": "normal",
+      "prompt": "beside a single dorm bed with thin bedding",
+      "tags": [
+        "bed",
+        "lying_surface",
+        "sitting_surface",
+        "dorm"
+      ],
+      "requires_tags": [
+        "dorm"
+      ],
+      "surface_color_target": "bedding",
+      "surface_texture_target": "bedding"
+    },
+    {
+      "id": "furniture_dorm_desk",
+      "catalog_category": "normal",
+      "prompt": "at a wooden dorm desk cluttered with books and a lamp",
+      "tags": [
+        "desk",
+        "working_surface",
+        "sitting_surface"
+      ],
+      "requires_tags": [
+        "dorm"
+      ],
+      "surface_color_target": "desk",
+      "surface_texture_target": "desk"
+    },
+    {
+      "id": "furniture_dorm_lockers",
+      "catalog_category": "normal",
+      "prompt": "beside a row of metal lockers with paper notices",
+      "tags": [
+        "lockers",
+        "standing_backdrop"
+      ],
+      "requires_tags": [
+        "lockers"
+      ]
+    },
+    {
+      "id": "furniture_library_desk",
+      "catalog_category": "normal",
+      "prompt": "at a long wooden library study desk with a brass lamp",
+      "tags": [
+        "desk",
+        "working_surface",
+        "sitting_surface"
+      ],
+      "requires_tags": [
+        "library"
+      ],
+      "surface_color_target": "desk",
+      "surface_texture_target": "desk"
+    },
+    {
+      "id": "furniture_library_shelf",
+      "catalog_category": "normal",
+      "prompt": "between tall wooden bookshelves with leather-bound books",
+      "tags": [
+        "bookshelf",
+        "standing_backdrop"
+      ],
+      "requires_tags": [
+        "library"
+      ]
+    },
+    {
+      "id": "furniture_flat_kitchen_counter",
+      "catalog_category": "normal",
+      "prompt": "at a narrow kitchen counter with a window behind",
+      "tags": [
+        "counter",
+        "standing_backdrop",
+        "sitting_surface"
+      ],
+      "requires_tags": [
+        "kitchen"
+      ],
+      "surface_color_target": "counter",
+      "surface_texture_target": "counter"
+    },
+    {
+      "id": "furniture_sofa_bed",
+      "catalog_category": "normal",
+      "prompt": "on a small sofa bed with a knit throw",
+      "tags": [
+        "bed",
+        "lying_surface",
+        "sitting_surface"
+      ],
+      "requires_tags": [
+        "lounge"
+      ],
+      "surface_color_target": "bedding",
+      "surface_texture_target": "bedding"
+    },
+    {
+      "id": "furniture_wardrobe",
+      "catalog_category": "normal",
+      "prompt": "in front of an open wooden wardrobe with hanging clothes",
+      "tags": [
+        "wardrobe",
+        "standing_backdrop"
+      ]
+    },
+    {
+      "id": "furniture_dresser",
+      "catalog_category": "normal",
+      "prompt": "at a dresser with a small round mirror on top",
+      "tags": [
+        "dresser",
+        "standing_backdrop"
+      ]
+    },
+    {
+      "id": "furniture_laundry_cart",
+      "catalog_category": "normal",
+      "prompt": "beside a metal laundry cart stacked with folded towels",
+      "tags": [
+        "laundry",
+        "standing_backdrop"
+      ],
+      "requires_tags": [
+        "laundry"
+      ]
+    },
+    {
+      "id": "furniture_window_seat",
+      "catalog_category": "normal",
+      "prompt": "on a window seat with a soft cushion and daylight",
+      "tags": [
+        "window_seat",
+        "sitting_surface",
+        "lying_surface"
+      ]
+    },
+    {
+      "id": "furniture_floor_rug",
+      "catalog_category": "normal",
+      "prompt": "on a soft rug over a pale wooden floor",
+      "tags": [
+        "rug",
+        "lying_surface",
+        "sitting_surface"
+      ]
+    },
+    {
+      "id": "furniture_kitchen_table",
+      "catalog_category": "normal",
+      "prompt": "at a small wooden table against a kitchen wall",
+      "tags": [
+        "table",
+        "sitting_surface"
+      ],
+      "requires_tags": [
+        "kitchen"
+      ],
+      "surface_color_target": "table",
+      "surface_texture_target": "table"
+    },
+    {
+      "id": "furniture_common_sofa",
+      "catalog_category": "normal",
+      "prompt": "on a worn fabric sofa with loose cushions",
+      "tags": [
+        "sofa",
+        "sitting_surface",
+        "lying_surface"
+      ],
+      "requires_tags": [
+        "lounge"
+      ],
+      "surface_color_target": "sofa",
+      "surface_texture_target": "sofa"
     }
   ],
   "moods": [
