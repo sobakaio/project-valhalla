@@ -174,6 +174,16 @@
           "photo_explicit_handheld_close",
           "photo_hidden_camera",
           "photo_amateur_smartphone"
+        ],
+        "lighting": [
+          "lighting_window_left",
+          "lighting_window_right",
+          "lighting_window_front",
+          "lighting_window_backlight",
+          "lighting_lamp_corner",
+          "lighting_chandelier",
+          "lighting_overcast_flat",
+          "lighting_afternoon_slant"
         ]
       },
       "curated_wardrobe": {
@@ -732,9 +742,9 @@
     "flash_reveal": {
       "escalated_chance": 0.4,
       "anchors": {
-        "flash_breast": "(dressed breast flash:1.5), the upper garment remains fully worn and deliberately lifted, breasts exposed in a candid caught-moment, natural unposed amateur feel",
-        "flash_skirt": "(dressed skirt flash:1.5), the skirt or dress remains fully worn and deliberately lifted, the crotch revealed in a candid caught-moment, natural unposed amateur feel",
-        "flash_escalated": "(escalated skirt flash:1.5), the skirt or dress remains fully worn and lifted, panties pushed to one side of the crotch, fully revealed in a candid caught-moment, natural unposed amateur feel"
+        "flash_breast": "the outfit stays fully worn with the upper garment deliberately lifted over the chest, natural unposed amateur feel",
+        "flash_skirt": "the outfit stays fully worn with the skirt or dress deliberately lifted, natural unposed amateur feel",
+        "flash_escalated": "the skirt or dress stays fully worn and lifted with the panties pushed to one side of the crotch, natural unposed amateur feel"
       },
       "plateau_share": 0.5
     }
@@ -45307,7 +45317,7 @@
     },
     {
       "id": "expression_candid_smile",
-      "prompt": "a small unguarded smile at something that is not quite the moment",
+      "prompt": "a small unguarded smile, gaze drifting just past the subject",
       "tags": [
         "candid_expression",
         "playful_expression"
@@ -45315,7 +45325,7 @@
     },
     {
       "id": "expression_climax_break",
-      "prompt": "a full break of composure as the crest lands, brow furrowed",
+      "prompt": "a full break of composure, brow furrowed, mouth open, eyes shut tight",
       "tags": [
         "climax_expression",
         "intense_pleasure_expression"
@@ -46550,7 +46560,7 @@
     {
       "id": "interior_slavic_living_room",
       "catalog_category": "normal",
-      "prompt": "small living room in a modest East European apartment, patterned floral wallpaper, worn fabric corner sofa, white plastic window frames, linoleum floor, a kitchen table pushed into the corner, lived-in and unpretentious",
+      "prompt": "small living room in a modest East European apartment, patterned floral wallpaper, white plastic window frames, linoleum floor, lived-in and unpretentious",
       "tags": [
         "indoor",
         "living_room",
@@ -46567,7 +46577,7 @@
     {
       "id": "interior_slavic_bedroom",
       "catalog_category": "normal",
-      "prompt": "modest bedroom in a Slavic apartment, old double bed with a patchwork quilt, mirrored sliding wardrobe, floral curtains over white plastic windows, pale wallpaper, small windowsill with a potted geranium, unpretentious and lived-in",
+      "prompt": "modest bedroom in a Slavic apartment, floral curtains over white plastic windows, pale wallpaper, unpretentious and lived-in",
       "tags": [
         "indoor",
         "bedroom",
@@ -46584,7 +46594,7 @@
     {
       "id": "interior_slavic_kitchen",
       "catalog_category": "normal",
-      "prompt": "compact kitchen in an East European flat, small window above the sink, laminate countertops, round laminate table with simple chairs, linoleum floor, practical shelves with dishes, warm afternoon light",
+      "prompt": "compact kitchen in an East European flat, small window above the sink, practical shelves with dishes, linoleum floor, warm afternoon light",
       "tags": [
         "indoor",
         "kitchen",
@@ -46599,7 +46609,7 @@
     {
       "id": "interior_slavic_kitchenette",
       "catalog_category": "normal",
-      "prompt": "combined kitchenette and living room in a 1990s East European flat, corner sofa facing the small kitchen counter, kitchen table by the window, curtains on the kitchen window, lived-in everyday warmth",
+      "prompt": "combined kitchenette and living room in a 1990s East European flat, curtains on the kitchen window, lived-in everyday warmth",
       "tags": [
         "indoor",
         "kitchen",
@@ -46616,7 +46626,7 @@
     {
       "id": "interior_slavic_stalinka_living_room",
       "catalog_category": "normal",
-      "prompt": "tall-ceilinged Stalinka apartment living room, parquet floors, ornate plaster crown molding, long narrow room with an old armchair and a wooden kitchen table, antique and practical furniture mixed together, soft window light",
+      "prompt": "tall-ceilinged Stalinka apartment living room, parquet floors, ornate plaster crown molding, a long narrow room, soft window light",
       "tags": [
         "indoor",
         "living_room",
@@ -46633,7 +46643,7 @@
     {
       "id": "interior_slavic_stalinka_bedroom",
       "catalog_category": "normal",
-      "prompt": "Stalinka bedroom with high ceilings and a parquet floor, old upholstered bed, wooden wardrobe, sheer curtains, deep window ledge, quiet old-world atmosphere",
+      "prompt": "Stalinka bedroom with high ceilings and a parquet floor, sheer curtains, a deep window ledge, quiet old-world atmosphere",
       "tags": [
         "indoor",
         "bedroom",
@@ -46650,7 +46660,7 @@
     {
       "id": "interior_slavic_balcony",
       "catalog_category": "normal",
-      "prompt": "small enclosed balcony of a Soviet-era apartment, washing machine in the corner, row of potted geraniums on the windowsill, metal drying rack, narrow walkway, daylight through the plastic window",
+      "prompt": "small enclosed balcony of a Soviet-era apartment, metal drying rack, narrow walkway, daylight through the plastic window",
       "tags": [
         "indoor",
         "balcony",
@@ -46664,7 +46674,7 @@
     {
       "id": "interior_slavic_hallway",
       "catalog_category": "normal",
-      "prompt": "narrow apartment hallway, shoe cabinet and a pile of shoes, small rectangular runner rug on the floor, wall clock, ceiling chandelier, pale wallpaper, a door to each room",
+      "prompt": "narrow apartment hallway, a pile of shoes by the door, wall clock, ceiling chandelier, pale wallpaper, a door to each room",
       "tags": [
         "indoor",
         "hallway",
@@ -46678,7 +46688,7 @@
     {
       "id": "interior_slavic_study",
       "catalog_category": "normal",
-      "prompt": "small study corner in an East European apartment, old computer desk with a desk lamp, bookshelf crowded with books and small knickknacks, worn chair, window with sheer curtains, everyday warmth",
+      "prompt": "small study corner in an East European apartment, bookshelf crowded with books and small knickknacks, window with sheer curtains, everyday warmth",
       "tags": [
         "indoor",
         "office",
@@ -46692,7 +46702,7 @@
     {
       "id": "interior_slavic_bathroom",
       "catalog_category": "normal",
-      "prompt": "small tiled bathroom in a Slavic apartment, washing machine against the wall, towel draped over the radiator, mirror, linoleum floor, bright practical light",
+      "prompt": "small tiled bathroom in a Slavic apartment, mirror, linoleum floor, bright practical light",
       "tags": [
         "indoor",
         "bathroom",
@@ -46706,7 +46716,7 @@
     {
       "id": "interior_slavic_shared_flat_living_room",
       "catalog_category": "normal",
-      "prompt": "shared student flat living room in East Europe, worn corner sofa, big kitchen table, mixed personal belongings, balcony door with curtains, easygoing lived-in atmosphere",
+      "prompt": "shared student flat living room in East Europe, mixed personal belongings, balcony door with curtains, easygoing lived-in atmosphere",
       "tags": [
         "indoor",
         "living_room",
@@ -46722,7 +46732,7 @@
     {
       "id": "interior_slavic_window_nook",
       "catalog_category": "normal",
-      "prompt": "window nook in a modest Slavic apartment, deep windowsill crowded with potted geraniums, thick floral curtains, morning light on the linoleum floor, small table beside the window",
+      "prompt": "window nook in a modest Slavic apartment, thick floral curtains, morning light on the linoleum floor",
       "tags": [
         "indoor",
         "window",
@@ -46738,7 +46748,7 @@
     {
       "id": "interior_slavic_lounge_corner",
       "catalog_category": "normal",
-      "prompt": "lounge corner in an old East European flat, worn fabric sofa, small wooden coffee table, television on a plain cabinet, floral wallpaper, ceiling chandelier overhead",
+      "prompt": "lounge corner in an old East European flat, floral wallpaper, ceiling chandelier overhead",
       "tags": [
         "indoor",
         "living_room",
@@ -46754,7 +46764,7 @@
     {
       "id": "interior_slavic_attic_room",
       "catalog_category": "normal",
-      "prompt": "low attic room in an old East European apartment, parquet floor, sloped ceiling, single bed under the gable window, wooden wardrobe, warm afternoon light through sheer curtains",
+      "prompt": "low attic room in an old East European apartment, parquet floor, sloped ceiling, warm afternoon light through sheer curtains",
       "tags": [
         "indoor",
         "bedroom",
@@ -46786,7 +46796,7 @@
     {
       "id": "interior_slavic_dacha",
       "catalog_category": "luxury",
-      "prompt": "living room of a dacha country house in East Europe, wooden beams, carved oak table, worn leather sofa, checkered tablecloth, fireplace, late afternoon light through the window",
+      "prompt": "living room of a dacha country house in East Europe, wooden beams, a fireplace, late afternoon light through the window",
       "tags": [
         "indoor",
         "living_room",
@@ -46802,7 +46812,7 @@
     {
       "id": "interior_slavic_dacha_veranda",
       "catalog_category": "luxury",
-      "prompt": "wooden dacha veranda overlooking the garden, carved wooden bench, chipped wooden table, potted flowers, linen curtains, late afternoon light, birdsong outside",
+      "prompt": "wooden dacha veranda overlooking the garden, potted flowers, linen curtains, late afternoon light",
       "tags": [
         "outdoor",
         "balcony",
@@ -46817,7 +46827,7 @@
     {
       "id": "interior_slavic_antique_bedroom",
       "catalog_category": "luxury",
-      "prompt": "old-world Slavic bedroom, antique carved wooden bed, patchwork quilt, carved dresser with a mirror, heavy floral curtains, parquet floor, soft window light",
+      "prompt": "old-world Slavic bedroom, heavy floral curtains, parquet floor, soft window light",
       "tags": [
         "indoor",
         "bedroom",
@@ -46834,7 +46844,7 @@
     {
       "id": "interior_slavic_loft",
       "catalog_category": "luxury",
-      "prompt": "designer Slavic loft apartment, old brick wall beside a modern kitchen block, vintage armchair, low platform bed, parquet floor, large window, mixed eras",
+      "prompt": "designer Slavic loft apartment, old brick wall beside a modern kitchen block, parquet floor, large window",
       "tags": [
         "indoor",
         "living_room",
@@ -46849,7 +46859,7 @@
     {
       "id": "interior_slavic_antique_salon",
       "catalog_category": "luxury",
-      "prompt": "antique Slavic salon, carved wooden chandelier, velvet upholstery under a crocheted cover, mahogany writing desk, parquet floor, oil paintings, candle-warm light",
+      "prompt": "antique Slavic salon, carved wooden chandelier, oil paintings, parquet floor, candle-warm light",
       "tags": [
         "indoor",
         "living_room",
@@ -48090,7 +48100,7 @@
     },
     {
       "id": "mood_rain_window",
-      "prompt": "rain on the window, soft grey light and the smell of coffee",
+      "prompt": "rain on the window, soft grey light",
       "menu_label": "Rain On The Window",
       "menu_group": "Amateur"
     },
@@ -48248,19 +48258,19 @@
     },
     {
       "id": "photo_window_soft",
-      "prompt": "soft window light from the side, the room left a little dark",
+      "prompt": "soft window light from the side, the room in shadow behind her",
       "menu_label": "Window soft",
       "menu_group": "Amateur"
     },
     {
       "id": "photo_low_lamp",
-      "prompt": "a single warm lamp from the corner, shadows doing the work",
+      "prompt": "a single warm lamp from the corner, deep shadows in the rest of the room",
       "menu_label": "Low lamp",
       "menu_group": "Amateur"
     },
     {
       "id": "photo_handheld_rough",
-      "prompt": "a little hand-held roughness, the frame not quite level",
+      "prompt": "slight handheld softness, the frame tilted a little off level",
       "menu_label": "Hand-held rough",
       "menu_group": "Amateur"
     }
@@ -48283,14 +48293,56 @@
     },
     "cameltoe_prompt": "clearly visible natural cameltoe contour through the tight fabric",
     "xxx_plateau_prompts": {
-      "provocative_rear": "(anatomically coherent rear-facing nude pose:1.5), back, shoulders, torso, pelvis and buttocks all facing away from the camera in one consistent direction, only the head and neck may turn to look back, exposed buttocks and genitals from behind, uncensored",
-      "intimate_closeup": "(explicit intimate anatomical close-up:1.5), fully nude, clearly visible, uncensored",
+      "provocative_rear": "(anatomically coherent rear-facing nude pose:1.5), back, shoulders, torso, pelvis and exposed buttocks all facing away from the camera in one consistent direction, only the head and neck may turn to look back, uncensored",
+      "intimate_closeup": "(explicit intimate anatomical close-up:1.5), clearly visible, uncensored",
       "panties_aside": "(explicit panties-pulled-aside view:1.5), exposed vulva between parted legs, uncensored",
-      "masturbation": "(hands-only masturbation:1.5), exposed genitals, fully nude, uncensored",
-      "flash_breast": "(dressed breast flash pose:1.5), the outfit stays fully worn with the upper garment lifted to expose the breasts, candid amateur flash aesthetic, natural body and skin texture, uncensored",
-      "flash_skirt": "(dressed skirt flash pose:1.5), the outfit stays fully worn with the skirt or dress lifted to reveal the crotch, candid amateur flash aesthetic, natural body and skin texture, uncensored",
-      "flash_escalated": "(escalated skirt flash pose:1.5), the skirt or dress stays fully worn and lifted with the panties pushed aside, fully revealed, candid amateur flash aesthetic, natural body and skin texture, uncensored",
-      "voyeur": "(voyeuristic hidden-POV:1.5), the subject unaware, a candid caught-moment from a hidden vantage point, amateur home camera feel, natural unaware expression, uncensored"
+      "masturbation": "(hands-only masturbation:1.5), exposed genitals, uncensored",
+      "flash_breast": "(dressed breast flash pose:1.5), breasts exposed in a candid caught-moment, uncensored",
+      "flash_skirt": "(dressed skirt flash pose:1.5), the crotch revealed in a candid caught-moment, uncensored",
+      "flash_escalated": "(escalated skirt flash pose:1.5), the crotch fully revealed in a candid caught-moment, uncensored",
+      "voyeur": "(voyeuristic hidden-POV:1.5), the subject unaware of the camera, amateur home camera feel, uncensored"
     }
-  }
+  },
+  "lighting": [
+    {
+      "id": "lighting_window_left",
+      "catalog_category": "normal",
+      "prompt": "soft daylight through the window from the left side of the frame"
+    },
+    {
+      "id": "lighting_window_right",
+      "catalog_category": "normal",
+      "prompt": "soft daylight through the window from the right side of the frame"
+    },
+    {
+      "id": "lighting_window_front",
+      "catalog_category": "normal",
+      "prompt": "daylight from the window behind the camera, softly washing her face"
+    },
+    {
+      "id": "lighting_window_backlight",
+      "catalog_category": "normal",
+      "prompt": "bright backlight from the window behind her, the room in shadow in front"
+    },
+    {
+      "id": "lighting_lamp_corner",
+      "catalog_category": "normal",
+      "prompt": "a single warm lamp from the corner, the rest of the room in soft shadow"
+    },
+    {
+      "id": "lighting_chandelier",
+      "catalog_category": "normal",
+      "prompt": "warm chandelier light from above, a soft pool of light around her"
+    },
+    {
+      "id": "lighting_overcast_flat",
+      "catalog_category": "normal",
+      "prompt": "flat overcast daylight through the window, no harsh shadows"
+    },
+    {
+      "id": "lighting_afternoon_slant",
+      "catalog_category": "normal",
+      "prompt": "low warm afternoon sun slanting across the floor from the window"
+    }
+  ]
 }

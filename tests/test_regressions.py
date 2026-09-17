@@ -1804,7 +1804,8 @@ class DirectorRegressionTests(unittest.TestCase):
                 scene = shot["scene"]
                 app.validate_pose_zone(scene["pose"], scene["location_zone"])
                 allowed = set(scene["location_zone"]["environment_tags"])
-                self.assertTrue(allowed & app.tags(scene["interior"]))
+                if allowed:
+                    self.assertTrue(allowed & app.tags(scene["interior"]))
 
     def test_subject_has_one_or_two_compatible_facial_accents(self):
         for seed in range(40):

@@ -436,7 +436,7 @@ def validate_database(db: dict[str, Any]) -> None:
         "outfit_templates", "location_zones", "interiors", "furniture", "poses", "actions", "props",
         "expressions", "moods", "photography_styles", "shot_sizes",
         "camera_angles", "framings", "focus_targets", "editorial_roles",
-        "explicit_recipes", "intimate_arousal_modifiers",
+        "explicit_recipes", "intimate_arousal_modifiers", "lighting",
     )
     for section in required_sections:
         if section not in db:
@@ -607,7 +607,7 @@ def validate_database(db: dict[str, Any]) -> None:
         "colors", "patterns", "fabric_textures", "outfit_templates", "location_zones", "interiors", "furniture", "poses", "actions",
         "props", "expressions", "moods", "photography_styles", "shot_sizes",
         "camera_angles", "framings", "focus_targets", "editorial_roles",
-        "explicit_recipes", "intimate_arousal_modifiers",
+        "explicit_recipes", "intimate_arousal_modifiers", "lighting",
     ):
         values = db[section]
         if not isinstance(values, list) or not values:
@@ -1306,6 +1306,7 @@ def validate_database(db: dict[str, Any]) -> None:
         "interiors": db["interiors"],
         "furniture": db["furniture"],
         "moods": db["moods"],
+        "lighting": db["lighting"],
         "photography_styles": db["photography_styles"],
         "explicit_photography_styles": db["photography_styles"],
     }
@@ -3145,8 +3146,16 @@ class Composer:
                     photography_candidates = [
                         item for item in photography_candidates if item["id"] in allowed_ids
                     ]
+                lighting_candidates = [
+                    item for item in self.db.get("lighting", [])
+                    if not item.get("disabled", False)
+                ]
+                if self.use_curated_defaults and scene_pools.get("lighting"):
+                    lighting_candidates = apply_preferred_pool(
+                        lighting_candidates, scene_pools["lighting"]
+                    )
                 outfit = self.choose_outfit(template, interior, content_mode)
-                return {
+                fixed = {
                     "human": self.choose_human(),
                     "outfit": outfit,
                     "interior": interior,
@@ -3154,6 +3163,9 @@ class Composer:
                     "mood": weighted_choice(self.rng, mood_candidates),
                     "photography_style": weighted_choice(self.rng, photography_candidates),
                 }
+                if lighting_candidates:
+                    fixed["lighting"] = weighted_choice(self.rng, lighting_candidates)
+                return fixed
             except AppError as exc:
                 last_error = str(exc)
         raise AppError(f"Could not resolve a compatible fixed context after {attempts} attempts: {last_error}")
@@ -3634,7 +3646,7 @@ class Composer:
                 item for slot, item in scene["outfit"].get(modifier_key, {}).items()
                 if slot in visible_slots
             )
-        flattened.extend([scene[key] for key in ("interior", "furniture", "location_zone", "pose", "action", "expression", "mood", "photography_style", "editorial_role", "shot_size", "camera_angle", "framing", "focus_target")])
+        flattened.extend([scene[key] for key in ("interior", "furniture", "location_zone", "pose", "action", "expression", "mood", "lighting", "photography_style", "editorial_role", "shot_size", "camera_angle", "framing", "focus_target")])
         flattened.extend(
             scene[key] for key in ("surface_color", "surface_texture")
             if scene.get(key)
@@ -4132,7 +4144,7 @@ def compile_scene(
         fragments.append(defaults["cameltoe_prompt"])
 
     # Location and its physical surface are also persistent set identity.
-    for key in ("location_zone", "interior", "furniture", "mood", "photography_style"):
+    for key in ("location_zone", "interior", "furniture", "mood", "lighting", "photography_style"):
         item = scene.get(key)
         if item:
             director_key = f"shot.{key}" if key == "furniture" else f"scene.{key}"
@@ -4210,7 +4222,7 @@ def compile_scene(
         )
         if layered_sheer_chest and "bra" in outfit.get(modifier_key, {}):
             ids.append(outfit[modifier_key]["bra"]["id"])
-    ids.extend(scene[key]["id"] for key in ("pose", "action", "expression", "interior", "furniture", "location_zone", "mood", "photography_style", "editorial_role", "shot_size", "camera_angle", "framing", "focus_target"))
+    ids.extend(scene[key]["id"] for key in ("pose", "action", "expression", "interior", "furniture", "location_zone", "mood", "lighting", "photography_style", "editorial_role", "shot_size", "camera_angle", "framing", "focus_target"))
     ids.extend(
         scene[key]["id"] for key in ("surface_color", "surface_texture")
         if scene.get(key)
@@ -4386,6 +4398,7 @@ def photoshoot_signature(context: dict[str, Any]) -> tuple[Any, ...]:
         context["interior"]["id"],
         context["furniture"]["id"],
         context["mood"]["id"],
+        context.get("lighting", {}).get("id"),
         context["photography_style"]["id"],
     )
 
@@ -7226,6 +7239,7 @@ def serialize_shot(db: dict[str, Any], shot: dict[str, Any]) -> dict[str, Any]:
         "location": context["interior"]["prompt"],
         "surface": _surface_summary(scene),
         "mood": context["mood"]["prompt"],
+        "lighting": context.get("lighting", {}).get("prompt", ""),
         "photography": scene["photography_style"]["prompt"],
         "pose": {"id": scene["pose"]["id"], "prompt": scene["pose"]["prompt"]},
         "action": {"id": scene["action"]["id"], "prompt": scene["action"]["prompt"]},
@@ -8151,6 +8165,7 @@ class WebState:
         for key, section, label in (
             ("interior", "interiors", "Location"),
             ("mood", "moods", "Mood"),
+            ("lighting", "lighting", "Lighting"),
             ("photography_style", "photography_styles", "Render style"),
         ):
             current_item = context[key]
@@ -8576,7 +8591,7 @@ class WebState:
                     key: context[key]
                     for key in (
                         "human", "outfit", "interior", "furniture", "mood",
-                        "photography_style",
+                        "lighting", "photography_style",
                     )
                 })
                 scene["stage"] = stage
@@ -9027,7 +9042,8 @@ class WebState:
             key = field.split(".", 1)[1]
             sections = {
                 "interior": "interiors", "furniture": "furniture",
-                "mood": "moods", "photography_style": "photography_styles",
+                "mood": "moods", "lighting": "lighting",
+                "photography_style": "photography_styles",
             }
             if key not in sections or index.get(value) not in db[sections[key]]:
                 raise AppError("Unknown scene selection")
