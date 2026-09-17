@@ -5355,7 +5355,7 @@ class PromptPreparationTests(unittest.TestCase):
                 "url": "http://llm", "model": "test", "api_key_env": "KEY",
                 "temperature": 1, "top_p": 0.9, "top_k": 20, "min_p": 0.0,
                 "presence_penalty": 0.0, "repeat_penalty": 1.0,
-                "max_tokens": 100,
+                "parallel": 4, "max_tokens": 100,
                 "timeout_seconds": 5, "instructions_image": "instructions.md",
             },
             "instructions": "Rewrite the image prompt.",
@@ -5420,6 +5420,56 @@ class PromptPreparationTests(unittest.TestCase):
         self.assertEqual(enhance.call_count, 1)
         self.assertEqual(job["skipped"], 1)
         self.assertEqual(job["completed"], 2)
+        self.assertEqual(job["status"], "completed")
+
+    def test_batch_prompt_preparation_uses_configured_parallelism(self):
+        state = app.WebState()
+        state.storyboards["board"] = {
+            "id": "board", "db": {},
+            "shots": [
+                {"number": number, "scene": {"number": number}}
+                for number in range(1, 5)
+            ],
+        }
+        job = {
+            "id": "job", "storyboard_id": "board", "render_tier": "production",
+            "parallel": 4, "status": "running", "total": 4, "completed": 0,
+            "skipped": 0, "failed": 0, "current_shot": None, "progress": 0,
+            "started_at": "now", "finished_at": None, "error": None,
+            "_durations": [], "_shot_started_monotonic": None,
+        }
+        active = 0
+        maximum_active = 0
+        active_lock = threading.Lock()
+        barrier = threading.Barrier(4)
+
+        def enhance(_positive, _render_tier):
+            nonlocal active, maximum_active
+            with active_lock:
+                active += 1
+                maximum_active = max(maximum_active, active)
+            try:
+                barrier.wait(timeout=2)
+                time.sleep(0.01)
+                return "optimized", True
+            finally:
+                with active_lock:
+                    active -= 1
+
+        with (
+            patch.object(app, "prompt_enhancer_context", return_value=self.context),
+            patch.object(
+                app, "compile_scene",
+                side_effect=lambda _db, scene: (f"compiled-{scene['number']}", "", []),
+            ),
+            patch.object(app, "enhance_compiled_prompt", side_effect=enhance),
+        ):
+            state._prompt_preparation_jobs["job"] = job
+            state._run_prompt_preparation("job")
+
+        self.assertEqual(maximum_active, 4)
+        self.assertEqual(job["completed"], 4)
+        self.assertEqual(job["failed"], 0)
         self.assertEqual(job["status"], "completed")
 
     def test_running_batch_exposes_ready_prompt_text_immediately(self):

@@ -273,7 +273,7 @@ Runtime settings live in `config.json`. Relative paths are resolved from the pro
 |---|---|
 | `server` | listen host and port; keep loopback unless trusted-LAN access is required |
 | `comfy` | ComfyUI URL, image/video workflow sources and profiles, timeouts, Preview size |
-| `prompt_enhancer` | optional local OpenAI-compatible prompt rewrite with independent `production` and `preview` flags; `models` is an array of `{ "model": "..." }` entries, while `image_model` and `video_model` select independently from it; image instructions are read from `instructions_image`, video instructions are read from `instructions_video`, sampling uses `temperature`, `top_p`, `top_k`, `min_p`, `presence_penalty`, and `repeat_penalty`, and authentication uses `LLAMA_API_KEY` |
+| `prompt_enhancer` | optional local OpenAI-compatible prompt rewrite with independent `production` and `preview` flags; `models` is an array of `{ "model": "..." }` entries, while `image_model` and `video_model` select independently from it; image instructions are read from `instructions_image`, video instructions are read from `instructions_video`, `parallel` limits concurrent batch requests, sampling uses `temperature`, `top_p`, `top_k`, `min_p`, `presence_penalty`, and `repeat_penalty`, and authentication uses `LLAMA_API_KEY` |
 | `storage` | output directory, additional proof directories, PNG/JPEG output, JPEG quality, and optional age-free prompt/result JSONL debug log |
 | `gallery` | thumbnail size and bounded in-memory thumbnail cache |
 | `interface` | privacy auto-cover intervals |
@@ -304,10 +304,16 @@ duplicated in the application code. Set `LLAMA_API_KEY` before starting the
 server when the local LLM endpoint requires authentication. This setting applies
 only to image renders.
 
+`prompt_enhancer.parallel` limits the number of concurrent requests during batch
+prompt preparation. Set it to the number of parallel slots configured in the
+local LLM server (for example, launch the server with `--parallel 4`). This is a
+client-side concurrency limit and is not sent as a chat-completion parameter.
+
 The **Enhance prompts** action is available in both Studio and Director
 render dropdowns. It keeps optimized prompts in server memory for the current
-session, processes shots sequentially, skips prompts whose compiled input and
-instructions are unchanged, and marks changed shots for recomputation. If a
+session, prepares shots concurrently up to `prompt_enhancer.parallel`, skips
+prompts whose compiled input and instructions are unchanged, and marks changed
+shots for recomputation. If a
 prompt is absent or stale when rendering starts, the normal LLM request runs
 immediately before that shot is submitted to ComfyUI. Editing either active
 instruction Markdown file takes effect on the next status check or request;

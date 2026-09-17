@@ -16,7 +16,7 @@ import sys
 import subprocess
 import time
 import uuid
-from concurrent.futures import Future
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterable
@@ -249,6 +249,14 @@ def load_config() -> tuple[dict[str, Any], Path]:
         or not 0 < enhancer_top_p <= 1
     ):
         raise AppError("config.prompt_enhancer.top_p must be a number greater than 0 and at most 1")
+    enhancer_parallel = prompt_enhancer.get("parallel", 1)
+    if (
+        not isinstance(enhancer_parallel, int)
+        or isinstance(enhancer_parallel, bool)
+        or not 1 <= enhancer_parallel <= 32
+    ):
+        raise AppError("config.prompt_enhancer.parallel must be an integer from 1 to 32")
+    prompt_enhancer["parallel"] = enhancer_parallel
     enhancer_top_k = prompt_enhancer.get("top_k")
     if (
         not isinstance(enhancer_top_k, int)
@@ -7749,7 +7757,8 @@ class WebState:
             )
             remaining = max(0, job["total"] - job["completed"])
             if average is not None:
-                payload["eta_seconds"] = round(average * remaining, 1)
+                parallel = max(1, int(job.get("parallel", 1)))
+                payload["eta_seconds"] = round(average * remaining / parallel, 1)
             elif started is not None:
                 payload["eta_seconds"] = None
             else:
@@ -7802,6 +7811,7 @@ class WebState:
                 "kind": "prompt_preparation",
                 "storyboard_id": storyboard_id,
                 "render_tier": render_tier,
+                "parallel": context["settings"].get("parallel", 1),
                 "status": "running",
                 "total": len(record["shots"]),
                 "completed": 0,
@@ -7832,71 +7842,126 @@ class WebState:
         if not job or not record:
             return
         try:
-            for shot in shots:
-                if not self.wait_for_queue_resume(job):
-                    with self.lock:
-                        job["status"] = "cancelled"
-                        job["finished_at"] = _iso_now()
-                        job["eta_seconds"] = 0
-                    break
-                with self.lock:
-                    if job.get("cancel_requested"):
-                        job["status"] = "cancelled"
-                        job["finished_at"] = _iso_now()
-                        job["eta_seconds"] = 0
+            parallel = max(1, int(job.get("parallel", 1)))
+            next_shot_index = 0
+            with ThreadPoolExecutor(max_workers=parallel) as executor:
+                while next_shot_index < len(shots):
+                    batch: list[dict[str, Any]] = []
+                    cancelled = False
+                    while len(batch) < parallel and next_shot_index < len(shots):
+                        if not self.wait_for_queue_resume(job):
+                            cancelled = True
+                            break
+                        with self.lock:
+                            if job.get("cancel_requested"):
+                                cancelled = True
+                                break
+                        shot = shots[next_shot_index]
+                        next_shot_index += 1
+                        positive, _, _ = compile_scene(record["db"], shot["scene"])
+                        context = prompt_enhancer_context(job["render_tier"])
+                        fingerprint = prompt_enhancer_fingerprint(
+                            positive, job["render_tier"], context
+                        )
+                        key = (
+                            job["storyboard_id"],
+                            job["render_tier"],
+                            shot["number"],
+                        )
+                        with self.lock:
+                            cached = self._prompt_cache.get(key)
+                            if (
+                                cached
+                                and cached.get("status") == "ready"
+                                and cached.get("fingerprint") == fingerprint
+                            ):
+                                job["skipped"] += 1
+                                job["completed"] += 1
+                                job["progress"] = round(
+                                    job["completed"] * 100 / job["total"], 1
+                                )
+                                continue
+                            self._prompt_cache[key] = {
+                                "fingerprint": fingerprint,
+                                "compiled_positive": positive,
+                                "status": "preparing",
+                                "updated_at": _iso_now(),
+                                "error": None,
+                            }
+                        batch.append({
+                            "key": key,
+                            "number": shot["number"],
+                            "positive": positive,
+                        })
+                    if cancelled:
+                        with self.lock:
+                            job["status"] = "cancelled"
+                            job["finished_at"] = _iso_now()
+                            job["eta_seconds"] = 0
                         break
-                positive, _, _ = compile_scene(record["db"], shot["scene"])
-                context = prompt_enhancer_context(job["render_tier"])
-                fingerprint = prompt_enhancer_fingerprint(positive, job["render_tier"], context)
-                key = (job["storyboard_id"], job["render_tier"], shot["number"])
-                with self.lock:
-                    cached = self._prompt_cache.get(key)
-                    if cached and cached.get("status") == "ready" and cached.get("fingerprint") == fingerprint:
-                        job["skipped"] += 1
-                        job["completed"] += 1
-                        job["progress"] = round(job["completed"] * 100 / job["total"], 1)
+                    if not batch:
                         continue
-                    job["current_shot"] = shot["number"]
-                    job["_shot_started_monotonic"] = time.monotonic()
-                    self._prompt_cache[key] = {
-                        "fingerprint": fingerprint,
-                        "compiled_positive": positive,
-                        "status": "preparing",
-                        "updated_at": _iso_now(),
-                        "error": None,
+
+                    active_shots = {item["number"] for item in batch}
+                    with self.lock:
+                        job["current_shot"] = min(active_shots)
+                        job["_shot_started_monotonic"] = time.monotonic()
+                    futures = {
+                        executor.submit(
+                            enhance_compiled_prompt,
+                            item["positive"],
+                            job["render_tier"],
+                        ): item
+                        for item in batch
                     }
-                try:
-                    optimized, applied = enhance_compiled_prompt(positive, job["render_tier"])
-                except Exception as exc:
+                    for future in as_completed(futures):
+                        item = futures[future]
+                        try:
+                            optimized, applied = future.result()
+                        except Exception as exc:
+                            optimized = None
+                            applied = False
+                            error = str(exc)
+                        else:
+                            error = None
+                        with self.lock:
+                            cache_entry = self._prompt_cache[item["key"]]
+                            if error is not None:
+                                cache_entry.update(
+                                    status="failed",
+                                    error=error,
+                                    updated_at=_iso_now(),
+                                )
+                                job["failed"] += 1
+                            else:
+                                cache_entry.update(
+                                    optimized_positive=optimized,
+                                    prompt_enhanced=applied,
+                                    status="ready",
+                                    updated_at=_iso_now(),
+                                    error=None,
+                                )
+                            job.setdefault("_durations", []).append(
+                                max(
+                                    0.0,
+                                    time.monotonic()
+                                    - job.get("_shot_started_monotonic", time.monotonic()),
+                                )
+                            )
+                            job["completed"] += 1
+                            job["progress"] = round(
+                                job["completed"] * 100 / job["total"], 1
+                            )
+                            active_shots.discard(item["number"])
+                            job["current_shot"] = min(active_shots) if active_shots else None
+                            if not active_shots:
+                                job["_shot_started_monotonic"] = None
                     with self.lock:
-                        self._prompt_cache[key].update(
-                            status="failed", error=str(exc), updated_at=_iso_now()
-                        )
-                        job["failed"] += 1
-                else:
-                    with self.lock:
-                        self._prompt_cache[key].update(
-                            optimized_positive=optimized,
-                            prompt_enhanced=applied,
-                            status="ready",
-                            updated_at=_iso_now(),
-                            error=None,
-                        )
-                with self.lock:
-                    started = job.get("_shot_started_monotonic")
-                    if started is not None:
-                        job.setdefault("_durations", []).append(
-                            max(0.0, time.monotonic() - started)
-                        )
-                    job["completed"] += 1
-                    job["progress"] = round(job["completed"] * 100 / job["total"], 1)
-                    job["current_shot"] = None
-                    job["_shot_started_monotonic"] = None
-                    if job.get("cancel_requested"):
-                        job["status"] = "cancelled"
-                        job["finished_at"] = _iso_now()
-                        job["eta_seconds"] = 0
-                        break
+                        if job.get("cancel_requested"):
+                            job["status"] = "cancelled"
+                            job["finished_at"] = _iso_now()
+                            job["eta_seconds"] = 0
+                            break
             with self.lock:
                 if job["status"] == "running":
                     job["status"] = "failed" if job["failed"] else "completed"
