@@ -28,8 +28,7 @@
           "hair_style_messy_bun",
           "hair_style_low_bun",
           "hair_style_braid",
-          "hair_style_shag",
-          "hair_style_afro"
+          "hair_style_shag"
         ],
         "hair_color": [
           "hair_brown",
@@ -38,7 +37,6 @@
           "hair_platinum",
           "hair_dark_brown",
           "hair_chestnut",
-          "hair_copper",
           "hair_strawberry_blonde",
           "hair_ash_blonde",
           "hair_blue_black"
@@ -65,8 +63,7 @@
         "hips": [],
         "breast_size": [
           "breasts_very_small",
-          "breasts_small",
-          "breasts_small_full"
+          "breasts_small"
         ],
         "breast_shape": [],
         "areola_size": [],
@@ -83,8 +80,7 @@
     },
     "scene_defaults": {
       "wardrobe_categories": [
-        "normal",
-        "luxury"
+        "normal"
       ],
       "environment_categories": [
         "normal",
@@ -94,21 +90,39 @@
         "interiors": [
           "interior_student_dorm",
           "interior_student_dorm_bath",
-          "interior_campus_library",
-          "interior_campus_hallway",
           "interior_apartment_bedroom",
           "interior_shared_flat_kitchen",
           "interior_guest_room",
           "interior_laundry_corner",
           "interior_campus_common",
-          "interior_attic_dormer"
+          "interior_attic_dormer",
+          "interior_slavic_living_room",
+          "interior_slavic_bedroom",
+          "interior_slavic_kitchen",
+          "interior_slavic_kitchenette",
+          "interior_slavic_stalinka_living_room",
+          "interior_slavic_stalinka_bedroom",
+          "interior_slavic_balcony",
+          "interior_slavic_hallway",
+          "interior_slavic_study",
+          "interior_slavic_bathroom",
+          "interior_slavic_shared_flat_living_room",
+          "interior_slavic_window_nook",
+          "interior_slavic_lounge_corner",
+          "interior_slavic_attic_room",
+          "interior_slavic_stalinka_renovated",
+          "interior_slavic_dacha",
+          "interior_slavic_dacha_veranda",
+          "interior_slavic_antique_bedroom",
+          "interior_slavic_loft",
+          "interior_slavic_antique_salon",
+          "interior_boudoir_room",
+          "interior_master_bedroom",
+          "interior_penthouse_lounge"
         ],
         "furniture": [
           "furniture_dorm_bed",
           "furniture_dorm_desk",
-          "furniture_dorm_lockers",
-          "furniture_library_desk",
-          "furniture_library_shelf",
           "furniture_flat_kitchen_counter",
           "furniture_sofa_bed",
           "furniture_wardrobe",
@@ -117,7 +131,25 @@
           "furniture_window_seat",
           "furniture_floor_rug",
           "furniture_kitchen_table",
-          "furniture_common_sofa"
+          "furniture_common_sofa",
+          "furniture_slavic_corner_sofa",
+          "furniture_slavic_double_bed",
+          "furniture_slavic_dining_table",
+          "furniture_slavic_kitchen_counter",
+          "furniture_slavic_geranium_windowsill",
+          "furniture_slavic_coupe_wardrobe",
+          "furniture_slavic_computer_desk",
+          "furniture_slavic_radiator",
+          "furniture_slavic_linoleum_floor",
+          "furniture_slavic_hallway_rug",
+          "furniture_slavic_plastic_window",
+          "furniture_slavic_balcony_washer",
+          "furniture_slavic_worn_armchair",
+          "furniture_slavic_carved_bed",
+          "furniture_slavic_oak_table",
+          "furniture_slavic_veranda_bench",
+          "furniture_slavic_writing_desk",
+          "furniture_slavic_platform_bed"
         ],
         "moods": [
           "mood_everyday_relaxed",
@@ -45656,6 +45688,20 @@
         "closeup"
       ],
       "environment_tags": []
+    },
+    {
+      "id": "zone_slavic_table",
+      "prompt": "at the round kitchen table, a simple chair tucked in at one side",
+      "match_any_tags": [
+        "table"
+      ],
+      "capabilities": [
+        "standing",
+        "seated",
+        "supported",
+        "closeup"
+      ],
+      "environment_tags": []
     }
   ],
   "interiors": [
@@ -46500,6 +46546,321 @@
         "bedroom",
         "intimate"
       ]
+    },
+    {
+      "id": "interior_slavic_living_room",
+      "catalog_category": "normal",
+      "prompt": "small living room in a modest East European apartment, patterned floral wallpaper, worn fabric corner sofa, white plastic window frames, linoleum floor, a kitchen table pushed into the corner, lived-in and unpretentious",
+      "tags": [
+        "indoor",
+        "living_room",
+        "apartment",
+        "home",
+        "lounge",
+        "modest",
+        "everyday",
+        "private",
+        "slavic"
+      ],
+      "weight": 1.2
+    },
+    {
+      "id": "interior_slavic_bedroom",
+      "catalog_category": "normal",
+      "prompt": "modest bedroom in a Slavic apartment, old double bed with a patchwork quilt, mirrored sliding wardrobe, floral curtains over white plastic windows, pale wallpaper, small windowsill with a potted geranium, unpretentious and lived-in",
+      "tags": [
+        "indoor",
+        "bedroom",
+        "apartment",
+        "home",
+        "intimate",
+        "modest",
+        "everyday",
+        "private",
+        "slavic"
+      ],
+      "weight": 1.2
+    },
+    {
+      "id": "interior_slavic_kitchen",
+      "catalog_category": "normal",
+      "prompt": "compact kitchen in an East European flat, small window above the sink, laminate countertops, round laminate table with simple chairs, linoleum floor, practical shelves with dishes, warm afternoon light",
+      "tags": [
+        "indoor",
+        "kitchen",
+        "apartment",
+        "home",
+        "everyday",
+        "private",
+        "slavic"
+      ],
+      "weight": 1.2
+    },
+    {
+      "id": "interior_slavic_kitchenette",
+      "catalog_category": "normal",
+      "prompt": "combined kitchenette and living room in a 1990s East European flat, corner sofa facing the small kitchen counter, kitchen table by the window, curtains on the kitchen window, lived-in everyday warmth",
+      "tags": [
+        "indoor",
+        "kitchen",
+        "living_room",
+        "apartment",
+        "home",
+        "lounge",
+        "everyday",
+        "private",
+        "slavic"
+      ],
+      "weight": 1.2
+    },
+    {
+      "id": "interior_slavic_stalinka_living_room",
+      "catalog_category": "normal",
+      "prompt": "tall-ceilinged Stalinka apartment living room, parquet floors, ornate plaster crown molding, long narrow room with an old armchair and a wooden kitchen table, antique and practical furniture mixed together, soft window light",
+      "tags": [
+        "indoor",
+        "living_room",
+        "apartment",
+        "home",
+        "lounge",
+        "cozy",
+        "private",
+        "slavic",
+        "vintage"
+      ],
+      "weight": 1.2
+    },
+    {
+      "id": "interior_slavic_stalinka_bedroom",
+      "catalog_category": "normal",
+      "prompt": "Stalinka bedroom with high ceilings and a parquet floor, old upholstered bed, wooden wardrobe, sheer curtains, deep window ledge, quiet old-world atmosphere",
+      "tags": [
+        "indoor",
+        "bedroom",
+        "apartment",
+        "home",
+        "intimate",
+        "cozy",
+        "private",
+        "slavic",
+        "vintage"
+      ],
+      "weight": 1.2
+    },
+    {
+      "id": "interior_slavic_balcony",
+      "catalog_category": "normal",
+      "prompt": "small enclosed balcony of a Soviet-era apartment, washing machine in the corner, row of potted geraniums on the windowsill, metal drying rack, narrow walkway, daylight through the plastic window",
+      "tags": [
+        "indoor",
+        "balcony",
+        "apartment",
+        "home",
+        "everyday",
+        "slavic"
+      ],
+      "weight": 1.2
+    },
+    {
+      "id": "interior_slavic_hallway",
+      "catalog_category": "normal",
+      "prompt": "narrow apartment hallway, shoe cabinet and a pile of shoes, small rectangular runner rug on the floor, wall clock, ceiling chandelier, pale wallpaper, a door to each room",
+      "tags": [
+        "indoor",
+        "hallway",
+        "apartment",
+        "home",
+        "everyday",
+        "slavic"
+      ],
+      "weight": 1.2
+    },
+    {
+      "id": "interior_slavic_study",
+      "catalog_category": "normal",
+      "prompt": "small study corner in an East European apartment, old computer desk with a desk lamp, bookshelf crowded with books and small knickknacks, worn chair, window with sheer curtains, everyday warmth",
+      "tags": [
+        "indoor",
+        "office",
+        "apartment",
+        "home",
+        "everyday",
+        "slavic"
+      ],
+      "weight": 1.2
+    },
+    {
+      "id": "interior_slavic_bathroom",
+      "catalog_category": "normal",
+      "prompt": "small tiled bathroom in a Slavic apartment, washing machine against the wall, towel draped over the radiator, mirror, linoleum floor, bright practical light",
+      "tags": [
+        "indoor",
+        "bathroom",
+        "apartment",
+        "home",
+        "everyday",
+        "slavic"
+      ],
+      "weight": 1.2
+    },
+    {
+      "id": "interior_slavic_shared_flat_living_room",
+      "catalog_category": "normal",
+      "prompt": "shared student flat living room in East Europe, worn corner sofa, big kitchen table, mixed personal belongings, balcony door with curtains, easygoing lived-in atmosphere",
+      "tags": [
+        "indoor",
+        "living_room",
+        "apartment",
+        "home",
+        "lounge",
+        "everyday",
+        "private",
+        "slavic"
+      ],
+      "weight": 1.2
+    },
+    {
+      "id": "interior_slavic_window_nook",
+      "catalog_category": "normal",
+      "prompt": "window nook in a modest Slavic apartment, deep windowsill crowded with potted geraniums, thick floral curtains, morning light on the linoleum floor, small table beside the window",
+      "tags": [
+        "indoor",
+        "window",
+        "bedroom",
+        "apartment",
+        "home",
+        "everyday",
+        "private",
+        "slavic"
+      ],
+      "weight": 1.2
+    },
+    {
+      "id": "interior_slavic_lounge_corner",
+      "catalog_category": "normal",
+      "prompt": "lounge corner in an old East European flat, worn fabric sofa, small wooden coffee table, television on a plain cabinet, floral wallpaper, ceiling chandelier overhead",
+      "tags": [
+        "indoor",
+        "living_room",
+        "apartment",
+        "home",
+        "lounge",
+        "modest",
+        "everyday",
+        "slavic"
+      ],
+      "weight": 1.2
+    },
+    {
+      "id": "interior_slavic_attic_room",
+      "catalog_category": "normal",
+      "prompt": "low attic room in an old East European apartment, parquet floor, sloped ceiling, single bed under the gable window, wooden wardrobe, warm afternoon light through sheer curtains",
+      "tags": [
+        "indoor",
+        "bedroom",
+        "apartment",
+        "home",
+        "intimate",
+        "private",
+        "slavic"
+      ],
+      "weight": 1.2
+    },
+    {
+      "id": "interior_slavic_stalinka_renovated",
+      "catalog_category": "luxury",
+      "prompt": "renovated high-ceilinged Stalinka apartment living room, restored parquet floors, ornate plaster crown molding, antique wooden furniture mixed with modern accents, tall window with a deep ledge, warm brass light",
+      "tags": [
+        "indoor",
+        "living_room",
+        "apartment",
+        "home",
+        "lounge",
+        "cozy",
+        "private",
+        "slavic",
+        "vintage"
+      ],
+      "weight": 1.2
+    },
+    {
+      "id": "interior_slavic_dacha",
+      "catalog_category": "luxury",
+      "prompt": "living room of a dacha country house in East Europe, wooden beams, carved oak table, worn leather sofa, checkered tablecloth, fireplace, late afternoon light through the window",
+      "tags": [
+        "indoor",
+        "living_room",
+        "home",
+        "lounge",
+        "cozy",
+        "private",
+        "slavic",
+        "country"
+      ],
+      "weight": 1.2
+    },
+    {
+      "id": "interior_slavic_dacha_veranda",
+      "catalog_category": "luxury",
+      "prompt": "wooden dacha veranda overlooking the garden, carved wooden bench, chipped wooden table, potted flowers, linen curtains, late afternoon light, birdsong outside",
+      "tags": [
+        "outdoor",
+        "balcony",
+        "home",
+        "slavic",
+        "country",
+        "everyday",
+        "indoor"
+      ],
+      "weight": 1.2
+    },
+    {
+      "id": "interior_slavic_antique_bedroom",
+      "catalog_category": "luxury",
+      "prompt": "old-world Slavic bedroom, antique carved wooden bed, patchwork quilt, carved dresser with a mirror, heavy floral curtains, parquet floor, soft window light",
+      "tags": [
+        "indoor",
+        "bedroom",
+        "apartment",
+        "home",
+        "intimate",
+        "cozy",
+        "private",
+        "slavic",
+        "vintage"
+      ],
+      "weight": 1.2
+    },
+    {
+      "id": "interior_slavic_loft",
+      "catalog_category": "luxury",
+      "prompt": "designer Slavic loft apartment, old brick wall beside a modern kitchen block, vintage armchair, low platform bed, parquet floor, large window, mixed eras",
+      "tags": [
+        "indoor",
+        "living_room",
+        "lounge",
+        "bedroom",
+        "home",
+        "private",
+        "slavic"
+      ],
+      "weight": 1.2
+    },
+    {
+      "id": "interior_slavic_antique_salon",
+      "catalog_category": "luxury",
+      "prompt": "antique Slavic salon, carved wooden chandelier, velvet upholstery under a crocheted cover, mahogany writing desk, parquet floor, oil paintings, candle-warm light",
+      "tags": [
+        "indoor",
+        "living_room",
+        "lounge",
+        "home",
+        "cozy",
+        "private",
+        "slavic",
+        "vintage"
+      ],
+      "weight": 1.2
     }
   ],
   "furniture": [
@@ -47254,7 +47615,8 @@
       "tags": [
         "bed",
         "lying_surface",
-        "sitting_surface"
+        "sitting_surface",
+        "sofa"
       ],
       "requires_tags": [
         "lounge"
@@ -47340,6 +47702,269 @@
       ],
       "surface_color_target": "sofa",
       "surface_texture_target": "sofa"
+    },
+    {
+      "id": "furniture_slavic_corner_sofa",
+      "catalog_category": "normal",
+      "prompt": "worn fabric corner sofa with patched cushions",
+      "tags": [
+        "sofa",
+        "sitting_surface",
+        "lying_surface"
+      ],
+      "requires_any_tags": [
+        "living_room",
+        "lounge"
+      ],
+      "surface_color_target": "upholstery",
+      "surface_texture_target": "upholstery"
+    },
+    {
+      "id": "furniture_slavic_double_bed",
+      "catalog_category": "normal",
+      "prompt": "old double bed with a patchwork quilt",
+      "tags": [
+        "bed",
+        "lying_surface",
+        "sitting_surface"
+      ],
+      "requires_tags": [
+        "bedroom"
+      ],
+      "surface_color_target": "bedding",
+      "surface_texture_target": "bedding"
+    },
+    {
+      "id": "furniture_slavic_dining_table",
+      "catalog_category": "normal",
+      "prompt": "round laminate kitchen table with simple chairs",
+      "tags": [
+        "table",
+        "sitting_surface",
+        "working_surface"
+      ],
+      "requires_tags": [
+        "kitchen"
+      ],
+      "surface_color_target": "table",
+      "surface_texture_target": "table"
+    },
+    {
+      "id": "furniture_slavic_kitchen_counter",
+      "catalog_category": "normal",
+      "prompt": "old laminate kitchen counter with chipped edges",
+      "tags": [
+        "counter",
+        "standing_backdrop",
+        "sitting_surface"
+      ],
+      "requires_tags": [
+        "kitchen"
+      ],
+      "surface_color_target": "counter",
+      "surface_texture_target": "counter"
+    },
+    {
+      "id": "furniture_slavic_geranium_windowsill",
+      "catalog_category": "normal",
+      "prompt": "deep windowsill crowded with potted geraniums",
+      "tags": [
+        "sitting_surface",
+        "window",
+        "standing_area"
+      ],
+      "requires_tags": [
+        "indoor"
+      ]
+    },
+    {
+      "id": "furniture_slavic_coupe_wardrobe",
+      "catalog_category": "normal",
+      "prompt": "mirrored sliding-door wardrobe with hanging clothes",
+      "tags": [
+        "wardrobe",
+        "standing_backdrop"
+      ]
+    },
+    {
+      "id": "furniture_slavic_computer_desk",
+      "catalog_category": "normal",
+      "prompt": "old computer desk with a desk lamp and a worn chair",
+      "tags": [
+        "desk",
+        "working_surface",
+        "sitting_surface"
+      ],
+      "requires_any_tags": [
+        "office",
+        "bedroom",
+        "living_room"
+      ],
+      "surface_color_target": "desk",
+      "surface_texture_target": "desk"
+    },
+    {
+      "id": "furniture_slavic_radiator",
+      "catalog_category": "normal",
+      "prompt": "wall-mounted radiator with a towel draped over it",
+      "tags": [
+        "wall",
+        "standing_backdrop"
+      ],
+      "requires_tags": [
+        "indoor"
+      ]
+    },
+    {
+      "id": "furniture_slavic_linoleum_floor",
+      "catalog_category": "normal",
+      "prompt": "worn linoleum floor with pale streaks of light",
+      "tags": [
+        "floor",
+        "standing_area",
+        "lying_surface",
+        "sitting_surface"
+      ],
+      "requires_tags": [
+        "indoor"
+      ]
+    },
+    {
+      "id": "furniture_slavic_hallway_rug",
+      "catalog_category": "normal",
+      "prompt": "small rectangular runner rug on the hallway floor",
+      "tags": [
+        "rug",
+        "standing_area",
+        "lying_surface",
+        "sitting_surface"
+      ],
+      "requires_tags": [
+        "indoor"
+      ],
+      "surface_color_target": "textile surface",
+      "surface_texture_target": "textile surface"
+    },
+    {
+      "id": "furniture_slavic_plastic_window",
+      "catalog_category": "normal",
+      "prompt": "white plastic window frames with sheer curtains",
+      "tags": [
+        "window",
+        "standing_backdrop"
+      ],
+      "requires_tags": [
+        "indoor"
+      ]
+    },
+    {
+      "id": "furniture_slavic_balcony_washer",
+      "catalog_category": "normal",
+      "prompt": "washing machine in the corner of an enclosed balcony",
+      "tags": [
+        "counter",
+        "standing_backdrop"
+      ],
+      "requires_any_tags": [
+        "balcony",
+        "bathroom",
+        "laundry"
+      ],
+      "surface_color_target": "counter",
+      "surface_texture_target": "counter"
+    },
+    {
+      "id": "furniture_slavic_worn_armchair",
+      "catalog_category": "normal",
+      "prompt": "worn armchair with a crocheted throw",
+      "tags": [
+        "chair",
+        "sitting_surface"
+      ],
+      "requires_any_tags": [
+        "living_room",
+        "lounge",
+        "bedroom"
+      ],
+      "surface_color_target": "upholstery",
+      "surface_texture_target": "upholstery"
+    },
+    {
+      "id": "furniture_slavic_carved_bed",
+      "catalog_category": "luxury",
+      "prompt": "antique carved wooden bed with a patchwork quilt",
+      "tags": [
+        "bed",
+        "lying_surface",
+        "sitting_surface"
+      ],
+      "requires_tags": [
+        "bedroom"
+      ],
+      "surface_color_target": "bedding",
+      "surface_texture_target": "bedding"
+    },
+    {
+      "id": "furniture_slavic_oak_table",
+      "catalog_category": "luxury",
+      "prompt": "carved oak dining table with wooden chairs",
+      "tags": [
+        "table",
+        "sitting_surface",
+        "working_surface"
+      ],
+      "requires_any_tags": [
+        "living_room",
+        "lounge",
+        "kitchen"
+      ],
+      "surface_color_target": "table",
+      "surface_texture_target": "table"
+    },
+    {
+      "id": "furniture_slavic_veranda_bench",
+      "catalog_category": "luxury",
+      "prompt": "carved wooden bench on the veranda",
+      "tags": [
+        "bench",
+        "sitting_surface"
+      ],
+      "requires_any_tags": [
+        "balcony",
+        "outdoor"
+      ]
+    },
+    {
+      "id": "furniture_slavic_writing_desk",
+      "catalog_category": "luxury",
+      "prompt": "mahogany writing desk with brass handles",
+      "tags": [
+        "desk",
+        "working_surface",
+        "sitting_surface"
+      ],
+      "requires_any_tags": [
+        "living_room",
+        "lounge",
+        "bedroom"
+      ],
+      "surface_color_target": "desk",
+      "surface_texture_target": "desk"
+    },
+    {
+      "id": "furniture_slavic_platform_bed",
+      "catalog_category": "luxury",
+      "prompt": "low platform bed with linen bedding",
+      "tags": [
+        "bed",
+        "lying_surface",
+        "sitting_surface"
+      ],
+      "requires_tags": [
+        "bedroom"
+      ],
+      "surface_color_target": "bedding",
+      "surface_texture_target": "bedding"
     }
   ],
   "moods": [
