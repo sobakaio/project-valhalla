@@ -33,6 +33,14 @@ class AppError(RuntimeError):
 
 APP_VERSION = "1.7.2"
 MEDIA_TYPES = {"image", "video"}
+PROMPT_ENHANCER_SAMPLING_KEYS = (
+    "temperature",
+    "top_p",
+    "top_k",
+    "min_p",
+    "presence_penalty",
+    "repeat_penalty",
+)
 UI_SEED_MIN = 100_000_000_000_000
 UI_SEED_MAX = 999_999_999_999_999
 UI_SEED_SPAN = UI_SEED_MAX - UI_SEED_MIN + 1
@@ -241,6 +249,38 @@ def load_config() -> tuple[dict[str, Any], Path]:
         or not 0 < enhancer_top_p <= 1
     ):
         raise AppError("config.prompt_enhancer.top_p must be a number greater than 0 and at most 1")
+    enhancer_top_k = prompt_enhancer.get("top_k")
+    if (
+        not isinstance(enhancer_top_k, int)
+        or isinstance(enhancer_top_k, bool)
+        or enhancer_top_k < 0
+    ):
+        raise AppError("config.prompt_enhancer.top_k must be a non-negative integer")
+    enhancer_min_p = prompt_enhancer.get("min_p")
+    if (
+        not isinstance(enhancer_min_p, (int, float))
+        or isinstance(enhancer_min_p, bool)
+        or not 0 <= enhancer_min_p <= 1
+    ):
+        raise AppError("config.prompt_enhancer.min_p must be a number from 0 to 1")
+    enhancer_presence_penalty = prompt_enhancer.get("presence_penalty")
+    if (
+        not isinstance(enhancer_presence_penalty, (int, float))
+        or isinstance(enhancer_presence_penalty, bool)
+        or not math.isfinite(enhancer_presence_penalty)
+        or not -2 <= enhancer_presence_penalty <= 2
+    ):
+        raise AppError(
+            "config.prompt_enhancer.presence_penalty must be a number from -2 to 2"
+        )
+    enhancer_repeat_penalty = prompt_enhancer.get("repeat_penalty")
+    if (
+        not isinstance(enhancer_repeat_penalty, (int, float))
+        or isinstance(enhancer_repeat_penalty, bool)
+        or not math.isfinite(enhancer_repeat_penalty)
+        or enhancer_repeat_penalty <= 0
+    ):
+        raise AppError("config.prompt_enhancer.repeat_penalty must be a positive number")
     storage = config.get("storage")
     if not isinstance(storage, dict):
         raise AppError("config.storage must be an object")
@@ -4821,6 +4861,11 @@ def prompt_enhancer_model(settings: dict[str, Any], media_type: str) -> str:
     raise AppError(f"No prompt enhancer model is configured for {media_type}")
 
 
+def prompt_enhancer_sampling_payload(settings: dict[str, Any]) -> dict[str, Any]:
+    """Return the configured sampling parameters for the local LLM request."""
+    return {key: settings[key] for key in PROMPT_ENHANCER_SAMPLING_KEYS}
+
+
 def prompt_enhancer_fingerprint(
     positive: str, render_tier: str, context: dict[str, Any] | None = None
 ) -> str:
@@ -4835,8 +4880,10 @@ def prompt_enhancer_fingerprint(
             "url": settings.get("url"),
             "model": prompt_enhancer_model(settings, "image"),
             "api_key_env": settings.get("api_key_env"),
-            "temperature": settings.get("temperature"),
-            "top_p": settings.get("top_p"),
+            "sampling": {
+                key: settings.get(key)
+                for key in PROMPT_ENHANCER_SAMPLING_KEYS
+            },
             "max_tokens": settings.get("max_tokens"),
             "timeout_seconds": settings.get("timeout_seconds"),
             "instructions_image": settings.get("instructions_image"),
@@ -4875,8 +4922,7 @@ def enhance_compiled_prompt(positive: str, render_tier: str) -> tuple[str, bool]
             json={
                 "model": model,
                 "messages": messages,
-                "temperature": settings["temperature"],
-                "top_p": settings["top_p"],
+                **prompt_enhancer_sampling_payload(settings),
                 "max_tokens": settings["max_tokens"],
                 "stream": False,
             },
@@ -4952,8 +4998,7 @@ def enhance_video_prompt(
             json={
                 "model": prompt_enhancer_model(settings, "video"),
                 "messages": [{"role": "system", "content": instructions}],
-                "temperature": settings["temperature"],
-                "top_p": settings["top_p"],
+                **prompt_enhancer_sampling_payload(settings),
                 "max_tokens": settings["max_tokens"],
                 "stream": False,
             },

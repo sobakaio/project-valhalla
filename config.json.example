@@ -43,8 +43,12 @@
     "api_key_env": "LLAMA_API_KEY",
     "timeout_seconds": 120,
     "max_tokens": 450,
-    "temperature": 1.2,
-    "top_p": 0.95
+    "temperature": 0.6,
+    "top_p": 0.85,
+    "top_k": 20,
+    "min_p": 0.0,
+    "presence_penalty": 0.0,
+    "repeat_penalty": 1.0
   },
   "storage": {
     "output_dir": "./outputs",

@@ -5353,7 +5353,9 @@ class PromptPreparationTests(unittest.TestCase):
             "enabled": True,
             "settings": {
                 "url": "http://llm", "model": "test", "api_key_env": "KEY",
-                "temperature": 1, "top_p": 0.9, "max_tokens": 100,
+                "temperature": 1, "top_p": 0.9, "top_k": 20, "min_p": 0.0,
+                "presence_penalty": 0.0, "repeat_penalty": 1.0,
+                "max_tokens": 100,
                 "timeout_seconds": 5, "instructions_image": "instructions.md",
             },
             "instructions": "Rewrite the image prompt.",
@@ -5786,6 +5788,16 @@ class WorkflowProfileTests(unittest.TestCase):
         )
         self.assertEqual(request["json"]["temperature"], config["prompt_enhancer"]["temperature"])
         self.assertEqual(request["json"]["top_p"], config["prompt_enhancer"]["top_p"])
+        self.assertEqual(request["json"]["top_k"], config["prompt_enhancer"]["top_k"])
+        self.assertEqual(request["json"]["min_p"], config["prompt_enhancer"]["min_p"])
+        self.assertEqual(
+            request["json"]["presence_penalty"],
+            config["prompt_enhancer"]["presence_penalty"],
+        )
+        self.assertEqual(
+            request["json"]["repeat_penalty"],
+            config["prompt_enhancer"]["repeat_penalty"],
+        )
         self.assertEqual(request["json"]["max_tokens"], config["prompt_enhancer"]["max_tokens"])
         self.assertEqual(
             request["json"]["messages"][0]["content"],
@@ -5845,6 +5857,11 @@ class WorkflowProfileTests(unittest.TestCase):
 
         self.assertEqual(prompt, "generated LTX motion")
         request = fake_requests.calls[0][1]
+        for key in app.PROMPT_ENHANCER_SAMPLING_KEYS:
+            self.assertEqual(
+                request["json"][key],
+                config["prompt_enhancer"][key],
+            )
         self.assertEqual(
             request["json"]["messages"][0]["content"],
             "<input_data>\noptimized image scene\n</input_data>\n"

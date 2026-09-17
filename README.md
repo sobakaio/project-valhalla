@@ -273,7 +273,7 @@ Runtime settings live in `config.json`. Relative paths are resolved from the pro
 |---|---|
 | `server` | listen host and port; keep loopback unless trusted-LAN access is required |
 | `comfy` | ComfyUI URL, image/video workflow sources and profiles, timeouts, Preview size |
-| `prompt_enhancer` | optional local OpenAI-compatible prompt rewrite with independent `production` and `preview` flags; `models` is an array of `{ "model": "..." }` entries, while `image_model` and `video_model` select independently from it; image instructions are read from `instructions_image`, video instructions are read from `instructions_video`, sampling uses `temperature`/`top_p`, and authentication uses `LLAMA_API_KEY` |
+| `prompt_enhancer` | optional local OpenAI-compatible prompt rewrite with independent `production` and `preview` flags; `models` is an array of `{ "model": "..." }` entries, while `image_model` and `video_model` select independently from it; image instructions are read from `instructions_image`, video instructions are read from `instructions_video`, sampling uses `temperature`, `top_p`, `top_k`, `min_p`, `presence_penalty`, and `repeat_penalty`, and authentication uses `LLAMA_API_KEY` |
 | `storage` | output directory, additional proof directories, PNG/JPEG output, JPEG quality, and optional age-free prompt/result JSONL debug log |
 | `gallery` | thumbnail size and bounded in-memory thumbnail cache |
 | `interface` | privacy auto-cover intervals |
