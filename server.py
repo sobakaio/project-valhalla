@@ -5005,7 +5005,16 @@ def enhance_video_prompt(
             headers=headers,
             json={
                 "model": prompt_enhancer_model(settings, "video"),
-                "messages": [{"role": "system", "content": instructions}],
+                "messages": [
+                    {"role": "system", "content": instructions},
+                    {
+                        "role": "user",
+                        "content": (
+                            "Generate the final video screenplay now using the "
+                            "input data, user guidance, and video length above."
+                        ),
+                    },
+                ],
                 **prompt_enhancer_sampling_payload(settings),
                 "max_tokens": settings["max_tokens"],
                 "stream": False,
@@ -9724,6 +9733,10 @@ class WebState:
         with self.lock:
             if any(preview["status"] in {"queued", "running"} for preview in self.previews.values()):
                 raise AppError("Wait for the active shot preview to finish")
+            queue_was_empty = not any(
+                item["status"] in {"queued", "running"}
+                for item in self.jobs.values()
+            )
             max_jobs = load_config()[0]["limits"]["max_jobs"]
             while len(self.jobs) >= max_jobs:
                 removable = next((job_id for job_id, item in self.jobs.items() if item["status"] not in {"queued", "running"}), None)
@@ -9731,6 +9744,9 @@ class WebState:
                     raise AppError(f"Render queue is full ({max_jobs} jobs)")
                 self.jobs.pop(removable)
             self.jobs[job_id] = job
+            if queue_was_empty:
+                self._queue_paused = True
+                self._queue_resume_event.clear()
             if not self._job_worker_running and not self._queue_paused:
                 self._job_worker_running = True
                 start_worker = True

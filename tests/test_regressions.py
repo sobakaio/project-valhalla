@@ -5912,6 +5912,8 @@ class WorkflowProfileTests(unittest.TestCase):
                 request["json"][key],
                 config["prompt_enhancer"][key],
             )
+        self.assertEqual(request["json"]["messages"][1]["role"], "user")
+        self.assertTrue(request["json"]["messages"][1]["content"])
         self.assertEqual(
             request["json"]["messages"][0]["content"],
             "<input_data>\noptimized image scene\n</input_data>\n"

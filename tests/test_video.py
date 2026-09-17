@@ -325,7 +325,41 @@ class VideoWorkflowTests(unittest.TestCase):
                 state.job_payload(state.jobs[payload["id"]])["pending_groups"][0]["source_set_key"],
                 "run-1:photoshoot:002:production",
             )
-            thread.assert_called_once()
+            self.assertTrue(payload["queue_paused"])
+            self.assertTrue(state._queue_paused)
+            thread.assert_not_called()
+
+            with patch.object(app.threading, "Thread") as resume_thread:
+                resumed = state.set_queue_paused(False)
+
+            self.assertFalse(resumed["queue_paused"])
+            resume_thread.assert_called_once()
+
+    def test_video_job_does_not_pause_an_existing_active_queue(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output_dir = Path(temporary)
+            source = output_dir / "frame.png"
+            source.write_bytes(b"source")
+            config_file = output_dir / "config.json"
+            config = {"limits": {"max_jobs": 4}, "storage": {"output_dir": "."}}
+            with (
+                patch.object(app, "load_database", return_value=({"settings": {}}, output_dir / "database.json")),
+                patch.object(app, "load_config", return_value=(config, config_file)),
+                patch.object(app, "proof_directories", return_value=[("output", output_dir)]),
+                patch.object(app, "workflow_source", return_value="profiles"),
+                patch.object(app, "load_workflow_profile_registry", return_value={"production": "ltx-2.5"}),
+                patch.object(app.threading, "Thread") as thread,
+            ):
+                state = app.WebState()
+                state.jobs["existing"] = {"status": "running"}
+                state._job_worker_running = True
+                payload = state.create_video_job(
+                    "output", "frame.png", "subtle camera movement", 5
+                )
+
+            self.assertFalse(payload["queue_paused"])
+            self.assertFalse(state._queue_paused)
+            thread.assert_not_called()
 
     def test_paused_video_job_waits_before_submitting_to_comfy(self):
         with tempfile.TemporaryDirectory() as temporary:

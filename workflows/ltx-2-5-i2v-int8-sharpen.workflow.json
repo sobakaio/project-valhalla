@@ -2,9 +2,11 @@
   "75": {
     "inputs": {
       "filename_prefix": "video/LTX-2.5_i2v",
-      "format": "auto",
-      "format.codec": "auto",
-      "codec": "auto",
+      "format": "mp4",
+      "format.codec": "h264",
+      "format.codec.encoding": "re-encode",
+      "format.codec.encoding.crf": 16.0,
+      "codec": "h264",
       "video": [
         "398:370",
         0
@@ -27,7 +29,7 @@
   "403": {
     "inputs": {
       "aspect_ratio": "4:3 (Standard)",
-      "megapixels": 1.5,
+      "megapixels": 1.8,
       "multiple": 32
     },
     "class_type": "ResolutionSelector",
@@ -133,7 +135,7 @@
   },
   "398:384": {
     "inputs": {
-      "unet_name": "ltx-2.5-22b-distilled-transformer-nvfp4.safetensors",
+      "unet_name": "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
       "weight_dtype": "default"
     },
     "class_type": "UNETLoader",
@@ -354,7 +356,7 @@
   },
   "398:357": {
     "inputs": {
-      "strength": 0.7,
+      "strength": 0.8,
       "bypass": [
         "398:363",
         0
@@ -429,7 +431,7 @@
   "398:351": {
     "inputs": {
       "resize_type": "scale longer dimension",
-      "resize_type.longer_size": 1536,
+      "resize_type.longer_size": 1728,
       "scale_method": "lanczos",
       "input": [
         "395",
@@ -683,10 +685,10 @@
   },
   "398:374": {
     "inputs": {
-      "tile_size": 512,
-      "overlap": 64,
-      "temporal_size": 64,
-      "temporal_overlap": 16,
+      "tile_size": 768,
+      "overlap": 192,
+      "temporal_size": 128,
+      "temporal_overlap": 32,
       "samples": [
         "398:369",
         0
@@ -699,6 +701,21 @@
     "class_type": "VAEDecodeTiled",
     "_meta": {
       "title": "VAE Decode (Tiled)"
+    }
+  },
+  "404": {
+    "inputs": {
+      "image": [
+        "398:374",
+        0
+      ],
+      "sharpen_radius": 1,
+      "sigma": 1.0,
+      "alpha": 0.35
+    },
+    "class_type": "ImageSharpen",
+    "_meta": {
+      "title": "Sharpen Image"
     }
   },
   "398:358": {
@@ -726,7 +743,7 @@
       "bit_depth": 8,
       "color_space": "sRGB",
       "images": [
-        "398:374",
+        "404",
         0
       ],
       "audio": [
