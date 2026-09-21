@@ -273,7 +273,7 @@ Runtime settings live in `config.json`. Relative paths are resolved from the pro
 |---|---|
 | `server` | listen host and port; keep loopback unless trusted-LAN access is required |
 | `comfy` | ComfyUI URL, image/video workflow sources and profiles, timeouts, Preview size |
-| `prompt_enhancer` | optional local OpenAI-compatible prompt rewrite with independent `production` and `preview` flags; `models` is an array of `{ "model": "..." }` entries, while `image_model` and `video_model` select independently from it; image instructions are read from `instructions_image`, video instructions are read from `instructions_video`, `parallel` limits concurrent batch requests, sampling uses `temperature`, `top_p`, `top_k`, `min_p`, `presence_penalty`, and `repeat_penalty`, and authentication uses `LLAMA_API_KEY` |
+| `prompt_enhancer` | optional local OpenAI-compatible prompt rewrite with independent `production` and `preview` flags; `models` is an array of `{ "model": "..." }` entries, while `image_model` and `video_model` select independently from it; image instructions are read from `instructions_image`, video instructions are read from `instructions_video`, `parallel` limits concurrent batch requests, reasoning uses `reasoning` and `reasoning_effort`, sampling uses `temperature`, `top_p`, `top_k`, `min_p`, `presence_penalty`, and `repeat_penalty`, and authentication uses `LLAMA_API_KEY` |
 | `storage` | output directory, additional proof directories, PNG/JPEG output, JPEG quality, and optional age-free prompt/result JSONL debug log |
 | `gallery` | thumbnail size and bounded in-memory thumbnail cache |
 | `interface` | privacy auto-cover intervals |
@@ -294,7 +294,7 @@ workflow, positive prompt, and auxiliary conditioning. The logged positive promp
 uses `adult woman` in place of the configured exact age; rendering still receives
 the original age prompt. Relative log paths are resolved from `config.json`.
 
-Restart the server after editing `config.json`. The application has no authentication, so do not bind it to an untrusted network.
+Restart the server after editing `config.json`. Restart the local LLM launcher after editing its model preset. The application has no authentication, so do not bind it to an untrusted network.
 
 When `prompt_enhancer.production` or `prompt_enhancer.preview` is `true`, the
 compiled image prompt for that render tier is sent to the configured local
@@ -308,6 +308,17 @@ only to image renders.
 prompt preparation. Set it to the number of parallel slots configured in the
 local LLM server (for example, launch the server with `--parallel 4`). This is a
 client-side concurrency limit and is not sent as a chat-completion parameter.
+
+The reasoning controls are sent with every prompt-enhancer request. For the
+current Qwen chat template, use `reasoning` as `on`, `off`, or `auto`, and use
+`reasoning_effort` as `low`, `medium`, or `xhigh`. Valhalla translates the
+on/off setting to llama.cpp's `chat_template_kwargs.enable_thinking` request
+parameter. `max_tokens` is shared by reasoning and the final prompt, so use a
+larger value such as `4096` when reasoning is enabled; a small value can return
+an incomplete prompt or no final prompt at all. Valhalla uses only the final
+prompt in `message.content`; any separate reasoning trace is ignored. Keep
+`reasoning-preserve = off` in the llama.cpp preset because each enhancement is
+an independent request.
 
 The **Enhance prompts** action is available in both Studio and Director
 render dropdowns. It keeps optimized prompts in server memory for the current

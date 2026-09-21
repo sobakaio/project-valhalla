@@ -155,7 +155,7 @@
         "HiresFix_ModelUpscale_ImageUpscaleWithModel",
         0
       ],
-      "upscale_method": "bilinear",
+      "upscale_method": "lanczos",
       "height": 1344,
       "width": 1728,
       "crop": "disabled"

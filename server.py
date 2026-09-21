@@ -41,6 +41,12 @@ PROMPT_ENHANCER_SAMPLING_KEYS = (
     "presence_penalty",
     "repeat_penalty",
 )
+PROMPT_ENHANCER_REASONING_DEFAULTS = {
+    "reasoning": "on",
+    "reasoning_effort": "low",
+}
+PROMPT_ENHANCER_REASONING_VALUES = {"on", "off", "auto"}
+PROMPT_ENHANCER_REASONING_EFFORTS = {"low", "medium", "xhigh"}
 UI_SEED_MIN = 100_000_000_000_000
 UI_SEED_MAX = 999_999_999_999_999
 UI_SEED_SPAN = UI_SEED_MAX - UI_SEED_MIN + 1
@@ -249,6 +255,22 @@ def load_config() -> tuple[dict[str, Any], Path]:
         or not 0 < enhancer_top_p <= 1
     ):
         raise AppError("config.prompt_enhancer.top_p must be a number greater than 0 and at most 1")
+    enhancer_reasoning = prompt_enhancer.get(
+        "reasoning", PROMPT_ENHANCER_REASONING_DEFAULTS["reasoning"]
+    )
+    if enhancer_reasoning not in PROMPT_ENHANCER_REASONING_VALUES:
+        raise AppError(
+            "config.prompt_enhancer.reasoning must be on, off, or auto"
+        )
+    prompt_enhancer["reasoning"] = enhancer_reasoning
+    enhancer_reasoning_effort = prompt_enhancer.get(
+        "reasoning_effort", PROMPT_ENHANCER_REASONING_DEFAULTS["reasoning_effort"]
+    )
+    if enhancer_reasoning_effort not in PROMPT_ENHANCER_REASONING_EFFORTS:
+        raise AppError(
+            "config.prompt_enhancer.reasoning_effort must be low, medium, or xhigh"
+        )
+    prompt_enhancer["reasoning_effort"] = enhancer_reasoning_effort
     enhancer_parallel = prompt_enhancer.get("parallel", 1)
     if (
         not isinstance(enhancer_parallel, int)
@@ -4874,6 +4896,24 @@ def prompt_enhancer_sampling_payload(settings: dict[str, Any]) -> dict[str, Any]
     return {key: settings[key] for key in PROMPT_ENHANCER_SAMPLING_KEYS}
 
 
+def prompt_enhancer_reasoning_payload(settings: dict[str, Any]) -> dict[str, Any]:
+    """Translate Valhalla reasoning settings to llama.cpp chat-template inputs."""
+    reasoning = settings.get(
+        "reasoning", PROMPT_ENHANCER_REASONING_DEFAULTS["reasoning"]
+    )
+    payload: dict[str, Any] = {}
+    if reasoning in {"on", "off"}:
+        payload["chat_template_kwargs"] = {
+            "enable_thinking": reasoning == "on",
+        }
+    if reasoning != "off":
+        payload["reasoning_effort"] = settings.get(
+            "reasoning_effort",
+            PROMPT_ENHANCER_REASONING_DEFAULTS["reasoning_effort"],
+        )
+    return payload
+
+
 def prompt_enhancer_fingerprint(
     positive: str, render_tier: str, context: dict[str, Any] | None = None
 ) -> str:
@@ -4892,6 +4932,7 @@ def prompt_enhancer_fingerprint(
                 key: settings.get(key)
                 for key in PROMPT_ENHANCER_SAMPLING_KEYS
             },
+            "reasoning": prompt_enhancer_reasoning_payload(settings),
             "max_tokens": settings.get("max_tokens"),
             "timeout_seconds": settings.get("timeout_seconds"),
             "instructions_image": settings.get("instructions_image"),
@@ -4931,6 +4972,7 @@ def enhance_compiled_prompt(positive: str, render_tier: str) -> tuple[str, bool]
                 "model": model,
                 "messages": messages,
                 **prompt_enhancer_sampling_payload(settings),
+                **prompt_enhancer_reasoning_payload(settings),
                 "max_tokens": settings["max_tokens"],
                 "stream": False,
             },
@@ -5016,6 +5058,7 @@ def enhance_video_prompt(
                     },
                 ],
                 **prompt_enhancer_sampling_payload(settings),
+                **prompt_enhancer_reasoning_payload(settings),
                 "max_tokens": settings["max_tokens"],
                 "stream": False,
             },

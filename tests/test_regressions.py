@@ -5356,6 +5356,7 @@ class PromptPreparationTests(unittest.TestCase):
                 "temperature": 1, "top_p": 0.9, "top_k": 20, "min_p": 0.0,
                 "presence_penalty": 0.0, "repeat_penalty": 1.0,
                 "parallel": 4, "max_tokens": 100,
+                "reasoning": "on", "reasoning_effort": "low",
                 "timeout_seconds": 5, "instructions_image": "instructions.md",
             },
             "instructions": "Rewrite the image prompt.",
@@ -5813,6 +5814,7 @@ class WorkflowProfileTests(unittest.TestCase):
             config["prompt_enhancer"].update(
                 production=True,
                 instructions_image="ENCHANCER.md",
+                reasoning="on",
             )
             config_file = root / "config.json"
             config_file.write_text(app.json.dumps(config), encoding="utf-8")
@@ -5850,12 +5852,26 @@ class WorkflowProfileTests(unittest.TestCase):
         )
         self.assertEqual(request["json"]["max_tokens"], config["prompt_enhancer"]["max_tokens"])
         self.assertEqual(
+            request["json"]["chat_template_kwargs"],
+            {"enable_thinking": True},
+        )
+        self.assertEqual(
+            request["json"]["reasoning_effort"],
+            config["prompt_enhancer"]["reasoning_effort"],
+        )
+        self.assertEqual(
             request["json"]["messages"][0]["content"],
             "instructions from disk",
         )
         self.assertEqual(
             request["json"]["messages"][1]["content"],
             "<input_data>\ncompiled details\n</input_data>",
+        )
+        self.assertEqual(
+            app.prompt_enhancer_reasoning_payload(
+                {"reasoning": "off", "reasoning_effort": "low"}
+            ),
+            {"chat_template_kwargs": {"enable_thinking": False}},
         )
 
     def test_video_prompt_enhancer_uses_image_sidecar_and_guidance(self):
