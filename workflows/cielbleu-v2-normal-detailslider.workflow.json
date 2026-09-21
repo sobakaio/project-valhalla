@@ -166,7 +166,7 @@
         0
       ],
       "seed": 1948031467,
-      "steps": 4,
+      "steps": 5,
       "cfg": 1.0,
       "sampler_name": "euler",
       "scheduler": "simple",
