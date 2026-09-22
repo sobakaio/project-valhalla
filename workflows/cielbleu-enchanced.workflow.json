@@ -1,0 +1,496 @@
+{
+  "UNETLoader": {
+    "inputs": {
+      "unet_name": "cielbleuZIT_v2_pruned_bf16.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "VAELoader": {
+    "inputs": {
+      "vae_name": "ultra_ae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "CLIPLoader": {
+    "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "lumina2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "EmptySD3LatentImage": {
+    "inputs": {
+      "width": 1152,
+      "height": 896,
+      "batch_size": 1
+    },
+    "class_type": "EmptySD3LatentImage",
+    "_meta": {
+      "title": "EmptySD3LatentImage"
+    }
+  },
+  "HiresFix_ModelUpscale_UpscaleModelLoader": {
+    "inputs": {
+      "model_name": "RealESRGAN_x2plus.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "Load Upscale Model"
+    }
+  },
+  "FaceDetector": {
+    "inputs": {
+      "model_name": "bbox/face_yolov9c.pt"
+    },
+    "class_type": "UltralyticsDetectorProvider",
+    "_meta": {
+      "title": "Face detector — YOLOv9c"
+    }
+  },
+  "AnatomyDetector": {
+    "inputs": {
+      "model_name": "bbox/vagina-v3.2.pt"
+    },
+    "class_type": "UltralyticsDetectorProvider",
+    "_meta": {
+      "title": "Anatomy detector — vagina v3.2"
+    }
+  },
+  "Loras_Base": {
+    "inputs": {
+      "lora_name": "m99_labiaplasty_pussy_3_zimageturbo.safetensors",
+      "strength_model": 0.6,
+      "strength_clip": 1,
+      "model": [
+        "UNETLoader",
+        0
+      ],
+      "clip": [
+        "CLIPLoader",
+        0
+      ]
+    },
+    "class_type": "LoraLoader",
+    "_meta": {
+      "title": "Load LoRA (Model and CLIP)"
+    }
+  },
+  "Loras_Base_2": {
+    "inputs": {
+      "lora_name": "Z-Detail-Slider.safetensors",
+      "strength_model": 0.2,
+      "strength_clip": 1,
+      "model": [
+        "Loras_Base",
+        0
+      ],
+      "clip": [
+        "Loras_Base",
+        1
+      ]
+    },
+    "class_type": "LoraLoader",
+    "_meta": {
+      "title": "Load LoRA (Model and CLIP)"
+    }
+  },
+  "ModelSamplingAuraFlow": {
+    "inputs": {
+      "shift": 3,
+      "sampling": "flow",
+      "model": [
+        "Loras_Base_2",
+        0
+      ]
+    },
+    "class_type": "ModelSamplingAuraFlow",
+    "_meta": {
+      "title": "ModelSamplingAuraFlow"
+    }
+  },
+  "PositiveCLIP_Base": {
+    "inputs": {
+      "text": "beautiful european girl",
+      "clip": [
+        "Loras_Base_2",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "NegativeCLIP_Base": {
+    "inputs": {
+      "text": "",
+      "clip": [
+        "Loras_Base_2",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "FaceDetailerPositive": {
+    "inputs": {
+      "text": "natural detailed face, clear symmetrical eyes, realistic skin texture, subtle pores, clean eyelashes, natural lips, balanced facial features",
+      "clip": [
+        "Loras_Base_2",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Face Detailer — positive"
+    }
+  },
+  "FaceDetailerNegative": {
+    "inputs": {
+      "text": "grain, stains, blotchy skin, waxy skin, plastic skin, oversharpening, halos, artifacts, deformed eyes, asymmetrical eyes",
+      "clip": [
+        "Loras_Base_2",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Face Detailer — negative"
+    }
+  },
+  "AnatomyDetailerPositive": {
+    "inputs": {
+      "text": "anatomically correct vulva, natural skin texture, clean detail, realistic proportions, coherent anatomy",
+      "clip": [
+        "Loras_Base_2",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Anatomy Detailer — positive"
+    }
+  },
+  "AnatomyDetailerNegative": {
+    "inputs": {
+      "text": "deformed anatomy, duplicated anatomy, fused anatomy, stains, grain, oversharpening, halos, artifacts",
+      "clip": [
+        "Loras_Base_2",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Anatomy Detailer — negative"
+    }
+  },
+  "Sampler": {
+    "inputs": {
+      "seed": 638561268351421,
+      "steps": 16,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "ModelSamplingAuraFlow",
+        0
+      ],
+      "positive": [
+        "PositiveCLIP_Base",
+        0
+      ],
+      "negative": [
+        "NegativeCLIP_Base",
+        0
+      ],
+      "latent_image": [
+        "EmptySD3LatentImage",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "VAEDecode_1": {
+    "inputs": {
+      "samples": [
+        "Sampler",
+        0
+      ],
+      "vae": [
+        "VAELoader",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "HiresFix_ModelUpscale_ImageUpscaleWithModel": {
+    "inputs": {
+      "upscale_model": [
+        "HiresFix_ModelUpscale_UpscaleModelLoader",
+        0
+      ],
+      "image": [
+        "VAEDecode_1",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "Upscale Image (using Model)"
+    }
+  },
+  "HiresFix_ImageScale": {
+    "inputs": {
+      "upscale_method": "lanczos",
+      "width": 1728,
+      "height": 1344,
+      "crop": "disabled",
+      "image": [
+        "HiresFix_ModelUpscale_ImageUpscaleWithModel",
+        0
+      ]
+    },
+    "class_type": "ImageScale",
+    "_meta": {
+      "title": "Upscale Image"
+    }
+  },
+  "VAEEncode_1": {
+    "inputs": {
+      "pixels": [
+        "HiresFix_ImageScale",
+        0
+      ],
+      "vae": [
+        "VAELoader",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE Encode"
+    }
+  },
+  "HiresFix_Sampler": {
+    "inputs": {
+      "seed": 235170003824831,
+      "steps": 5,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 0.3,
+      "model": [
+        "ModelSamplingAuraFlow",
+        0
+      ],
+      "positive": [
+        "PositiveCLIP_Base",
+        0
+      ],
+      "negative": [
+        "NegativeCLIP_Base",
+        0
+      ],
+      "latent_image": [
+        "VAEEncode_1",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "VAEDecode_2": {
+    "inputs": {
+      "samples": [
+        "HiresFix_Sampler",
+        0
+      ],
+      "vae": [
+        "VAELoader",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "FaceDetailer": {
+    "inputs": {
+      "guide_size": 768,
+      "guide_size_for": true,
+      "max_size": 1280,
+      "seed": 889227854933732,
+      "steps": 6,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 0.12,
+      "feather": 28,
+      "noise_mask": true,
+      "force_inpaint": true,
+      "bbox_threshold": 0.5,
+      "bbox_dilation": 6,
+      "bbox_crop_factor": 2.8,
+      "sam_detection_hint": "none",
+      "sam_dilation": 0,
+      "sam_threshold": 0.93,
+      "sam_bbox_expansion": 0,
+      "sam_mask_hint_threshold": 0.7,
+      "sam_mask_hint_use_negative": "False",
+      "drop_size": 10,
+      "wildcard": "",
+      "cycle": 1,
+      "inpaint_model": false,
+      "noise_mask_feather": 20,
+      "tiled_encode": false,
+      "tiled_decode": false,
+      "image": [
+        "VAEDecode_2",
+        0
+      ],
+      "model": [
+        "ModelSamplingAuraFlow",
+        0
+      ],
+      "clip": [
+        "Loras_Base_2",
+        1
+      ],
+      "vae": [
+        "VAELoader",
+        0
+      ],
+      "positive": [
+        "FaceDetailerPositive",
+        0
+      ],
+      "negative": [
+        "FaceDetailerNegative",
+        0
+      ],
+      "bbox_detector": [
+        "FaceDetector",
+        0
+      ]
+    },
+    "class_type": "FaceDetailer",
+    "_meta": {
+      "title": "Face Detailer"
+    }
+  },
+  "AnatomyDetailer": {
+    "inputs": {
+      "guide_size": 768,
+      "guide_size_for": true,
+      "max_size": 1280,
+      "seed": 773799209118331,
+      "steps": 6,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 0.14,
+      "feather": 28,
+      "noise_mask": true,
+      "force_inpaint": true,
+      "bbox_threshold": 0.5,
+      "bbox_dilation": 6,
+      "bbox_crop_factor": 2.4,
+      "sam_detection_hint": "none",
+      "sam_dilation": 0,
+      "sam_threshold": 0.93,
+      "sam_bbox_expansion": 0,
+      "sam_mask_hint_threshold": 0.7,
+      "sam_mask_hint_use_negative": "False",
+      "drop_size": 12,
+      "wildcard": "",
+      "cycle": 1,
+      "inpaint_model": false,
+      "noise_mask_feather": 20,
+      "tiled_encode": false,
+      "tiled_decode": false,
+      "image": [
+        "FaceDetailer",
+        0
+      ],
+      "model": [
+        "ModelSamplingAuraFlow",
+        0
+      ],
+      "clip": [
+        "Loras_Base_2",
+        1
+      ],
+      "vae": [
+        "VAELoader",
+        0
+      ],
+      "positive": [
+        "AnatomyDetailerPositive",
+        0
+      ],
+      "negative": [
+        "AnatomyDetailerNegative",
+        0
+      ],
+      "bbox_detector": [
+        "AnatomyDetector",
+        0
+      ]
+    },
+    "class_type": "FaceDetailer",
+    "_meta": {
+      "title": "Anatomy Detailer"
+    }
+  },
+  "FinalSharpen": {
+    "inputs": {
+      "method": "adaptive_usm",
+      "method.strength": 0.2,
+      "method.radius": 1,
+      "method.threshold": 0.1,
+      "image": [
+        "AnatomyDetailer",
+        0
+      ]
+    },
+    "class_type": "ImageSharpenKJ",
+    "_meta": {
+      "title": "Adaptive Sharpen"
+    }
+  },
+  "SaveImage": {
+    "inputs": {
+      "images": [
+        "FinalSharpen",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  }
+}
